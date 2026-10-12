@@ -2,4 +2,33 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+    <color name="primary">#6200EE</color>
+    <color name="primary_dark">#3700B3</color>
+    <color name="accent">#03DAC6</color>
+
+    <!-- Custom Theme Colors -->
+    <color name="bg_main">#F8FAFC</color>
+    <color name="card_background">#FFFFFF</color>
+    <color name="text_primary">#0F172A</color>
+    <color name="text_secondary">#64748B</color>
+
+    <color name="green_badge_bg">#D1FAE5</color>
+    <color name="green_badge_text">#065F46</color>
+    <color name="green_accent">#10B981</color>
+    <color name="green_dark">#047857</color>
+
+    <color name="blue_badge_bg">#DBEAFE</color>
+    <color name="blue_badge_text">#1E40AF</color>
+
+    <color name="orange_dot">#F59E0B</color>
+    <color name="green_dot">#10B981</color>
+
+    <color name="gray_bar">#E2E8F0</color>
+    <color name="gray_border">#E2E8F0</color>
+    <color name="gray_input_bg">#F8FAFC</color>
+
+    <color name="chip_bg_selected">#0F172A</color>
+    <color name="chip_text_selected">#FFFFFF</color>
+    <color name="chip_bg_unselected">#FFFFFF</color>
+    <color name="chip_text_unselected">#334155</color>
 </resources>

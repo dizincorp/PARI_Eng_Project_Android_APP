@@ -1,3 +1,118 @@
 <resources>
-    <string name="app_name">Project</string>
+    <string name="app_name">ParkShare</string>
+    <string name="nav_search">Szukaj</string>
+    <string name="nav_reservations">Rezerwacje</string>
+    <string name="nav_places">Miejsca</string>
+    <string name="nav_profile">Profil</string>
+
+    <string name="title_search">Strona: Szukaj</string>
+    <string name="title_reservations">Strona: Rezerwacje</string>
+    <string name="title_places">Strona: Miejsca</string>
+    <string name="title_profile">Strona: Profil</string>
+
+    <string name="google_maps_key" translatable="false">YOUR_API_KEY_HERE</string>
+    <string name="search_hint">Szukaj miejsca&#8230;</string>
+    <string name="default_location_title">Warszawa</string>
+    <string name="error_empty_query">Wpisz nazwę miejsca</string>
+    <string name="error_location_not_found">Nie znaleziono miejsca</string>
+    <string name="error_geocoding_failed">Błąd wyszukiwania: %1$s</string>
+
+    <!-- Places / Dashboard Strings -->
+    <string name="user_greeting">Cześć, Jan</string>
+    <string name="dashboard_subtitle">Dashboard • Październik 2024</string>
+    <string name="earnings_title">ZAROBKI W TYM MIESIĄCU</string>
+    <string name="earnings_value">1,240 PLN</string>
+    <string name="earnings_growth">+12%</string>
+
+    <string name="btn_add_place">Dodaj Miejsce</string>
+    <string name="btn_availability">Dostępność</string>
+    <string name="today_reservations_title">Dzisiejsze Rezerwacje</string>
+    <string name="link_all">Wszystkie</string>
+
+    <string name="sample_time_1">14:00</string>
+    <string name="sample_time_2">Do 18</string>
+    <string name="sample_place_a">Miejsce A - Ul. Polna 12</string>
+    <string name="sample_place_b">Miejsce B - Ul. Polna 12</string>
+    <string name="sample_sub_a">WA 12345 • Oczekuje</string>
+    <string name="sample_sub_b">KR 98765 • Trwa</string>
+
+    <string name="status_pending">Oczekuje</string>
+    <string name="status_ongoing">Trwa</string>
+
+    <!-- Add Place Strings -->
+    <string name="title_add_place">Dodaj miejsce</string>
+    <string name="section_location">Lokalizacja</string>
+    <string name="link_set_on_map">Ustaw na mapie</string>
+    <string name="label_street">Ulica i numer</string>
+    <string name="hint_street">Np. Marszałkowska 1</string>
+    <string name="label_city">Miasto</string>
+    <string name="hint_city">Warszawa</string>
+    <string name="label_postal_code">Kod pocztowy</string>
+    <string name="hint_postal_code">00&#8211;001</string>
+
+    <string name="section_place_details">Szczegóły miejsca</string>
+    <string name="label_place_number">Numer / Nazwa miejsca</string>
+    <string name="hint_place_number">Nr 42</string>
+    <string name="label_floor">Piętro (opcjonalnie)</string>
+    <string name="hint_floor">-1</string>
+
+    <string name="section_price">Cena</string>
+    <string name="label_hourly_rate">Stawka godzinowa (PLN/h)</string>
+    <string name="hint_price">15.00</string>
+
+    <string name="section_amenities">Udogodnienia</string>
+    <string name="amenity_monitoring">Monitoring</string>
+    <string name="amenity_lighting">Oświetlenie</string>
+    <string name="amenity_ev">EV Charging</string>
+    <string name="amenity_underground">Podziemny</string>
+
+    <string name="section_photos">Zdjęcia</string>
+    <string name="prompt_add_photos">Dodaj zdjęcia miejsca</string>
+    <string name="photos_format_hint">JPG, PNG (max 5MB)</string>
+    <string name="msg_place_added">Miejsce zostało pomyślnie dodane!</string>
+    <string name="msg_validation_error">Proszę wypełnić wymagane pola (Ulica, Miasto, Numer)</string>
+
+    <!-- Availability Calendar Strings -->
+    <string name="title_availability_calendar">Kalendarz dostępności</string>
+    <string name="subtitle_availability">Zarządzaj rezerwacjami i blokadami terminów dla swoich miejsc.</string>
+    <string name="month_october">Październik 2024</string>
+    <string name="legend_reservation">Rezerwacja</string>
+    <string name="legend_block">Blokada</string>
+
+    <string name="day_mon">Pn</string>
+    <string name="day_tue">Wt</string>
+    <string name="day_wed">Śr</string>
+    <string name="day_thu">Cz</string>
+    <string name="day_fri">Pt</string>
+    <string name="day_sat">Sb</string>
+    <string name="day_sun">Nd</string>
+
+    <string name="selected_date_header">6 Października</string>
+    <string name="reservations_count_badge">2 Rezerwacje</string>
+
+    <string name="time_slot_1">08:00 &#8211; 12:00</string>
+    <string name="time_slot_2">14:00 &#8211; 18:00</string>
+    <string name="place_name_underground">Miejsce #12 (Podziemny)</string>
+
+    <string name="user_anna">Anna K.</string>
+    <string name="user_tomasz">Tomasz Z.</string>
+    <string name="user_car_1">Toyota Yaris • WA 12345</string>
+    <string name="user_car_2">Skoda Octavia • WZ 9876</string>
+
+    <string name="day_1">1</string>
+    <string name="day_2">2</string>
+    <string name="day_3">3 •</string>
+    <string name="day_4">4</string>
+    <string name="day_5">5</string>
+    <string name="day_6">6</string>
+    <string name="day_7">7 ⧸</string>
+    <string name="day_8">8</string>
+    <string name="day_9">9 •</string>
+    <string name="day_10">10</string>
+    <string name="day_11">11</string>
+    <string name="day_12">12</string>
+    <string name="day_13">13</string>
+
+    <string name="btn_block_slot">Zablokuj termin</string>
+    <string name="msg_slot_blocked">Termin został pomyślnie zablokowany</string>
 </resources>
