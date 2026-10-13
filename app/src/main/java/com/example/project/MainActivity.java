@@ -1,6 +1,8 @@
 package com.example.project;
 
+import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -17,14 +19,24 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.material.chip.Chip;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public class MainActivity extends BaseActivity implements OnMapReadyCallback {
 
     private ActivityMainBinding binding;
     private SearchViewModel viewModel;
     private GoogleMap googleMap;
+    private final Map<String, ParkingPlace> markerPlaceMap = new HashMap<>();
+    private ParkingPlace selectedPlaceForBooking = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,7 +76,20 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
         }
 
         setupSearchView();
+        setupClickListeners();
         observeViewModel();
+    }
+
+    private void setupClickListeners() {
+        if (binding == null) return;
+
+        binding.btnReserveNow.setOnClickListener(v -> {
+            if (selectedPlaceForBooking != null) {
+                Intent intent = new Intent(MainActivity.this, ReservePlaceActivity.class);
+                intent.putExtra(ReservePlaceActivity.EXTRA_PLACE_ID, selectedPlaceForBooking.getId());
+                startActivity(intent);
+            }
+        });
     }
 
     private void setupSearchView() {
@@ -98,15 +123,43 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
             }
 
             if (result.isSuccess() && googleMap != null) {
-                googleMap.clear();
-                googleMap.addMarker(new MarkerOptions()
-                        .position(result.getLatLng())
-                        .title(result.getTitle()));
                 googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(result.getLatLng(), 14f));
             } else if (result.getErrorMessage() != null) {
                 Toast.makeText(MainActivity.this, result.getErrorMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+
+        // Observe places from Repository so newly added places appear automatically on the map!
+        AppRepository.getInstance().getPlacesLiveData().observe(this, places -> {
+            if (googleMap != null && places != null) {
+                displayPlacesOnMap(places);
+            }
+        });
+    }
+
+    private void displayPlacesOnMap(List<ParkingPlace> places) {
+        if (googleMap == null || places == null) return;
+
+        googleMap.clear();
+        markerPlaceMap.clear();
+
+        for (ParkingPlace p : places) {
+            if (p == null || p.isOccupied()) {
+                // If occupied or null, do not show on map
+                continue;
+            }
+
+            LatLng pos = new LatLng(p.getLatitude(), p.getLongitude());
+            Marker marker = googleMap.addMarker(new MarkerOptions()
+                    .position(pos)
+                    .title(p.getTitle())
+                    .snippet(String.format(Locale.getDefault(), "%.2f zł/h", p.getPrice()))
+                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+
+            if (marker != null) {
+                markerPlaceMap.put(marker.getId(), p);
+            }
+        }
     }
 
     @Override
@@ -115,10 +168,49 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
         this.googleMap.getUiSettings().setZoomControlsEnabled(true);
 
         LatLng defaultLocation = new LatLng(52.2297, 21.0122); // Warszawa
-        this.googleMap.addMarker(new MarkerOptions()
-                .position(defaultLocation)
-                .title(getString(R.string.default_location_title)));
         this.googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 12f));
+
+        List<ParkingPlace> currentPlaces = AppRepository.getInstance().getPlacesLiveData().getValue();
+        if (currentPlaces != null) {
+            displayPlacesOnMap(currentPlaces);
+        }
+
+        googleMap.setOnMarkerClickListener(marker -> {
+            ParkingPlace place = markerPlaceMap.get(marker.getId());
+            if (place != null) {
+                showPlacePreviewCard(place);
+                return true;
+            }
+            return false;
+        });
+
+        googleMap.setOnMapClickListener(latLng -> {
+            if (binding != null && binding.cardPlacePreview != null) {
+                binding.cardPlacePreview.setVisibility(View.GONE);
+            }
+        });
+    }
+
+    private void showPlacePreviewCard(ParkingPlace place) {
+        if (binding == null || place == null) return;
+
+        selectedPlaceForBooking = place;
+
+        binding.textPreviewTitle.setText(place.getTitle());
+        binding.textPreviewPriceValue.setText(String.format(Locale.getDefault(), "%.0f", place.getPrice()));
+
+        binding.chipGroupPreviewAmenities.removeAllViews();
+        if (place.getAmenities() != null) {
+            for (String amenity : place.getAmenities()) {
+                Chip chip = new Chip(this);
+                chip.setText(amenity);
+                chip.setClickable(false);
+                chip.setCheckable(false);
+                binding.chipGroupPreviewAmenities.addView(chip);
+            }
+        }
+
+        binding.cardPlacePreview.setVisibility(View.VISIBLE);
     }
 
     @Override

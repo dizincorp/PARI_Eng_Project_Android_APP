@@ -42,6 +42,9 @@
             android:name=".AvailabilityCalendarActivity"
             android:exported="false" />
         <activity
+            android:name=".EarningsActivity"
+            android:exported="false" />
+        <activity
             android:name=".ProfileActivity"
             android:exported="false" />
     </application>

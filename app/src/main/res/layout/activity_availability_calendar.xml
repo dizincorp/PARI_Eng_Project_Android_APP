@@ -8,9 +8,9 @@
     android:background="@color/bg_main"
     tools:context=".AvailabilityCalendarActivity">
 
-    <!-- Header Toolbar -->
+    <!-- Top Toolbar -->
     <LinearLayout
-        android:id="@+id/layout_header"
+        android:id="@+id/layout_top_bar"
         android:layout_width="0dp"
         android:layout_height="56dp"
         android:gravity="center_vertical"
@@ -21,36 +21,21 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
-            android:id="@+id/btn_menu"
+            android:id="@+id/btn_back"
             android:layout_width="24dp"
             android:layout_height="24dp"
-            android:contentDescription="@string/app_name"
-            android:src="@drawable/ic_menu" />
+            android:contentDescription="@string/title_availability_calendar"
+            android:src="@drawable/ic_arrow_back" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_weight="1"
-            android:text="@string/app_name"
+            android:text="@string/title_availability_calendar"
             android:textColor="@color/text_primary"
             android:textSize="20sp"
             android:textStyle="bold" />
-
-        <ImageView
-            android:id="@+id/btn_notifications"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:layout_marginEnd="16dp"
-            android:contentDescription="@string/app_name"
-            android:src="@drawable/ic_bell" />
-
-        <ImageView
-            android:id="@+id/img_profile"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
-            android:contentDescription="@string/app_name"
-            android:src="@drawable/ic_avatar" />
     </LinearLayout>
 
     <ScrollView
@@ -60,7 +45,7 @@
         app:layout_constraintBottom_toTopOf="@id/bottom_navigation"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/layout_header">
+        app:layout_constraintTop_toBottomOf="@id/layout_top_bar">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -71,20 +56,29 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/title_availability_calendar"
-                android:textColor="@color/text_primary"
-                android:textSize="24sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
                 android:text="@string/subtitle_availability"
                 android:textColor="@color/text_secondary"
                 android:textSize="14sp" />
 
-            <!-- Calendar Card -->
+            <!-- Interactive Calendar View -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardBackgroundColor="@color/card_background"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="1dp"
+                app:strokeColor="@color/gray_border"
+                app:strokeWidth="1dp">
+
+                <CalendarView
+                    android:id="@+id/calendar_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="8dp" />
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Parking Place & Time Range Selector Card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -101,369 +95,142 @@
                     android:orientation="vertical"
                     android:padding="16dp">
 
-                    <!-- Month Navigation -->
-                    <RelativeLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                        <ImageView
-                            android:id="@+id/btn_prev_month"
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:layout_alignParentStart="true"
-                            android:contentDescription="@string/month_october"
-                            android:src="@drawable/ic_chevron_left" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_centerInParent="true"
-                            android:text="@string/month_october"
-                            android:textColor="@color/text_primary"
-                            android:textSize="18sp"
-                            android:textStyle="bold" />
-
-                        <ImageView
-                            android:id="@+id/btn_next_month"
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:layout_alignParentEnd="true"
-                            android:contentDescription="@string/month_october"
-                            android:src="@drawable/ic_chevron_right" />
-                    </RelativeLayout>
-
-                    <!-- Weekdays Header -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
+                    <TextView
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
-                        android:orientation="horizontal">
+                        android:text="@string/select_parking_place"
+                        android:textColor="@color/text_primary"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
 
-                        <TextView style="@style/CalendarDayHeader" android:text="@string/day_mon" />
-                        <TextView style="@style/CalendarDayHeader" android:text="@string/day_tue" />
-                        <TextView style="@style/CalendarDayHeader" android:text="@string/day_wed" />
-                        <TextView style="@style/CalendarDayHeader" android:text="@string/day_thu" />
-                        <TextView style="@style/CalendarDayHeader" android:text="@string/day_fri" />
-                        <TextView style="@style/CalendarDayHeader" android:text="@string/day_sat" />
-                        <TextView style="@style/CalendarDayHeader" android:text="@string/day_sun" />
-                    </LinearLayout>
+                    <Spinner
+                        android:id="@+id/spinner_parking_places"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/bg_dashed_border"
+                        android:backgroundTint="@color/gray_input_bg"
+                        android:paddingHorizontal="12dp" />
 
-                    <!-- Days Grid (Row 1) -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
+                        android:baselineAligned="false"
                         android:orientation="horizontal">
 
-                        <TextView style="@style/CalendarDayCell" android:text="" />
-                        <TextView style="@style/CalendarDayCell" android:text="@string/day_1" />
-                        <TextView style="@style/CalendarDayCell" android:text="@string/day_2" />
-                        <TextView style="@style/CalendarDayCell" android:text="@string/day_3" />
-                        <TextView style="@style/CalendarDayCell" android:text="@string/day_4" />
-                        <TextView style="@style/CalendarDayCell" android:text="@string/day_5" />
-
-                        <TextView
-                            style="@style/CalendarDayCell"
-                            android:background="@drawable/ic_arrow_up"
-                            android:backgroundTint="@color/chip_bg_selected"
-                            android:text="@string/day_6"
-                            android:textColor="@color/white"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-
-                    <!-- Days Grid (Row 2) -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
-                        android:orientation="horizontal">
-
-                        <TextView style="@style/CalendarDayCell" android:text="@string/day_7" android:textColor="@color/text_secondary" />
-                        <TextView style="@style/CalendarDayCell" android:text="@string/day_8" />
-                        <TextView style="@style/CalendarDayCell" android:text="@string/day_9" />
-                        <TextView style="@style/CalendarDayCell" android:text="@string/day_10" />
-                        <TextView style="@style/CalendarDayCell" android:text="@string/day_11" />
-                        <TextView style="@style/CalendarDayCell" android:text="@string/day_12" />
-                        <TextView style="@style/CalendarDayCell" android:text="@string/day_13" />
-                    </LinearLayout>
-
-                    <!-- Legend -->
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="20dp"
-                        android:gravity="center"
-                        android:orientation="horizontal">
-
-                        <View
-                            android:layout_width="8dp"
-                            android:layout_height="8dp"
-                            android:background="@drawable/ic_arrow_up"
-                            android:backgroundTint="@color/green_dark" />
-
-                        <TextView
-                            android:layout_width="wrap_content"
+                        <LinearLayout
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="6dp"
-                            android:text="@string/legend_reservation"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="12sp" />
+                            android:layout_marginEnd="8dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
 
-                        <View
-                            android:layout_width="12dp"
-                            android:layout_height="12dp"
-                            android:layout_marginStart="24dp"
-                            android:background="@drawable/ic_arrow_back"
-                            android:backgroundTint="@color/text_secondary" />
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/label_time_from"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
+                            <EditText
+                                android:id="@+id/edit_time_from"
+                                android:layout_width="match_parent"
+                                android:layout_height="48dp"
+                                android:layout_marginTop="4dp"
+                                android:autofillHints="time"
+                                android:background="@drawable/bg_dashed_border"
+                                android:backgroundTint="@color/gray_input_bg"
+                                android:hint="@string/hint_time_from"
+                                android:inputType="time"
+                                android:paddingHorizontal="12dp"
+                                android:textColor="@color/text_primary"
+                                android:textSize="14sp" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="6dp"
-                            android:text="@string/legend_block"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="12sp" />
+                            android:layout_marginStart="8dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/label_time_to"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp" />
+
+                            <EditText
+                                android:id="@+id/edit_time_to"
+                                android:layout_width="match_parent"
+                                android:layout_height="48dp"
+                                android:layout_marginTop="4dp"
+                                android:autofillHints="time"
+                                android:background="@drawable/bg_dashed_border"
+                                android:backgroundTint="@color/gray_input_bg"
+                                android:hint="@string/hint_time_to"
+                                android:inputType="time"
+                                android:paddingHorizontal="12dp"
+                                android:textColor="@color/text_primary"
+                                android:textSize="14sp" />
+                        </LinearLayout>
                     </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_block_slot"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="16dp"
+                        android:backgroundTint="@color/chip_bg_selected"
+                        android:text="@string/btn_block_slot"
+                        android:textAllCaps="false"
+                        android:textColor="@color/white"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        app:cornerRadius="12dp"
+                        app:icon="@drawable/ic_block"
+                        app:iconGravity="textStart"
+                        app:iconTint="@color/white" />
+
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Selected Date Section -->
-            <RelativeLayout
-                android:layout_width="match_parent"
+            <!-- Selected Date Reservations Section -->
+            <TextView
+                android:id="@+id/text_selected_date_title"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentStart="true"
-                    android:text="@string/selected_date_header"
-                    android:textColor="@color/text_primary"
-                    android:textSize="20sp"
-                    android:textStyle="bold" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:background="@drawable/ic_arrow_up"
-                    android:backgroundTint="@color/blue_badge_bg"
-                    android:paddingHorizontal="10dp"
-                    android:paddingVertical="4dp"
-                    android:text="@string/reservations_count_badge"
-                    android:textColor="@color/blue_badge_text"
-                    android:textSize="12sp"
-                    android:textStyle="bold" />
-            </RelativeLayout>
-
-            <!-- Reservation Card 1 -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="1dp"
-                app:strokeColor="@color/gray_border"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-
-                    <RelativeLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_alignParentStart="true"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/time_slot_1"
-                                android:textColor="@color/text_primary"
-                                android:textSize="15sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="@string/place_name_underground"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="13sp" />
-                        </LinearLayout>
-
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:layout_alignParentEnd="true"
-                            android:contentDescription="@string/title_availability_calendar"
-                            android:src="@drawable/ic_check_circle" />
-                    </RelativeLayout>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:layout_marginVertical="12dp"
-                        android:background="@color/gray_border" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <ImageView
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:contentDescription="@string/title_availability_calendar"
-                            android:src="@drawable/ic_avatar" />
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="12dp"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/user_anna"
-                                android:textColor="@color/text_primary"
-                                android:textSize="15sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="@string/user_car_1"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="13sp" />
-                        </LinearLayout>
-                    </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Reservation Card 2 -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="1dp"
-                app:strokeColor="@color/gray_border"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp">
-
-                    <RelativeLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content">
-
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_alignParentStart="true"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/time_slot_2"
-                                android:textColor="@color/text_primary"
-                                android:textSize="15sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="@string/place_name_underground"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="13sp" />
-                        </LinearLayout>
-
-                        <ImageView
-                            android:layout_width="24dp"
-                            android:layout_height="24dp"
-                            android:layout_alignParentEnd="true"
-                            android:contentDescription="@string/title_availability_calendar"
-                            android:src="@drawable/ic_check_circle" />
-                    </RelativeLayout>
-
-                    <View
-                        android:layout_width="match_parent"
-                        android:layout_height="1dp"
-                        android:layout_marginVertical="12dp"
-                        android:background="@color/gray_border" />
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <ImageView
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:contentDescription="@string/title_availability_calendar"
-                            android:src="@drawable/ic_avatar" />
-
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="12dp"
-                            android:orientation="vertical">
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="@string/user_tomasz"
-                                android:textColor="@color/text_primary"
-                                android:textSize="15sp"
-                                android:textStyle="bold" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="@string/user_car_2"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="13sp" />
-                        </LinearLayout>
-                    </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Block Slot Button -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_block_slot"
-                android:layout_width="match_parent"
-                android:layout_height="54dp"
                 android:layout_marginTop="20dp"
-                android:backgroundTint="@color/chip_bg_selected"
-                android:text="@string/btn_block_slot"
+                android:text="@string/selected_date_header"
+                android:textColor="@color/text_primary"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <!-- Reservations List Container -->
+            <LinearLayout
+                android:id="@+id/container_date_reservations"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="vertical" />
+
+            <!-- Return Button -->
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_return_to_places"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="24dp"
+                android:backgroundTint="@color/white"
+                android:text="@string/btn_return_to_places"
                 android:textAllCaps="false"
-                android:textColor="@color/white"
-                android:textSize="16sp"
+                android:textColor="@color/text_primary"
+                android:textSize="15sp"
                 android:textStyle="bold"
                 app:cornerRadius="12dp"
-                app:icon="@drawable/ic_block"
-                app:iconGravity="textStart"
-                app:iconTint="@color/white" />
+                app:strokeColor="@color/text_primary"
+                app:strokeWidth="1dp" />
 
         </LinearLayout>
     </ScrollView>

@@ -28,6 +28,7 @@
             android:src="@drawable/ic_arrow_back" />
 
         <TextView
+            android:id="@+id/text_toolbar_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
@@ -128,6 +129,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
                         android:layout_marginTop="6dp"
+                        android:autofillHints="postalAddress"
                         android:background="@drawable/bg_dashed_border"
                         android:backgroundTint="@color/gray_input_bg"
                         android:hint="@string/hint_street"
@@ -141,6 +143,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
+                        android:baselineAligned="false"
                         android:orientation="horizontal">
 
                         <LinearLayout
@@ -162,6 +165,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="48dp"
                                 android:layout_marginTop="6dp"
+                                android:autofillHints="postalAddress"
                                 android:background="@drawable/bg_dashed_border"
                                 android:backgroundTint="@color/gray_input_bg"
                                 android:hint="@string/hint_city"
@@ -190,6 +194,7 @@
                                 android:layout_width="match_parent"
                                 android:layout_height="48dp"
                                 android:layout_marginTop="6dp"
+                                android:autofillHints="postalCode"
                                 android:background="@drawable/bg_dashed_border"
                                 android:backgroundTint="@color/gray_input_bg"
                                 android:hint="@string/hint_postal_code"
@@ -240,6 +245,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
                         android:layout_marginTop="6dp"
+                        android:autofillHints="none"
                         android:background="@drawable/bg_dashed_border"
                         android:backgroundTint="@color/gray_input_bg"
                         android:hint="@string/hint_place_number"
@@ -261,10 +267,33 @@
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
                         android:layout_marginTop="6dp"
+                        android:autofillHints="none"
                         android:background="@drawable/bg_dashed_border"
                         android:backgroundTint="@color/gray_input_bg"
                         android:hint="@string/hint_floor"
                         android:inputType="numberSigned"
+                        android:paddingHorizontal="12dp"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="@string/label_access_time"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp" />
+
+                    <EditText
+                        android:id="@+id/edit_access_time"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="6dp"
+                        android:autofillHints="none"
+                        android:background="@drawable/bg_dashed_border"
+                        android:backgroundTint="@color/gray_input_bg"
+                        android:hint="@string/hint_access_time"
+                        android:inputType="text"
                         android:paddingHorizontal="12dp"
                         android:textColor="@color/text_primary"
                         android:textSize="14sp" />
@@ -309,6 +338,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
                         android:layout_marginTop="6dp"
+                        android:autofillHints="none"
                         android:background="@drawable/bg_dashed_border"
                         android:backgroundTint="@color/gray_input_bg"
                         android:hint="@string/hint_price"

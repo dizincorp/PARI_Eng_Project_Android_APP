@@ -23,24 +23,26 @@
     <string name="earnings_title">ZAROBKI W TYM MIESIĄCU</string>
     <string name="earnings_value">1,240 PLN</string>
     <string name="earnings_growth">+12%</string>
+    <string name="title_transaction_history">Historia Transakcji</string>
+
+    <string name="format_vehicle">Pojazd: %1$s</string>
+    <string name="format_duration">Czas: %1$s</string>
+    <string name="format_date">Data: %1$s</string>
+    <string name="format_sub_details">%1$s • %2$s</string>
+    <string name="format_city_street">%1$s, %2$s</string>
 
     <string name="btn_add_place">Dodaj Miejsce</string>
     <string name="btn_availability">Dostępność</string>
-    <string name="today_reservations_title">Dzisiejsze Rezerwacje</string>
+    <string name="my_places_title">Moje Miejsca</string>
     <string name="link_all">Wszystkie</string>
 
-    <string name="sample_time_1">14:00</string>
-    <string name="sample_time_2">Do 18</string>
-    <string name="sample_place_a">Miejsce A - Ul. Polna 12</string>
-    <string name="sample_place_b">Miejsce B - Ul. Polna 12</string>
-    <string name="sample_sub_a">WA 12345 • Oczekuje</string>
-    <string name="sample_sub_b">KR 98765 • Trwa</string>
+    <string name="status_free">Wolne</string>
+    <string name="status_occupied">Zajęte</string>
+    <string name="format_occupied_until">Zajęte do: %1$s</string>
 
-    <string name="status_pending">Oczekuje</string>
-    <string name="status_ongoing">Trwa</string>
-
-    <!-- Add Place Strings -->
+    <!-- Add / Edit Place Strings -->
     <string name="title_add_place">Dodaj miejsce</string>
+    <string name="title_edit_place">Edytuj miejsce</string>
     <string name="section_location">Lokalizacja</string>
     <string name="link_set_on_map">Ustaw na mapie</string>
     <string name="label_street">Ulica i numer</string>
@@ -55,6 +57,8 @@
     <string name="hint_place_number">Nr 42</string>
     <string name="label_floor">Piętro (opcjonalnie)</string>
     <string name="hint_floor">-1</string>
+    <string name="label_access_time">Czas dostępu (np. 08:00 &#8211; 20:00)</string>
+    <string name="hint_access_time">08:00 &#8211; 20:00</string>
 
     <string name="section_price">Cena</string>
     <string name="label_hourly_rate">Stawka godzinowa (PLN/h)</string>
@@ -69,7 +73,7 @@
     <string name="section_photos">Zdjęcia</string>
     <string name="prompt_add_photos">Dodaj zdjęcia miejsca</string>
     <string name="photos_format_hint">JPG, PNG (max 5MB)</string>
-    <string name="msg_place_added">Miejsce zostało pomyślnie dodane!</string>
+    <string name="msg_place_added">Miejsce zostało pomyślnie zapisane!</string>
     <string name="msg_validation_error">Proszę wypełnić wymagane pola (Ulica, Miasto, Numer)</string>
 
     <!-- Availability Calendar Strings -->
@@ -78,41 +82,73 @@
     <string name="month_october">Październik 2024</string>
     <string name="legend_reservation">Rezerwacja</string>
     <string name="legend_block">Blokada</string>
-
-    <string name="day_mon">Pn</string>
-    <string name="day_tue">Wt</string>
-    <string name="day_wed">Śr</string>
-    <string name="day_thu">Cz</string>
-    <string name="day_fri">Pt</string>
-    <string name="day_sat">Sb</string>
-    <string name="day_sun">Nd</string>
-
-    <string name="selected_date_header">6 Października</string>
-    <string name="reservations_count_badge">2 Rezerwacje</string>
-
-    <string name="time_slot_1">08:00 &#8211; 12:00</string>
-    <string name="time_slot_2">14:00 &#8211; 18:00</string>
-    <string name="place_name_underground">Miejsce #12 (Podziemny)</string>
-
-    <string name="user_anna">Anna K.</string>
-    <string name="user_tomasz">Tomasz Z.</string>
-    <string name="user_car_1">Toyota Yaris • WA 12345</string>
-    <string name="user_car_2">Skoda Octavia • WZ 9876</string>
-
-    <string name="day_1">1</string>
-    <string name="day_2">2</string>
-    <string name="day_3">3 •</string>
-    <string name="day_4">4</string>
-    <string name="day_5">5</string>
-    <string name="day_6">6</string>
-    <string name="day_7">7 ⧸</string>
-    <string name="day_8">8</string>
-    <string name="day_9">9 •</string>
-    <string name="day_10">10</string>
-    <string name="day_11">11</string>
-    <string name="day_12">12</string>
-    <string name="day_13">13</string>
+    <string name="selected_date_header">Dostępność dla wybranego dnia</string>
 
     <string name="btn_block_slot">Zablokuj termin</string>
     <string name="msg_slot_blocked">Termin został pomyślnie zablokowany</string>
+    <string name="btn_return_to_places">Powrót do Miejsc</string>
+    <string name="select_parking_place">Wybierz miejsce parkingowe</string>
+
+    <string name="label_time_from">Godzina od</string>
+    <string name="label_time_to">Godzina do</string>
+    <string name="hint_time_from">12:00</string>
+    <string name="hint_time_to">18:00</string>
+    <string name="format_reservations_for_date">Dostępność w dniu %1$s</string>
+
+    <!-- Reserve Process Strings -->
+    <string name="title_reservation_details">Szczegóły rezerwacji</string>
+    <string name="badge_available_now">✔ Dostępne teraz</string>
+    <string name="header_schedule">HARMONOGRAM</string>
+    <string name="label_start_time">Rozpoczęcie</string>
+    <string name="label_end_time">Zakończenie</string>
+    <string name="btn_change_time">Zmień czas</string>
+    <string name="header_select_vehicle">WYBIERZ POJAZD</string>
+    <string name="btn_add_vehicle_plus">+ Dodaj pojazd</string>
+    <string name="btn_add_vehicle">Dodaj pojazd</string>
+    <string name="header_summary">PODSUMOWANIE</string>
+    <string name="label_duration">Czas trwania</string>
+    <string name="label_hourly_fee">Stawka</string>
+    <string name="label_service_fee">Opłata serwisowa</string>
+    <string name="label_total_sum">Suma</string>
+    <string name="btn_reserve_and_pay">Zarezerwuj i zapłać 🔒</string>
+    <string name="sample_4h">4h</string>
+
+    <!-- Add Vehicle Dialog Strings -->
+    <string name="title_add_vehicle">Dodaj pojazd</string>
+    <string name="label_vehicle_make">Marka i model samochodu</string>
+    <string name="hint_vehicle_make">Np. Tesla Model 3</string>
+    <string name="label_vehicle_plate">Numer rejestracyjny</string>
+    <string name="hint_vehicle_plate">Np. WX 12345</string>
+    <string name="label_vehicle_color">Kolor samochodu</string>
+    <string name="hint_vehicle_color">Np. Czarny</string>
+    <string name="btn_save_vehicle">Zapisz pojazd</string>
+
+    <!-- Reservations Activity Strings -->
+    <string name="tab_active">Aktywne</string>
+    <string name="tab_history">Historia</string>
+    <string name="msg_no_active_reservation">nie masz zarezerwowanego miejsca, odszukaj swoje na mapie</string>
+    <string name="btn_search_on_map">Odszukaj swoje na mapie</string>
+
+    <string name="badge_active_now">AKTYWNA TERAZ</string>
+    <string name="label_remaining_time">Pozostało</string>
+    <string name="btn_navigate_to_place">Nawiguj do miejsca</string>
+    <string name="label_pin_code">Kod PIN wjazd</string>
+    <string name="label_entry">Wjazd</string>
+    <string name="label_exit">Wyjazd</string>
+    <string name="btn_download_confirmation">Pobierz potwierdzenie</string>
+    <string name="btn_cancel_reservation">Anuluj rezerwację</string>
+    <string name="toast_download_confirmation">Pobranie potwierdzenia&#8230;</string>
+    <string name="toast_reservation_cancelled">Rezerwacja została anulowana</string>
+    <string name="toast_reservation_success">Rezerwacja została pomyślnie opłacona!</string>
+    <string name="btn_reserve_now">Rezerwuj teraz &#8594;</string>
+
+    <string name="label_header_place">MIEJSCE</string>
+    <string name="label_header_time">CZAS</string>
+    <string name="label_header_date">DATA</string>
+
+    <string name="preview_rating_text">★ 4.8 (124 opinie) • 300m stąd</string>
+    <string name="preview_price_unit">zł\n/godz</string>
+    <string name="sample_date_dialog">14.10.2024</string>
+    <string name="sample_time_start">14:00</string>
+    <string name="sample_time_end">18:00</string>
 </resources>
