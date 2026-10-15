@@ -21,7 +21,7 @@
             android:value="@string/google_maps_key" />
 
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.LoginActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -29,23 +29,53 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
         <activity
-            android:name=".ReservationsActivity"
+            android:name=".ui.RegisterActivity"
             android:exported="false" />
+
         <activity
-            android:name=".PlacesActivity"
+            android:name=".ui.OnboardingActivity"
             android:exported="false" />
+
         <activity
-            android:name=".AddPlaceActivity"
+            android:name=".ui.MainActivity"
             android:exported="false" />
+
         <activity
-            android:name=".AvailabilityCalendarActivity"
+            android:name=".ui.ReservationsActivity"
             android:exported="false" />
+
         <activity
-            android:name=".EarningsActivity"
+            android:name=".ui.PlacesActivity"
             android:exported="false" />
+
         <activity
-            android:name=".ProfileActivity"
+            android:name=".ui.AddPlaceActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.AvailabilityCalendarActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.ReservePlaceActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.EarningsActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.ProfileActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.PaymentMethodsActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.SettingsActivity"
             android:exported="false" />
     </application>
 

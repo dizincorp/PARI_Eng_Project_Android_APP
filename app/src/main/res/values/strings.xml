@@ -10,12 +10,66 @@
     <string name="title_places">Strona: Miejsca</string>
     <string name="title_profile">Strona: Profil</string>
 
-    <string name="google_maps_key" translatable="false">YOUR_API_KEY_HERE</string>
+    <string name="google_maps_key" translatable="false">AIzaSyD-SlqBfJFwVRkHxPHIU8WQe_gxbZK_XAk</string>
     <string name="search_hint">Szukaj miejsca&#8230;</string>
     <string name="default_location_title">Warszawa</string>
     <string name="error_empty_query">Wpisz nazwę miejsca</string>
     <string name="error_location_not_found">Nie znaleziono miejsca</string>
     <string name="error_geocoding_failed">Błąd wyszukiwania: %1$s</string>
+
+    <!-- Auth / Login Strings -->
+    <string name="title_welcome_back">Witaj ponownie</string>
+    <string name="subtitle_welcome_back">Wprowadź swoje dane, aby uzyskać dostęp do konta.</string>
+    <string name="label_email">Email</string>
+    <string name="hint_email">twoj@email.pl</string>
+    <string name="label_password">Hasło</string>
+    <string name="link_forgot_password">Zapomniałeś hasła?</string>
+    <string name="btn_login">Zaloguj się</string>
+    <string name="divider_or_continue">Lub kontynuuj przez</string>
+    <string name="btn_google_signin">Google</string>
+    <string name="prompt_no_account">Nie masz jeszcze konta? </string>
+    <string name="link_register_free">Zarejestruj się za darmo</string>
+
+    <!-- Auth / Register Strings -->
+    <string name="title_register_account">Załóż konto</string>
+    <string name="label_name_and_surname">Imię i Nazwisko</string>
+    <string name="hint_name_sample">Jan Kowalski</string>
+    <string name="label_confirm_password">Potwierdź hasło</string>
+    <string name="btn_register">Zarejestruj się</string>
+    <string name="divider_or_join">LUB DOŁĄCZ PRZEZ</string>
+    <string name="prompt_have_account">Masz już konto? </string>
+    <string name="link_login_here">Zaloguj się</string>
+
+    <!-- Auth Validation Toasts -->
+    <string name="error_invalid_credentials">Podaj poprawny email i hasło</string>
+    <string name="error_passwords_dont_match">Hasła nie są identyczne</string>
+    <string name="msg_login_success">Pomyślnie zalogowano!</string>
+    <string name="msg_registration_success">Konto zostało pomyślnie utworzone!</string>
+
+    <!-- Onboarding Strings (Screenshot 3) -->
+    <string name="onboarding_driver_title">Dla Kierowcy</string>
+    <string name="ob_search_title">Szukaj</string>
+    <string name="ob_search_sub">Szybko znajduj dostępne miejsca w okolicy.</string>
+    <string name="ob_reserve_title">Rezerwuj</string>
+    <string name="ob_reserve_sub">Gwarancja miejsca bez ukrytych opłat.</string>
+    <string name="ob_park_title">Parkuj</string>
+    <string name="ob_park_sub">Spokojnie i bezpiecznie docieraj na miejsce.</string>
+
+    <string name="onboarding_owner_title">Dla Właściciela</string>
+    <string name="ob_add_title">Dodaj</string>
+    <string name="ob_add_sub">Wystaw swoje puste miejsce w kilka minut.</string>
+    <string name="ob_earn_title">Zarabiaj</string>
+    <string name="ob_earn_sub">Stały dochód pasywny z nieużywanej przestrzeni.</string>
+    <string name="ob_manage_title">Zarządzaj</string>
+    <string name="ob_manage_sub">Pełna kontrola nad dostępnością w aplikacji.</string>
+
+    <string name="onboarding_why_title">Dlaczego ParkShare?</string>
+    <string name="ob_trust_title">Zaufanie</string>
+    <string name="ob_trust_sub">Bezpieczne płatności i wsparcie 24/7 dla pełnego spokoju.</string>
+    <string name="ob_verified_title">Zweryfikowane</string>
+    <string name="ob_verified_sub">Każde miejsce jest sprawdzane, by uniknąć niespodzianek.</string>
+
+    <string name="btn_start_now">Zacznij teraz</string>
 
     <!-- Places / Dashboard Strings -->
     <string name="user_greeting">Cześć, Jan</string>
@@ -151,4 +205,48 @@
     <string name="sample_date_dialog">14.10.2024</string>
     <string name="sample_time_start">14:00</string>
     <string name="sample_time_end">18:00</string>
+
+    <!-- Profile & Settings Strings -->
+    <string name="default_user_name">Jan Kowalski</string>
+    <string name="default_user_email">jan_kowalski@gmail.com</string>
+    <string name="badge_premium_member">PREMIUM MEMBER</string>
+    <string name="badge_not_premium_member">NOT PREMIUM MEMBER</string>
+    <string name="badge_czlonek_premium">Członek Premium</string>
+    <string name="badge_user_rating">★ 4.9 Rating</string>
+
+    <string name="menu_my_reservations">Moje Rezerwacje</string>
+    <string name="menu_sub_reservations">Zarządzaj swoimi postojami</string>
+    <string name="menu_payment_methods">Metody Płatności</string>
+    <string name="menu_sub_payment">Visa **** 4242</string>
+    <string name="menu_settings">Ustawienia</string>
+    <string name="menu_sub_settings">Dostępność, powiadomienia</string>
+    <string name="menu_logout">Wyloguj się</string>
+    <string name="menu_sub_logout">Zakończ obecną sesję!</string>
+
+    <string name="section_accessibility">DOSTĘPNOŚĆ</string>
+    <string name="label_font_size">Rozmiar czcionki</string>
+    <string name="label_preview_text">Podgląd tekstu</string>
+    <string name="sample_preview_text">Tak będzie wyglądać Twój tekst w aplikacji</string>
+
+    <string name="section_general">OGÓLNE</string>
+    <string name="label_notifications">Powiadomienia</string>
+    <string name="label_dark_mode">Tryb Ciemny</string>
+    <string name="label_language">Język</string>
+    <string name="lang_polski">Polski</string>
+    <string name="lang_english">English</string>
+
+    <string name="title_edit_profile">Edytuj profil</string>
+    <string name="label_first_last_name">Imię i nazwisko</string>
+    <string name="btn_save">Zapisz</string>
+    <string name="btn_cancel">Anuluj</string>
+    <string name="msg_logout_success">Pomyślnie wylogowano!</string>
+    <string name="msg_profile_updated">Profil został zaktualizowany!</string>
+    <string name="title_payment_methods">Metody Płatności</string>
+
+    <!-- Rating Strings -->
+    <string name="title_rate_place">Oceń miejsce i właściciela</string>
+    <string name="subtitle_rate_place">Jak oceniasz swoje doświadczenie z postojem?</string>
+    <string name="hint_review_comment">Napisz krótki komentarz (opcjonalnie)&#8230;</string>
+    <string name="toast_rating_submitted">Dziękujemy za ocenę!</string>
+    <string name="error_owner_cannot_reserve">Nie możesz zarezerwować własnego miejsca parkingowego!</string>
 </resources>

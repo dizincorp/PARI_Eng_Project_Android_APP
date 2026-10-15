@@ -1,0 +1,33 @@
+package com.example.project.database.dao;
+
+import androidx.lifecycle.LiveData;
+import androidx.room.Dao;
+import androidx.room.Insert;
+import androidx.room.OnConflictStrategy;
+import androidx.room.Query;
+
+import com.example.project.database.entity.ReservationEntity;
+
+import java.util.List;
+
+/**
+ * Data Access Object for Reservation table.
+ */
+@Dao
+public interface ReservationDao {
+
+    @Query("SELECT * FROM reservations WHERE status = 'AKTYWNA' ORDER BY startTimeMs DESC LIMIT 1")
+    LiveData<ReservationEntity> getActiveReservationLiveData();
+
+    @Query("SELECT * FROM reservations WHERE status != 'AKTYWNA' ORDER BY startTimeMs DESC")
+    LiveData<List<ReservationEntity>> getHistoryReservationsLiveData();
+
+    @Query("SELECT * FROM reservations WHERE dateString = :dateStr")
+    List<ReservationEntity> getReservationsForDate(String dateStr);
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insertOrUpdate(ReservationEntity reservation);
+
+    @Query("DELETE FROM reservations")
+    void deleteAll();
+}

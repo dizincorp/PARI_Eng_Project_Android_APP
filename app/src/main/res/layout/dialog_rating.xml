@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_horizontal"
+    android:orientation="vertical"
+    android:padding="20dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Oceń miejsce i właściciela"
+        android:textColor="@color/text_primary"
+        android:textSize="18sp"
+        android:textStyle="bold" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:text="Jak oceniasz swoje doświadczenie z postojem?"
+        android:textColor="@color/text_secondary"
+        android:textSize="13sp" />
+
+    <RatingBar
+        android:id="@+id/rating_bar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:numStars="5"
+        android:rating="5"
+        android:stepSize="1" />
+
+    <EditText
+        android:id="@+id/edit_review_comment"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:layout_marginTop="16dp"
+        android:autofillHints="none"
+        android:background="@drawable/bg_dashed_border"
+        android:backgroundTint="@color/gray_input_bg"
+        android:gravity="top|start"
+        android:hint="Napisz krótкий komentarz (opcjonalnie)..."
+        android:inputType="textMultiLine"
+        android:padding="12dp"
+        android:textColor="@color/text_primary"
+        android:textSize="14sp" />
+
+</LinearLayout>
