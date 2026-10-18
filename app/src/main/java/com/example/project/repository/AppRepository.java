@@ -29,7 +29,7 @@ import java.util.concurrent.Executors;
 
 /**
  * Repository class acting as Single Source of Truth for the application's data layer,
- * backed by Room Database.
+ * backed by Room Database with multi-user isolation.
  */
 public class AppRepository {
 
@@ -53,19 +53,6 @@ public class AppRepository {
     public void init(Context context) {
         if (database == null && context != null) {
             database = AppDatabase.getInstance(context);
-
-            executor.execute(() -> {
-                UserEntity user = database.userDao().getUserByEmail("jan_kowalski@gmail.com");
-                if (user == null) {
-                    user = new UserEntity();
-                    user.setEmail("jan_kowalski@gmail.com");
-                    user.setName("Jan Kowalski");
-                    user.setPremium(true);
-                    user.setRating(4.9);
-                    user.setRatingCount(12);
-                    database.userDao().insertOrUpdate(user);
-                }
-            });
         }
     }
 
@@ -100,10 +87,7 @@ public class AppRepository {
         userEmailLiveData.setValue(finalEmail);
         userNameLiveData.setValue(finalName);
 
-        UserProfile profile = userProfileLiveData.getValue();
-        if (profile == null) {
-            profile = new UserProfile();
-        }
+        UserProfile profile = new UserProfile();
         profile.setEmail(finalEmail);
         profile.setName(finalName);
         userProfileLiveData.setValue(profile);
@@ -156,6 +140,7 @@ public class AppRepository {
         }
     }
 
+    // Common places on map (shared by ALL users)
     public LiveData<List<ParkingPlace>> getPlacesLiveData() {
         if (database == null) {
             return new MutableLiveData<>(new ArrayList<>());
@@ -171,11 +156,30 @@ public class AppRepository {
         });
     }
 
+    // Owner's places ("Moje Miejsca")
+    public LiveData<List<ParkingPlace>> getMyPlacesLiveData() {
+        if (database == null) {
+            return new MutableLiveData<>(new ArrayList<>());
+        }
+        String currentEmail = userEmailLiveData.getValue() != null ? userEmailLiveData.getValue() : "";
+        return Transformations.map(database.parkingPlaceDao().getMyPlacesLiveData(currentEmail), entities -> {
+            List<ParkingPlace> list = new ArrayList<>();
+            if (entities != null) {
+                for (ParkingPlaceEntity e : entities) {
+                    list.add(toParkingPlace(e));
+                }
+            }
+            return list;
+        });
+    }
+
+    // Driver's vehicles ("Moje Pojazdy")
     public LiveData<List<Vehicle>> getVehiclesLiveData() {
         if (database == null) {
             return new MutableLiveData<>(new ArrayList<>());
         }
-        return Transformations.map(database.vehicleDao().getAllVehiclesLiveData(), entities -> {
+        String currentEmail = userEmailLiveData.getValue() != null ? userEmailLiveData.getValue() : "";
+        return Transformations.map(database.vehicleDao().getUserVehiclesLiveData(currentEmail), entities -> {
             List<Vehicle> list = new ArrayList<>();
             if (entities != null) {
                 for (VehicleEntity e : entities) {
@@ -186,21 +190,25 @@ public class AppRepository {
         });
     }
 
+    // Driver's active reservation
     public LiveData<Reservation> getActiveReservationLiveData() {
         if (database == null) {
             return new MutableLiveData<>(null);
         }
-        return Transformations.map(database.reservationDao().getActiveReservationLiveData(), entity -> {
+        String currentEmail = userEmailLiveData.getValue() != null ? userEmailLiveData.getValue() : "";
+        return Transformations.map(database.reservationDao().getUserActiveReservationLiveData(currentEmail), entity -> {
             if (entity == null) return null;
             return toReservation(entity);
         });
     }
 
+    // Driver's history reservations
     public LiveData<List<Reservation>> getHistoryReservationsLiveData() {
         if (database == null) {
             return new MutableLiveData<>(new ArrayList<>());
         }
-        return Transformations.map(database.reservationDao().getHistoryReservationsLiveData(), entities -> {
+        String currentEmail = userEmailLiveData.getValue() != null ? userEmailLiveData.getValue() : "";
+        return Transformations.map(database.reservationDao().getUserHistoryReservationsLiveData(currentEmail), entities -> {
             List<Reservation> list = new ArrayList<>();
             if (entities != null) {
                 for (ReservationEntity e : entities) {
@@ -211,11 +219,13 @@ public class AppRepository {
         });
     }
 
+    // Owner's earnings & transactions
     public LiveData<List<Transaction>> getTransactionsLiveData() {
         if (database == null) {
             return new MutableLiveData<>(new ArrayList<>());
         }
-        return Transformations.map(database.transactionDao().getAllTransactionsLiveData(), entities -> {
+        String currentEmail = userEmailLiveData.getValue() != null ? userEmailLiveData.getValue() : "";
+        return Transformations.map(database.transactionDao().getUserTransactionsLiveData(currentEmail), entities -> {
             List<Transaction> list = new ArrayList<>();
             if (entities != null) {
                 for (TransactionEntity e : entities) {
@@ -255,11 +265,17 @@ public class AppRepository {
 
     public void addReservation(Reservation reservation) {
         if (reservation == null || database == null) return;
+        if (reservation.getUserEmail() == null || reservation.getUserEmail().isEmpty()) {
+            reservation.setUserEmail(userEmailLiveData.getValue() != null ? userEmailLiveData.getValue() : "");
+        }
         executor.execute(() -> database.reservationDao().insertOrUpdate(toReservationEntity(reservation)));
     }
 
     public void addPlace(ParkingPlace place) {
         if (place == null || database == null) return;
+        if (place.getOwnerEmail() == null || place.getOwnerEmail().isEmpty()) {
+            place.setOwnerEmail(userEmailLiveData.getValue() != null ? userEmailLiveData.getValue() : "");
+        }
         place.setOccupied(false);
         place.setOccupiedUntil("");
         executor.execute(() -> database.parkingPlaceDao().insertOrUpdate(toParkingPlaceEntity(place)));
@@ -267,11 +283,17 @@ public class AppRepository {
 
     public void addVehicle(Vehicle vehicle) {
         if (vehicle == null || database == null) return;
+        if (vehicle.getOwnerEmail() == null || vehicle.getOwnerEmail().isEmpty()) {
+            vehicle.setOwnerEmail(userEmailLiveData.getValue() != null ? userEmailLiveData.getValue() : "");
+        }
         executor.execute(() -> database.vehicleDao().insertOrUpdate(toVehicleEntity(vehicle)));
     }
 
     public void createReservation(Reservation reservation) {
         if (reservation == null || database == null) return;
+
+        String currentEmail = userEmailLiveData.getValue() != null ? userEmailLiveData.getValue() : "";
+        reservation.setUserEmail(currentEmail);
 
         executor.execute(() -> {
             database.reservationDao().insertOrUpdate(toReservationEntity(reservation));
@@ -281,15 +303,17 @@ public class AppRepository {
                 place.setOccupied(true);
                 place.setOccupiedUntil(reservation.getTimeRange());
                 database.parkingPlaceDao().insertOrUpdate(place);
-            }
 
-            TransactionEntity tx = new TransactionEntity();
-            tx.setPlaceName(reservation.getPlaceName());
-            tx.setCarInfo(reservation.getVehicleInfo());
-            tx.setDuration(reservation.getTimeRange());
-            tx.setDate(getTodayDateString());
-            tx.setTotalPrice(reservation.getTotalPrice());
-            database.transactionDao().insertOrUpdate(tx);
+                // Add transaction log credited to the OWNER of the spot
+                TransactionEntity tx = new TransactionEntity();
+                tx.setOwnerEmail(place.getOwnerEmail());
+                tx.setPlaceName(reservation.getPlaceName());
+                tx.setCarInfo(reservation.getVehicleInfo());
+                tx.setDuration(reservation.getTimeRange());
+                tx.setDate(getTodayDateString());
+                tx.setTotalPrice(reservation.getTotalPrice());
+                database.transactionDao().insertOrUpdate(tx);
+            }
         });
     }
 
@@ -400,13 +424,16 @@ public class AppRepository {
 
     private Vehicle toVehicle(VehicleEntity e) {
         if (e == null) return null;
-        return new Vehicle(e.getId(), e.getMakeAndModel(), e.getLicensePlate(), e.getColor());
+        Vehicle v = new Vehicle(e.getId(), e.getMakeAndModel(), e.getLicensePlate(), e.getColor());
+        v.setOwnerEmail(e.getOwnerEmail() != null ? e.getOwnerEmail() : "");
+        return v;
     }
 
     private VehicleEntity toVehicleEntity(Vehicle v) {
         if (v == null) return null;
         VehicleEntity e = new VehicleEntity();
         e.setId(v.getId());
+        e.setOwnerEmail(v.getOwnerEmail() != null ? v.getOwnerEmail() : "");
         e.setMakeAndModel(v.getMakeAndModel());
         e.setLicensePlate(v.getLicensePlate());
         e.setColor(v.getColor());
@@ -415,18 +442,21 @@ public class AppRepository {
 
     private Reservation toReservation(ReservationEntity e) {
         if (e == null) return null;
-        return new Reservation(
+        Reservation r = new Reservation(
                 e.getId(), e.getPlaceId(), e.getPlaceName(), e.getStreet(), e.getCity(),
                 e.getPlaceNumber(), e.getDateString(), e.getTimeRange(), e.getStartTimeMs(),
                 e.getEndTimeMs(), e.getVehicleInfo(), e.getStatus(), e.getTotalPrice(),
                 e.getPinCode(), e.getPhotoResId()
         );
+        r.setUserEmail(e.getUserEmail() != null ? e.getUserEmail() : "");
+        return r;
     }
 
     private ReservationEntity toReservationEntity(Reservation r) {
         if (r == null) return null;
         ReservationEntity e = new ReservationEntity();
         e.setId(r.getId());
+        e.setUserEmail(r.getUserEmail() != null ? r.getUserEmail() : "");
         e.setPlaceId(r.getPlaceId());
         e.setPlaceName(r.getPlaceName());
         e.setStreet(r.getStreet());
@@ -449,6 +479,21 @@ public class AppRepository {
 
     private Transaction toTransaction(TransactionEntity e) {
         if (e == null) return null;
-        return new Transaction(e.getId(), e.getPlaceName(), e.getCarInfo(), e.getDuration(), e.getDate(), e.getTotalPrice());
+        Transaction t = new Transaction(e.getId(), e.getPlaceName(), e.getCarInfo(), e.getDuration(), e.getDate(), e.getTotalPrice());
+        t.setOwnerEmail(e.getOwnerEmail() != null ? e.getOwnerEmail() : "");
+        return t;
+    }
+
+    private TransactionEntity toTransactionEntity(Transaction t) {
+        if (t == null) return null;
+        TransactionEntity e = new TransactionEntity();
+        e.setId(t.getId());
+        e.setOwnerEmail(t.getOwnerEmail() != null ? t.getOwnerEmail() : "");
+        e.setPlaceName(t.getPlaceName());
+        e.setCarInfo(t.getCarInfo());
+        e.setDuration(t.getDuration());
+        e.setDate(t.getDate());
+        e.setTotalPrice(t.getTotalPrice());
+        return e;
     }
 }

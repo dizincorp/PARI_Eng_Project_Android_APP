@@ -6,6 +6,7 @@ package com.example.project.model;
 public class Transaction {
 
     private String id;
+    private String ownerEmail;
     private String placeName;
     private String carInfo;
     private String duration;
@@ -16,6 +17,7 @@ public class Transaction {
      * Default constructor for Transaction.
      */
     public Transaction() {
+        this.ownerEmail = "";
     }
 
     /**
@@ -30,6 +32,7 @@ public class Transaction {
      */
     public Transaction(String id, String placeName, String carInfo, String duration, String date, double totalPrice) {
         this.id = id;
+        this.ownerEmail = "";
         this.placeName = placeName;
         this.carInfo = carInfo;
         this.duration = duration;
@@ -43,6 +46,14 @@ public class Transaction {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getOwnerEmail() {
+        return ownerEmail;
+    }
+
+    public void setOwnerEmail(String ownerEmail) {
+        this.ownerEmail = ownerEmail;
     }
 
     public String getPlaceName() {

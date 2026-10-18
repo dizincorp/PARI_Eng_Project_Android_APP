@@ -13,6 +13,7 @@ public class ReservationEntity {
     @PrimaryKey
     @NonNull
     private String id;
+    private String userEmail;
     private String placeId;
     private String placeName;
     private String street;
@@ -33,6 +34,7 @@ public class ReservationEntity {
 
     public ReservationEntity() {
         this.id = "r_" + System.currentTimeMillis();
+        this.userEmail = "";
         this.status = "AKTYWNA";
         this.pinCode = "4829";
     }
@@ -44,6 +46,14 @@ public class ReservationEntity {
 
     public void setId(@NonNull String id) {
         this.id = id;
+    }
+
+    public String getUserEmail() {
+        return userEmail;
+    }
+
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
     }
 
     public String getPlaceId() {

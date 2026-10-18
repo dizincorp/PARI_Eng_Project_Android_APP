@@ -8,6 +8,7 @@ import com.example.project.R;
 public class Reservation {
 
     private String id;
+    private String userEmail;
     private String placeId;
     private String placeName;
     private String street;
@@ -30,6 +31,7 @@ public class Reservation {
      * Default constructor for Reservation.
      */
     public Reservation() {
+        this.userEmail = "";
         this.pinCode = "4829";
         this.status = "AKTYWNA";
         this.userName = "Użytkownik";
@@ -61,6 +63,7 @@ public class Reservation {
                        long startTimeMs, long endTimeMs, String vehicleInfo,
                        String status, double totalPrice, String pinCode, int photoResId) {
         this.id = id;
+        this.userEmail = "";
         this.placeId = placeId;
         this.placeName = placeName;
         this.street = street;
@@ -86,6 +89,14 @@ public class Reservation {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getUserEmail() {
+        return userEmail;
+    }
+
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
     }
 
     public String getPlaceId() {

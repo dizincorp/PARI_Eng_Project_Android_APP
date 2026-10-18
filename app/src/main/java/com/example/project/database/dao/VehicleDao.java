@@ -19,6 +19,9 @@ public interface VehicleDao {
     @Query("SELECT * FROM vehicles")
     LiveData<List<VehicleEntity>> getAllVehiclesLiveData();
 
+    @Query("SELECT * FROM vehicles WHERE ownerEmail = :ownerEmail")
+    LiveData<List<VehicleEntity>> getUserVehiclesLiveData(String ownerEmail);
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertOrUpdate(VehicleEntity vehicle);
 }

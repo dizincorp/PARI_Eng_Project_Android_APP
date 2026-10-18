@@ -6,6 +6,7 @@ package com.example.project.model;
 public class Vehicle {
 
     private String id;
+    private String ownerEmail;
     private String makeAndModel;
     private String licensePlate;
     private String color;
@@ -14,6 +15,7 @@ public class Vehicle {
      * Default constructor for Vehicle.
      */
     public Vehicle() {
+        this.ownerEmail = "";
     }
 
     /**
@@ -26,6 +28,7 @@ public class Vehicle {
      */
     public Vehicle(String id, String makeAndModel, String licensePlate, String color) {
         this.id = id;
+        this.ownerEmail = "";
         this.makeAndModel = makeAndModel;
         this.licensePlate = licensePlate;
         this.color = color;
@@ -37,6 +40,14 @@ public class Vehicle {
 
     public void setId(String id) {
         this.id = id;
+    }
+
+    public String getOwnerEmail() {
+        return ownerEmail;
+    }
+
+    public void setOwnerEmail(String ownerEmail) {
+        this.ownerEmail = ownerEmail;
     }
 
     public String getMakeAndModel() {

@@ -19,6 +19,9 @@ public interface ReservationDao {
     @Query("SELECT * FROM reservations WHERE status = 'AKTYWNA' ORDER BY startTimeMs DESC LIMIT 1")
     LiveData<ReservationEntity> getActiveReservationLiveData();
 
+    @Query("SELECT * FROM reservations WHERE userEmail = :userEmail AND status = 'AKTYWNA' ORDER BY startTimeMs DESC LIMIT 1")
+    LiveData<ReservationEntity> getUserActiveReservationLiveData(String userEmail);
+
     @Query("SELECT * FROM reservations WHERE status = 'AKTYWNA' ORDER BY startTimeMs DESC LIMIT 1")
     ReservationEntity getActiveReservationSync();
 
@@ -27,6 +30,9 @@ public interface ReservationDao {
 
     @Query("SELECT * FROM reservations WHERE status != 'AKTYWNA' ORDER BY startTimeMs DESC")
     LiveData<List<ReservationEntity>> getHistoryReservationsLiveData();
+
+    @Query("SELECT * FROM reservations WHERE userEmail = :userEmail AND status != 'AKTYWNA' ORDER BY startTimeMs DESC")
+    LiveData<List<ReservationEntity>> getUserHistoryReservationsLiveData(String userEmail);
 
     @Query("SELECT * FROM reservations WHERE dateString = :dateStr")
     List<ReservationEntity> getReservationsForDate(String dateStr);

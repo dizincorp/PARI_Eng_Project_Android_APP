@@ -19,6 +19,9 @@ public interface TransactionDao {
     @Query("SELECT * FROM transactions ORDER BY id DESC")
     LiveData<List<TransactionEntity>> getAllTransactionsLiveData();
 
+    @Query("SELECT * FROM transactions WHERE ownerEmail = :ownerEmail ORDER BY id DESC")
+    LiveData<List<TransactionEntity>> getUserTransactionsLiveData(String ownerEmail);
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertOrUpdate(TransactionEntity transaction);
 }

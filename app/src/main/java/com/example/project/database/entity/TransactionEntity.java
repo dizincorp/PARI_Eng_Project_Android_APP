@@ -13,6 +13,7 @@ public class TransactionEntity {
     @PrimaryKey
     @NonNull
     private String id;
+    private String ownerEmail;
     private String placeName;
     private String carInfo;
     private String duration;
@@ -21,6 +22,7 @@ public class TransactionEntity {
 
     public TransactionEntity() {
         this.id = "t_" + System.currentTimeMillis();
+        this.ownerEmail = "";
     }
 
     @NonNull
@@ -30,6 +32,14 @@ public class TransactionEntity {
 
     public void setId(@NonNull String id) {
         this.id = id;
+    }
+
+    public String getOwnerEmail() {
+        return ownerEmail;
+    }
+
+    public void setOwnerEmail(String ownerEmail) {
+        this.ownerEmail = ownerEmail;
     }
 
     public String getPlaceName() {

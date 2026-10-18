@@ -5,7 +5,7 @@ import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
 /**
- * Room Entity representing a vehicle in the database.
+ * Room Entity representing a vehicle owned by a user.
  */
 @Entity(tableName = "vehicles")
 public class VehicleEntity {
@@ -13,12 +13,14 @@ public class VehicleEntity {
     @PrimaryKey
     @NonNull
     private String id;
+    private String ownerEmail;
     private String makeAndModel;
     private String licensePlate;
     private String color;
 
     public VehicleEntity() {
         this.id = "v_" + System.currentTimeMillis();
+        this.ownerEmail = "";
     }
 
     @NonNull
@@ -28,6 +30,14 @@ public class VehicleEntity {
 
     public void setId(@NonNull String id) {
         this.id = id;
+    }
+
+    public String getOwnerEmail() {
+        return ownerEmail;
+    }
+
+    public void setOwnerEmail(String ownerEmail) {
+        this.ownerEmail = ownerEmail;
     }
 
     public String getMakeAndModel() {
