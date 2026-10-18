@@ -172,6 +172,11 @@
     <string name="btn_reserve_and_pay">Zarezerwuj i zapłać 🔒</string>
     <string name="sample_4h">4h</string>
 
+    <string name="error_reservation_before_allowed">Nie możesz zarezerwować przed czasem dostępności miejsca (%1$s)!</string>
+    <string name="error_reservation_after_allowed">Nie możesz zarezerwować po czasie dostępności miejsca (%1$s)!</string>
+    <string name="error_invalid_time_range">Czas rozpoczęcia musi być wcześniejszy niż czas zakończenia!</string>
+    <string name="label_allowed_access_hours">Godziny dostępności: %1$s</string>
+
     <!-- Add Vehicle Dialog Strings -->
     <string name="title_add_vehicle">Dodaj pojazd</string>
     <string name="label_vehicle_make">Marka i model samochodu</string>

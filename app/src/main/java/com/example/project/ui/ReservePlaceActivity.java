@@ -20,6 +20,7 @@ import com.example.project.model.ParkingPlace;
 import com.example.project.model.Reservation;
 import com.example.project.model.Vehicle;
 import com.example.project.repository.AppRepository;
+import com.example.project.utils.AccessTimeParser;
 import com.example.project.utils.NotificationHelper;
 
 import java.util.ArrayList;
@@ -28,7 +29,7 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Activity for booking and paying for a parking spot reservation with TimePicker selection.
+ * Activity for booking a spot with strict validation against owner's access time limits.
  */
 public class ReservePlaceActivity extends BaseActivity {
 
@@ -38,9 +39,14 @@ public class ReservePlaceActivity extends BaseActivity {
     private ParkingPlace currentPlace;
     private final List<Vehicle> currentVehiclesList = new ArrayList<>();
 
-    private int selectedStartHour = 18;
+    private int allowedStartHour = 8;
+    private int allowedStartMinute = 0;
+    private int allowedEndHour = 20;
+    private int allowedEndMinute = 0;
+
+    private int selectedStartHour = 8;
     private int selectedStartMinute = 0;
-    private int selectedEndHour = 22;
+    private int selectedEndHour = 20;
     private int selectedEndMinute = 0;
 
     @Override
@@ -77,6 +83,19 @@ public class ReservePlaceActivity extends BaseActivity {
             return;
         }
 
+        if (currentPlace != null) {
+            String accessTime = currentPlace.getAccessTime();
+            allowedStartHour = AccessTimeParser.getStartHour(accessTime);
+            allowedStartMinute = AccessTimeParser.getStartMinute(accessTime);
+            allowedEndHour = AccessTimeParser.getEndHour(accessTime);
+            allowedEndMinute = AccessTimeParser.getEndMinute(accessTime);
+
+            selectedStartHour = allowedStartHour;
+            selectedStartMinute = allowedStartMinute;
+            selectedEndHour = allowedEndHour;
+            selectedEndMinute = allowedEndMinute;
+        }
+
         setupUI();
         setupClickListeners();
         observeVehicles();
@@ -96,18 +115,45 @@ public class ReservePlaceActivity extends BaseActivity {
         if (binding == null || currentPlace == null) return;
 
         double rate = currentPlace.getPrice();
-        double hours = Math.max(1.0, Math.abs(selectedEndHour - selectedStartHour));
+        double hours = Math.max(0.5, (double) (selectedEndHour * 60 + selectedEndMinute - (selectedStartHour * 60 + selectedStartMinute)) / 60.0);
         double subtotal = rate * hours;
         double serviceFee = 2.50;
         double total = subtotal + serviceFee;
 
-        binding.textSummaryDuration.setText(String.format(Locale.getDefault(), "%.0fh", hours));
+        binding.textSummaryDuration.setText(String.format(Locale.getDefault(), "%.1fh", hours));
         binding.textSummaryRateLabel.setText(String.format(Locale.getDefault(), "Stawka (%.2f PLN/h)", rate));
         binding.textSummaryRateValue.setText(String.format(Locale.getDefault(), "%.2f PLN", subtotal));
         binding.textSummaryTotalSum.setText(String.format(Locale.getDefault(), "%.2f PLN", total));
 
         binding.textStartTimeValue.setText(String.format(Locale.getDefault(), "Dzisiaj, %02d:%02d", selectedStartHour, selectedStartMinute));
         binding.textEndTimeValue.setText(String.format(Locale.getDefault(), "Dzisiaj, %02d:%02d", selectedEndHour, selectedEndMinute));
+    }
+
+    private boolean validateReservationTimeLimits() {
+        int selectedStartTotalMin = selectedStartHour * 60 + selectedStartMinute;
+        int selectedEndTotalMin = selectedEndHour * 60 + selectedEndMinute;
+
+        int allowedStartTotalMin = allowedStartHour * 60 + allowedStartMinute;
+        int allowedEndTotalMin = allowedEndHour * 60 + allowedEndMinute;
+
+        if (selectedStartTotalMin < allowedStartTotalMin) {
+            String allowedStr = String.format(Locale.getDefault(), "%02d:%02d", allowedStartHour, allowedStartMinute);
+            Toast.makeText(this, getString(R.string.error_reservation_before_allowed, allowedStr), Toast.LENGTH_LONG).show();
+            return false;
+        }
+
+        if (selectedEndTotalMin > allowedEndTotalMin) {
+            String allowedStr = String.format(Locale.getDefault(), "%02d:%02d", allowedEndHour, allowedEndMinute);
+            Toast.makeText(this, getString(R.string.error_reservation_after_allowed, allowedStr), Toast.LENGTH_LONG).show();
+            return false;
+        }
+
+        if (selectedStartTotalMin >= selectedEndTotalMin) {
+            Toast.makeText(this, R.string.error_invalid_time_range, Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        return true;
     }
 
     private void setupClickListeners() {
@@ -121,6 +167,10 @@ public class ReservePlaceActivity extends BaseActivity {
 
         binding.btnReserveAndPay.setOnClickListener(v -> {
             if (currentPlace == null) return;
+
+            if (!validateReservationTimeLimits()) {
+                return;
+            }
 
             String selectedVehicleText = "Tesla Model 3 - WX 12345";
             int selectedPos = binding.spinnerVehicles.getSelectedItemPosition();
@@ -142,7 +192,7 @@ public class ReservePlaceActivity extends BaseActivity {
             endCal.set(Calendar.SECOND, 0);
 
             double rate = currentPlace.getPrice();
-            double hours = Math.max(1.0, Math.abs(selectedEndHour - selectedStartHour));
+            double hours = Math.max(0.5, (double) (selectedEndHour * 60 + selectedEndMinute - (selectedStartHour * 60 + selectedStartMinute)) / 60.0);
 
             String timeRange = String.format(Locale.getDefault(), "%02d:%02d - %02d:%02d",
                     selectedStartHour, selectedStartMinute, selectedEndHour, selectedEndMinute);
@@ -178,14 +228,37 @@ public class ReservePlaceActivity extends BaseActivity {
 
     private void showTimePickerDialogs() {
         TimePickerDialog startPicker = new TimePickerDialog(this, (view, hourOfDay, minute) -> {
-            selectedStartHour = hourOfDay;
-            selectedStartMinute = minute;
-
             TimePickerDialog endPicker = new TimePickerDialog(this, (view2, endHour, endMinute) -> {
+                int startMinTotal = hourOfDay * 60 + minute;
+                int endMinTotal = endHour * 60 + endMinute;
+                int allowedStartMinTotal = allowedStartHour * 60 + allowedStartMinute;
+                int allowedEndMinTotal = allowedEndHour * 60 + allowedEndMinute;
+
+                if (startMinTotal < allowedStartMinTotal) {
+                    String allowedStr = String.format(Locale.getDefault(), "%02d:%02d", allowedStartHour, allowedStartMinute);
+                    Toast.makeText(this, getString(R.string.error_reservation_before_allowed, allowedStr), Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                if (endMinTotal > allowedEndMinTotal) {
+                    String allowedStr = String.format(Locale.getDefault(), "%02d:%02d", allowedEndHour, allowedEndMinute);
+                    Toast.makeText(this, getString(R.string.error_reservation_after_allowed, allowedStr), Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                if (startMinTotal >= endMinTotal) {
+                    Toast.makeText(this, R.string.error_invalid_time_range, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                selectedStartHour = hourOfDay;
+                selectedStartMinute = minute;
                 selectedEndHour = endHour;
                 selectedEndMinute = endMinute;
+
                 updatePriceSummary();
-            }, (hourOfDay + 4) % 24, minute, true);
+
+            }, selectedEndHour, selectedEndMinute, true);
             endPicker.setTitle("Wybierz czas zakończenia");
             endPicker.show();
 
