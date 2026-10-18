@@ -205,17 +205,30 @@ public class ReservationsActivity extends BaseActivity {
     private void updateCountdownText() {
         if (binding == null || currentActiveReservation == null) return;
 
-        long remainingMs = currentActiveReservation.getEndTimeMs() - System.currentTimeMillis();
-        if (remainingMs < 0) {
-            remainingMs = 84 * 60 * 1000L;
+        long now = System.currentTimeMillis();
+        long startTime = currentActiveReservation.getStartTimeMs();
+        long endTime = currentActiveReservation.getEndTimeMs();
+
+        if (now < startTime) {
+            // Not started yet
+            long diff = startTime - now;
+            long hours = diff / (1000 * 60 * 60);
+            long minutes = (diff % (1000 * 60 * 60)) / (1000 * 60);
+            long seconds = (diff % (1000 * 60)) / 1000;
+            String formattedTime = String.format(Locale.getDefault(), "Do rozpoczęcia: %dh %02dm %02ds", hours, minutes, seconds);
+            binding.textResCountdown.setText(formattedTime);
+        } else {
+            // Active now
+            long diff = endTime - now;
+            if (diff < 0) {
+                diff = 0;
+            }
+            long hours = diff / (1000 * 60 * 60);
+            long minutes = (diff % (1000 * 60 * 60)) / (1000 * 60);
+            long seconds = (diff % (1000 * 60)) / 1000;
+            String formattedTime = String.format(Locale.getDefault(), "Pozostało: %dh %02dm %02ds", hours, minutes, seconds);
+            binding.textResCountdown.setText(formattedTime);
         }
-
-        long hours = remainingMs / (1000 * 60 * 60);
-        long minutes = (remainingMs % (1000 * 60 * 60)) / (1000 * 60);
-        long seconds = (remainingMs % (1000 * 60)) / 1000;
-
-        String formattedTime = String.format(Locale.getDefault(), "Pozostało %dh %02dm %02ds", hours, minutes, seconds);
-        binding.textResCountdown.setText(formattedTime);
     }
 
     private void showActiveReservationDialog(Reservation reservation) {
@@ -240,7 +253,11 @@ public class ReservationsActivity extends BaseActivity {
         });
 
         dialogBinding.btnCancelReservation.setOnClickListener(v -> {
-            AppRepository.getInstance().cancelActiveReservation();
+            if (reservation != null && reservation.getId() != null) {
+                AppRepository.getInstance().cancelReservationById(reservation.getId());
+            } else {
+                AppRepository.getInstance().cancelActiveReservation();
+            }
             NotificationHelper.showNotification(this, "ParkShare", getString(R.string.toast_reservation_cancelled));
             Toast.makeText(this, R.string.toast_reservation_cancelled, Toast.LENGTH_SHORT).show();
             dialog.dismiss();

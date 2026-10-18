@@ -1,5 +1,6 @@
 package com.example.project.ui;
 
+import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -21,11 +22,12 @@ import com.example.project.repository.AppRepository;
 import com.example.project.viewmodel.AddPlaceViewModel;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
 /**
- * Activity for creating or updating a parking spot with photo selection support.
+ * Activity for creating or updating a parking spot with photo selection & TimePicker.
  */
 public class AddPlaceActivity extends AppCompatActivity {
 
@@ -42,7 +44,7 @@ public class AddPlaceActivity extends AppCompatActivity {
                     Uri imageUri = result.getData().getData();
                     if (imageUri != null) {
                         selectedPhotoUri = imageUri.toString();
-                        Toast.makeText(this, "Zdjęтие wybrane pomyślnie!", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(this, "Zdjęcie wybrane pomyślnie!", Toast.LENGTH_SHORT).show();
                     }
                 }
             });
@@ -82,6 +84,10 @@ public class AddPlaceActivity extends AppCompatActivity {
 
         binding.btnBack.setOnClickListener(v -> finish());
 
+        // TimePicker for access time
+        binding.editAccessTime.setFocusable(false);
+        binding.editAccessTime.setOnClickListener(v -> showTimePickerForAccessTime());
+
         binding.btnSubmitPlace.setOnClickListener(v -> {
             String street = binding.editStreet.getText() != null ? binding.editStreet.getText().toString() : "";
             String city = binding.editCity.getText() != null ? binding.editCity.getText().toString() : "";
@@ -105,6 +111,26 @@ public class AddPlaceActivity extends AppCompatActivity {
             Intent pickIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
             photoPickerLauncher.launch(pickIntent);
         });
+    }
+
+    private void showTimePickerForAccessTime() {
+        Calendar calendar = Calendar.getInstance();
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        int minute = calendar.get(Calendar.MINUTE);
+
+        TimePickerDialog fromPicker = new TimePickerDialog(this, (view, hourOfDayFrom, minuteFrom) -> {
+            String fromFormatted = String.format(Locale.getDefault(), "%02d:%02d", hourOfDayFrom, minuteFrom);
+
+            TimePickerDialog toPicker = new TimePickerDialog(this, (view2, hourOfDayTo, minuteTo) -> {
+                String toFormatted = String.format(Locale.getDefault(), "%02d:%02d", hourOfDayTo, minuteTo);
+                binding.editAccessTime.setText(fromFormatted + " - " + toFormatted);
+            }, (hourOfDayFrom + 8) % 24, minuteFrom, true);
+            toPicker.setTitle("Godzina DO");
+            toPicker.show();
+
+        }, hour, minute, true);
+        fromPicker.setTitle("Godzina OD");
+        fromPicker.show();
     }
 
     private void observeViewModel() {

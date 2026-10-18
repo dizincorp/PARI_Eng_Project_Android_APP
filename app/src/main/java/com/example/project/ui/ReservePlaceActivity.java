@@ -1,5 +1,6 @@
 package com.example.project.ui;
 
+import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -22,11 +23,12 @@ import com.example.project.repository.AppRepository;
 import com.example.project.utils.NotificationHelper;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
 /**
- * Activity for booking and paying for a parking spot reservation.
+ * Activity for booking and paying for a parking spot reservation with TimePicker selection.
  */
 public class ReservePlaceActivity extends BaseActivity {
 
@@ -35,6 +37,11 @@ public class ReservePlaceActivity extends BaseActivity {
     private ActivityReservePlaceBinding binding;
     private ParkingPlace currentPlace;
     private final List<Vehicle> currentVehiclesList = new ArrayList<>();
+
+    private int selectedStartHour = 18;
+    private int selectedStartMinute = 0;
+    private int selectedEndHour = 22;
+    private int selectedEndMinute = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,28 +89,33 @@ public class ReservePlaceActivity extends BaseActivity {
         binding.textPlaceStreet.setText(currentPlace.getStreet() != null ? currentPlace.getStreet() : currentPlace.getTitle());
         binding.textPlaceCity.setText(currentPlace.getCity() != null ? currentPlace.getCity() : "Warszawa");
 
+        updatePriceSummary();
+    }
+
+    private void updatePriceSummary() {
+        if (binding == null || currentPlace == null) return;
+
         double rate = currentPlace.getPrice();
-        double hours = 4.0;
+        double hours = Math.max(1.0, Math.abs(selectedEndHour - selectedStartHour));
         double subtotal = rate * hours;
         double serviceFee = 2.50;
         double total = subtotal + serviceFee;
 
-        binding.textSummaryDuration.setText(R.string.sample_4h);
+        binding.textSummaryDuration.setText(String.format(Locale.getDefault(), "%.0fh", hours));
         binding.textSummaryRateLabel.setText(String.format(Locale.getDefault(), "Stawka (%.2f PLN/h)", rate));
         binding.textSummaryRateValue.setText(String.format(Locale.getDefault(), "%.2f PLN", subtotal));
         binding.textSummaryTotalSum.setText(String.format(Locale.getDefault(), "%.2f PLN", total));
 
-        // Fixed schedule time reflecting access time/range
-        String startVal = "Dzisiaj, " + (currentPlace.getAccessTime().contains("-") ? currentPlace.getAccessTime().split("-")[0].trim() : "14:00");
-        String endVal = "Dzisiaj, " + (currentPlace.getAccessTime().contains("-") ? currentPlace.getAccessTime().split("-")[1].trim() : "18:00");
-        binding.textStartTimeValue.setText(startVal);
-        binding.textEndTimeValue.setText(endVal);
+        binding.textStartTimeValue.setText(String.format(Locale.getDefault(), "Dzisiaj, %02d:%02d", selectedStartHour, selectedStartMinute));
+        binding.textEndTimeValue.setText(String.format(Locale.getDefault(), "Dzisiaj, %02d:%02d", selectedEndHour, selectedEndMinute));
     }
 
     private void setupClickListeners() {
         if (binding == null) return;
 
         binding.btnBack.setOnClickListener(v -> finish());
+
+        binding.btnChangeTime.setOnClickListener(v -> showTimePickerDialogs());
 
         binding.btnAddVehicle.setOnClickListener(v -> showAddVehicleDialog());
 
@@ -119,6 +131,22 @@ public class ReservePlaceActivity extends BaseActivity {
                 }
             }
 
+            Calendar startCal = Calendar.getInstance();
+            startCal.set(Calendar.HOUR_OF_DAY, selectedStartHour);
+            startCal.set(Calendar.MINUTE, selectedStartMinute);
+            startCal.set(Calendar.SECOND, 0);
+
+            Calendar endCal = Calendar.getInstance();
+            endCal.set(Calendar.HOUR_OF_DAY, selectedEndHour);
+            endCal.set(Calendar.MINUTE, selectedEndMinute);
+            endCal.set(Calendar.SECOND, 0);
+
+            double rate = currentPlace.getPrice();
+            double hours = Math.max(1.0, Math.abs(selectedEndHour - selectedStartHour));
+
+            String timeRange = String.format(Locale.getDefault(), "%02d:%02d - %02d:%02d",
+                    selectedStartHour, selectedStartMinute, selectedEndHour, selectedEndMinute);
+
             Reservation reservation = new Reservation(
                     "r_" + System.currentTimeMillis(),
                     currentPlace.getId(),
@@ -127,12 +155,12 @@ public class ReservePlaceActivity extends BaseActivity {
                     currentPlace.getCity() != null ? currentPlace.getCity() : "Warszawa",
                     currentPlace.getPlaceNumber() != null ? currentPlace.getPlaceNumber() : "1",
                     "Dziś, 14 Października",
-                    binding.textStartTimeValue.getText().toString() + " - " + binding.textEndTimeValue.getText().toString(),
-                    System.currentTimeMillis(),
-                    System.currentTimeMillis() + 14400000L,
+                    timeRange,
+                    startCal.getTimeInMillis(),
+                    endCal.getTimeInMillis(),
                     selectedVehicleText,
                     "AKTYWNA",
-                    currentPlace.getPrice() * 4 + 2.50,
+                    rate * hours + 2.50,
                     currentPlace.getPinCode(),
                     currentPlace.getPhotoResId()
             );
@@ -146,6 +174,24 @@ public class ReservePlaceActivity extends BaseActivity {
             startActivity(intent);
             finish();
         });
+    }
+
+    private void showTimePickerDialogs() {
+        TimePickerDialog startPicker = new TimePickerDialog(this, (view, hourOfDay, minute) -> {
+            selectedStartHour = hourOfDay;
+            selectedStartMinute = minute;
+
+            TimePickerDialog endPicker = new TimePickerDialog(this, (view2, endHour, endMinute) -> {
+                selectedEndHour = endHour;
+                selectedEndMinute = endMinute;
+                updatePriceSummary();
+            }, (hourOfDay + 4) % 24, minute, true);
+            endPicker.setTitle("Wybierz czas zakończenia");
+            endPicker.show();
+
+        }, selectedStartHour, selectedStartMinute, true);
+        startPicker.setTitle("Wybierz czas rozpoczęcia");
+        startPicker.show();
     }
 
     private void observeVehicles() {

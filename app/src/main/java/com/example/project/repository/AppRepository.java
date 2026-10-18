@@ -110,13 +110,16 @@ public class AppRepository {
 
         if (database != null) {
             executor.execute(() -> {
-                UserEntity entity = new UserEntity();
-                entity.setEmail(finalEmail);
-                entity.setName(finalName);
-                entity.setPremium(true);
-                entity.setRating(4.9);
-                entity.setRatingCount(12);
-                database.userDao().insertOrUpdate(entity);
+                UserEntity entity = database.userDao().getUserByEmail(finalEmail);
+                if (entity == null) {
+                    entity = new UserEntity();
+                    entity.setEmail(finalEmail);
+                    entity.setName(finalName);
+                    entity.setPremium(true);
+                    entity.setRating(4.9);
+                    entity.setRatingCount(12);
+                    database.userDao().insertOrUpdate(entity);
+                }
             });
         }
     }
@@ -295,12 +298,34 @@ public class AppRepository {
 
         executor.execute(() -> {
             try {
-                ReservationEntity active = database.reservationDao().getActiveReservationLiveData().getValue();
+                ReservationEntity active = database.reservationDao().getActiveReservationSync();
                 if (active != null) {
                     active.setStatus("ANULOWANA");
                     database.reservationDao().insertOrUpdate(active);
 
                     ParkingPlaceEntity place = database.parkingPlaceDao().getPlaceById(active.getPlaceId());
+                    if (place != null) {
+                        place.setOccupied(false);
+                        place.setOccupiedUntil("");
+                        database.parkingPlaceDao().insertOrUpdate(place);
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        });
+    }
+
+    public void cancelReservationById(String reservationId) {
+        if (reservationId == null || database == null) return;
+
+        executor.execute(() -> {
+            try {
+                ReservationEntity entity = database.reservationDao().getReservationByIdSync(reservationId);
+                if (entity != null) {
+                    entity.setStatus("ANULOWANA");
+                    database.reservationDao().insertOrUpdate(entity);
+
+                    ParkingPlaceEntity place = database.parkingPlaceDao().getPlaceById(entity.getPlaceId());
                     if (place != null) {
                         place.setOccupied(false);
                         place.setOccupiedUntil("");
@@ -329,6 +354,10 @@ public class AppRepository {
                 e.getPlaceNumber(), e.getFloor(), e.getPrice(), e.getAccessTime(),
                 amenities, e.getLatitude(), e.getLongitude()
         );
+        p.setOwnerEmail(e.getOwnerEmail() != null ? e.getOwnerEmail() : "");
+        p.setImageUri(e.getImageUri() != null ? e.getImageUri() : "");
+        p.setRating(e.getRating());
+        p.setRatingCount(e.getRatingCount());
         p.setOccupied(e.isOccupied());
         p.setOccupiedUntil(e.getOccupiedUntil());
         p.setPinCode(e.getPinCode());
@@ -340,6 +369,7 @@ public class AppRepository {
         if (p == null) return null;
         ParkingPlaceEntity e = new ParkingPlaceEntity();
         e.setId(p.getId());
+        e.setOwnerEmail(p.getOwnerEmail() != null ? p.getOwnerEmail() : "");
         e.setTitle(p.getTitle());
         e.setStreet(p.getStreet());
         e.setCity(p.getCity());
@@ -358,6 +388,9 @@ public class AppRepository {
         }
         e.setLatitude(p.getLatitude());
         e.setLongitude(p.getLongitude());
+        e.setImageUri(p.getImageUri() != null ? p.getImageUri() : "");
+        e.setRating(p.getRating());
+        e.setRatingCount(p.getRatingCount());
         e.setOccupied(p.isOccupied());
         e.setOccupiedUntil(p.getOccupiedUntil());
         e.setPinCode(p.getPinCode());

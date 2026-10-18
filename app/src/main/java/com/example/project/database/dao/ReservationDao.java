@@ -19,6 +19,12 @@ public interface ReservationDao {
     @Query("SELECT * FROM reservations WHERE status = 'AKTYWNA' ORDER BY startTimeMs DESC LIMIT 1")
     LiveData<ReservationEntity> getActiveReservationLiveData();
 
+    @Query("SELECT * FROM reservations WHERE status = 'AKTYWNA' ORDER BY startTimeMs DESC LIMIT 1")
+    ReservationEntity getActiveReservationSync();
+
+    @Query("SELECT * FROM reservations WHERE id = :id LIMIT 1")
+    ReservationEntity getReservationByIdSync(String id);
+
     @Query("SELECT * FROM reservations WHERE status != 'AKTYWNA' ORDER BY startTimeMs DESC")
     LiveData<List<ReservationEntity>> getHistoryReservationsLiveData();
 

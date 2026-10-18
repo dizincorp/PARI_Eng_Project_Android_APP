@@ -35,7 +35,7 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Main map activity allowing users to search and discover parking spots.
+ * Main map activity allowing users to search and discover parking spots with color-coded markers.
  */
 public class MainActivity extends BaseActivity implements OnMapReadyCallback {
 
@@ -98,6 +98,11 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
                     return;
                 }
 
+                if (selectedPlaceForBooking.isOccupied()) {
+                    Toast.makeText(this, "To miejsce jest obecnie zajęte!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 Intent intent = new Intent(MainActivity.this, ReservePlaceActivity.class);
                 intent.putExtra(ReservePlaceActivity.EXTRA_PLACE_ID, selectedPlaceForBooking.getId());
                 startActivity(intent);
@@ -155,9 +160,21 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
         googleMap.clear();
         markerPlaceMap.clear();
 
+        String currentUserEmail = AppRepository.getInstance().getUserEmailLiveData().getValue();
+        if (currentUserEmail == null) currentUserEmail = "";
+
         for (ParkingPlace p : places) {
-            if (p == null || p.isOccupied()) {
-                continue;
+            if (p == null) continue;
+
+            boolean isOwner = currentUserEmail.equalsIgnoreCase(p.getOwnerEmail());
+            float markerColor;
+
+            if (isOwner) {
+                markerColor = BitmapDescriptorFactory.HUE_AZURE; // Blue: your spot
+            } else if (p.isOccupied()) {
+                markerColor = BitmapDescriptorFactory.HUE_RED;   // Red: occupied spot
+            } else {
+                markerColor = BitmapDescriptorFactory.HUE_GREEN; // Green: available spot to reserve
             }
 
             LatLng pos = new LatLng(p.getLatitude(), p.getLongitude());
@@ -165,7 +182,7 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
                     .position(pos)
                     .title(p.getTitle())
                     .snippet(String.format(Locale.getDefault(), "%.2f zł/h", p.getPrice()))
-                    .icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_AZURE)));
+                    .icon(BitmapDescriptorFactory.defaultMarker(markerColor)));
 
             if (marker != null) {
                 markerPlaceMap.put(marker.getId(), p);
