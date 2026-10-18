@@ -29,7 +29,7 @@ import java.util.concurrent.Executors;
 
 /**
  * Repository class acting as Single Source of Truth for the application's data layer,
- * backed by Room Database with multi-user isolation.
+ * backed by Room Database with reactive multi-user isolation via Transformations.switchMap.
  */
 public class AppRepository {
 
@@ -156,21 +156,22 @@ public class AppRepository {
         });
     }
 
-    // Owner's places ("Moje Miejsca")
+    // Owner's places ("Moje Miejsca") dynamically updated when userEmailLiveData changes!
     public LiveData<List<ParkingPlace>> getMyPlacesLiveData() {
         if (database == null) {
             return new MutableLiveData<>(new ArrayList<>());
         }
-        String currentEmail = userEmailLiveData.getValue() != null ? userEmailLiveData.getValue() : "";
-        return Transformations.map(database.parkingPlaceDao().getMyPlacesLiveData(currentEmail), entities -> {
-            List<ParkingPlace> list = new ArrayList<>();
-            if (entities != null) {
-                for (ParkingPlaceEntity e : entities) {
-                    list.add(toParkingPlace(e));
-                }
-            }
-            return list;
-        });
+        return Transformations.switchMap(userEmailLiveData, email ->
+                Transformations.map(database.parkingPlaceDao().getMyPlacesLiveData(email != null ? email : ""), entities -> {
+                    List<ParkingPlace> list = new ArrayList<>();
+                    if (entities != null) {
+                        for (ParkingPlaceEntity e : entities) {
+                            list.add(toParkingPlace(e));
+                        }
+                    }
+                    return list;
+                })
+        );
     }
 
     // Driver's vehicles ("Moje Pojazdy")
@@ -178,16 +179,17 @@ public class AppRepository {
         if (database == null) {
             return new MutableLiveData<>(new ArrayList<>());
         }
-        String currentEmail = userEmailLiveData.getValue() != null ? userEmailLiveData.getValue() : "";
-        return Transformations.map(database.vehicleDao().getUserVehiclesLiveData(currentEmail), entities -> {
-            List<Vehicle> list = new ArrayList<>();
-            if (entities != null) {
-                for (VehicleEntity e : entities) {
-                    list.add(toVehicle(e));
-                }
-            }
-            return list;
-        });
+        return Transformations.switchMap(userEmailLiveData, email ->
+                Transformations.map(database.vehicleDao().getUserVehiclesLiveData(email != null ? email : ""), entities -> {
+                    List<Vehicle> list = new ArrayList<>();
+                    if (entities != null) {
+                        for (VehicleEntity e : entities) {
+                            list.add(toVehicle(e));
+                        }
+                    }
+                    return list;
+                })
+        );
     }
 
     // Driver's active reservation
@@ -195,11 +197,12 @@ public class AppRepository {
         if (database == null) {
             return new MutableLiveData<>(null);
         }
-        String currentEmail = userEmailLiveData.getValue() != null ? userEmailLiveData.getValue() : "";
-        return Transformations.map(database.reservationDao().getUserActiveReservationLiveData(currentEmail), entity -> {
-            if (entity == null) return null;
-            return toReservation(entity);
-        });
+        return Transformations.switchMap(userEmailLiveData, email ->
+                Transformations.map(database.reservationDao().getUserActiveReservationLiveData(email != null ? email : ""), entity -> {
+                    if (entity == null) return null;
+                    return toReservation(entity);
+                })
+        );
     }
 
     // Driver's history reservations
@@ -207,16 +210,17 @@ public class AppRepository {
         if (database == null) {
             return new MutableLiveData<>(new ArrayList<>());
         }
-        String currentEmail = userEmailLiveData.getValue() != null ? userEmailLiveData.getValue() : "";
-        return Transformations.map(database.reservationDao().getUserHistoryReservationsLiveData(currentEmail), entities -> {
-            List<Reservation> list = new ArrayList<>();
-            if (entities != null) {
-                for (ReservationEntity e : entities) {
-                    list.add(toReservation(e));
-                }
-            }
-            return list;
-        });
+        return Transformations.switchMap(userEmailLiveData, email ->
+                Transformations.map(database.reservationDao().getUserHistoryReservationsLiveData(email != null ? email : ""), entities -> {
+                    List<Reservation> list = new ArrayList<>();
+                    if (entities != null) {
+                        for (ReservationEntity e : entities) {
+                            list.add(toReservation(e));
+                        }
+                    }
+                    return list;
+                })
+        );
     }
 
     // Owner's earnings & transactions
@@ -224,16 +228,17 @@ public class AppRepository {
         if (database == null) {
             return new MutableLiveData<>(new ArrayList<>());
         }
-        String currentEmail = userEmailLiveData.getValue() != null ? userEmailLiveData.getValue() : "";
-        return Transformations.map(database.transactionDao().getUserTransactionsLiveData(currentEmail), entities -> {
-            List<Transaction> list = new ArrayList<>();
-            if (entities != null) {
-                for (TransactionEntity e : entities) {
-                    list.add(toTransaction(e));
-                }
-            }
-            return list;
-        });
+        return Transformations.switchMap(userEmailLiveData, email ->
+                Transformations.map(database.transactionDao().getUserTransactionsLiveData(email != null ? email : ""), entities -> {
+                    List<Transaction> list = new ArrayList<>();
+                    if (entities != null) {
+                        for (TransactionEntity e : entities) {
+                            list.add(toTransaction(e));
+                        }
+                    }
+                    return list;
+                })
+        );
     }
 
     public ParkingPlace getPlaceById(String id) {
@@ -279,6 +284,11 @@ public class AppRepository {
         place.setOccupied(false);
         place.setOccupiedUntil("");
         executor.execute(() -> database.parkingPlaceDao().insertOrUpdate(toParkingPlaceEntity(place)));
+    }
+
+    public void deletePlace(String placeId) {
+        if (placeId == null || database == null) return;
+        executor.execute(() -> database.parkingPlaceDao().deleteById(placeId));
     }
 
     public void addVehicle(Vehicle vehicle) {
@@ -482,18 +492,5 @@ public class AppRepository {
         Transaction t = new Transaction(e.getId(), e.getPlaceName(), e.getCarInfo(), e.getDuration(), e.getDate(), e.getTotalPrice());
         t.setOwnerEmail(e.getOwnerEmail() != null ? e.getOwnerEmail() : "");
         return t;
-    }
-
-    private TransactionEntity toTransactionEntity(Transaction t) {
-        if (t == null) return null;
-        TransactionEntity e = new TransactionEntity();
-        e.setId(t.getId());
-        e.setOwnerEmail(t.getOwnerEmail() != null ? t.getOwnerEmail() : "");
-        e.setPlaceName(t.getPlaceName());
-        e.setCarInfo(t.getCarInfo());
-        e.setDuration(t.getDuration());
-        e.setDate(t.getDate());
-        e.setTotalPrice(t.getTotalPrice());
-        return e;
     }
 }

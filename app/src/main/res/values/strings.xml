@@ -130,6 +130,11 @@
     <string name="msg_place_added">Miejsce zostało pomyślnie zapisane!</string>
     <string name="msg_validation_error">Proszę wypełnić wymagane pola (Ulica, Miasto, Numer)</string>
 
+    <string name="btn_delete_place">Usuń miejsce</string>
+    <string name="dialog_delete_title">Usunięcie miejsca</string>
+    <string name="dialog_delete_confirm">Czy na pewno chcesz usunąć to miejsce parkingowe?</string>
+    <string name="msg_place_deleted">Miejsce zostało usunięte!</string>
+
     <!-- Availability Calendar Strings -->
     <string name="title_availability_calendar">Kalendarz dostępności</string>
     <string name="subtitle_availability">Zarządzaj rezerwacjami i blokadami terminów dla swoich miejsc.</string>

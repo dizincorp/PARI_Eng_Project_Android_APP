@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/bg_main"
-    tools:context=".AddPlaceActivity">
+    tools:context=".ui.AddPlaceActivity">
 
     <!-- Top Bar -->
     <LinearLayout
@@ -476,12 +476,13 @@
         </LinearLayout>
     </ScrollView>
 
-    <!-- Bottom Action Button Container -->
+    <!-- Bottom Action Buttons Container -->
     <LinearLayout
         android:id="@+id/layout_bottom_button"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:background="@color/card_background"
+        android:orientation="vertical"
         android:padding="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -497,6 +498,20 @@
             android:textColor="@color/white"
             android:textSize="16sp"
             android:textStyle="bold"
+            app:cornerRadius="12dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_delete_place"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="8dp"
+            android:backgroundTint="#FEE2E2"
+            android:text="Usuń miejsce"
+            android:textAllCaps="false"
+            android:textColor="#DC2626"
+            android:textSize="14sp"
+            android:textStyle="bold"
+            android:visibility="gone"
             app:cornerRadius="12dp" />
     </LinearLayout>
 

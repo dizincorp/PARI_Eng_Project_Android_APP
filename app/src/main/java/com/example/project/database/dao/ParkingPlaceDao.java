@@ -35,6 +35,9 @@ public interface ParkingPlaceDao {
     @Delete
     void delete(ParkingPlaceEntity place);
 
+    @Query("DELETE FROM parking_places WHERE id = :id")
+    void deleteById(String id);
+
     @Query("DELETE FROM parking_places")
     void deleteAll();
 }

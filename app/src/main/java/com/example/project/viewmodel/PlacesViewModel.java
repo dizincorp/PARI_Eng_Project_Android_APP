@@ -53,10 +53,14 @@ public class PlacesViewModel extends ViewModel {
     }
 
     public LiveData<List<ParkingPlace>> getMyPlacesLiveData() {
-        return repository.getPlacesLiveData();
+        return repository.getMyPlacesLiveData();
     }
 
     public LiveData<List<Transaction>> getTransactionsLiveData() {
         return repository.getTransactionsLiveData();
+    }
+
+    public void deletePlace(String placeId) {
+        repository.deletePlace(placeId);
     }
 }

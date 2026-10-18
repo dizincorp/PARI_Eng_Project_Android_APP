@@ -5,11 +5,13 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.provider.MediaStore;
+import android.view.View;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -27,7 +29,7 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Activity for creating or updating a parking spot with photo selection & TimePicker.
+ * Activity for creating or updating a parking spot with photo selection, TimePicker & place deletion.
  */
 public class AddPlaceActivity extends AppCompatActivity {
 
@@ -73,6 +75,7 @@ public class AddPlaceActivity extends AppCompatActivity {
         observeViewModel();
 
         if (currentPlaceId != null) {
+            binding.btnDeletePlace.setVisibility(View.VISIBLE);
             viewModel.loadPlaceForEditing(currentPlaceId);
         }
     }
@@ -107,6 +110,21 @@ public class AddPlaceActivity extends AppCompatActivity {
             viewModel.savePlace(currentPlaceId, street, city, postalCode, placeNumber, floor, accessTime, price, amenities, ownerEmail, selectedPhotoUri);
         });
 
+        binding.btnDeletePlace.setOnClickListener(v -> {
+            if (currentPlaceId != null) {
+                new AlertDialog.Builder(this)
+                        .setTitle(R.string.dialog_delete_title)
+                        .setMessage(R.string.dialog_delete_confirm)
+                        .setPositiveButton(R.string.btn_delete_place, (dialog, which) -> {
+                            viewModel.deletePlace(currentPlaceId);
+                            Toast.makeText(this, R.string.msg_place_deleted, Toast.LENGTH_SHORT).show();
+                            finish();
+                        })
+                        .setNegativeButton(R.string.btn_cancel, null)
+                        .show();
+            }
+        });
+
         binding.btnUploadPhotos.setOnClickListener(v -> {
             Intent pickIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
             photoPickerLauncher.launch(pickIntent);
@@ -123,7 +141,8 @@ public class AddPlaceActivity extends AppCompatActivity {
 
             TimePickerDialog toPicker = new TimePickerDialog(this, (view2, hourOfDayTo, minuteTo) -> {
                 String toFormatted = String.format(Locale.getDefault(), "%02d:%02d", hourOfDayTo, minuteTo);
-                binding.editAccessTime.setText(fromFormatted + " - " + toFormatted);
+                String timeRange = getString(R.string.format_sub_details, fromFormatted, toFormatted);
+                binding.editAccessTime.setText(timeRange);
             }, (hourOfDayFrom + 8) % 24, minuteFrom, true);
             toPicker.setTitle("Godzina DO");
             toPicker.show();

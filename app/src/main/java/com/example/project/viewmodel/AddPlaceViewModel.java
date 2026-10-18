@@ -11,7 +11,7 @@ import com.example.project.repository.AppRepository;
 import java.util.List;
 
 /**
- * ViewModel for adding and editing parking places.
+ * ViewModel for adding, editing and deleting parking places.
  */
 public class AddPlaceViewModel extends ViewModel {
 
@@ -50,6 +50,17 @@ public class AddPlaceViewModel extends ViewModel {
             if (place != null) {
                 editingPlaceLiveData.setValue(place);
             }
+        }
+    }
+
+    /**
+     * Deletes a parking place from repository by ID.
+     *
+     * @param placeId ID of the place to delete
+     */
+    public void deletePlace(String placeId) {
+        if (placeId != null && !placeId.isEmpty()) {
+            repository.deletePlace(placeId);
         }
     }
 
