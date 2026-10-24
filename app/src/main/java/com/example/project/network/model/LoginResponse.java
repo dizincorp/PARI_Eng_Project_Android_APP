@@ -43,6 +43,18 @@ public class LoginResponse {
     }
 
     /**
+     * Parameterized convenience constructor accepting primitive long.
+     *
+     * @param token     JWT authentication token
+     * @param tokenType Token scheme (e.g. "Bearer")
+     * @param expiresIn Token validity period in seconds
+     * @param user      Authenticated user profile details
+     */
+    public LoginResponse(String token, String tokenType, long expiresIn, UserResponse user) {
+        this(token, tokenType, Long.valueOf(expiresIn), user);
+    }
+
+    /**
      * Gets the JWT token string.
      *
      * @return JWT token

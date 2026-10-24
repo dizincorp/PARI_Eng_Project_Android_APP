@@ -17,7 +17,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.project.R;
 import com.example.project.databinding.ActivityMainBinding;
-import com.example.project.network.model.ParkingSpotResponse;
+import com.example.project.network.model.ParkingSpot;
 import com.example.project.viewmodel.SearchViewModel;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -46,8 +46,8 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
     private SearchViewModel viewModel;
     private GoogleMap googleMap;
 
-    private final Map<String, ParkingSpotResponse> markerSpotMap = new HashMap<>();
-    private ParkingSpotResponse selectedSpotForBooking = null;
+    private final Map<String, ParkingSpot> markerSpotMap = new HashMap<>();
+    private ParkingSpot selectedSpotForBooking = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -163,13 +163,13 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
      *
      * @param spots List of parking spots returned from backend service
      */
-    private void displaySpotsOnMap(List<ParkingSpotResponse> spots) {
+    private void displaySpotsOnMap(List<ParkingSpot> spots) {
         if (googleMap == null || spots == null) return;
 
         googleMap.clear();
         markerSpotMap.clear();
 
-        for (ParkingSpotResponse spot : spots) {
+        for (ParkingSpot spot : spots) {
             if (spot == null) continue;
 
             float markerColor;
@@ -212,7 +212,7 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
         });
 
         googleMap.setOnMarkerClickListener(marker -> {
-            ParkingSpotResponse spot = markerSpotMap.get(marker.getId());
+            ParkingSpot spot = markerSpotMap.get(marker.getId());
             if (spot != null) {
                 showSpotPreviewCard(spot);
                 return true;
@@ -232,7 +232,7 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
      *
      * @param spot Selected parking spot
      */
-    private void showSpotPreviewCard(ParkingSpotResponse spot) {
+    private void showSpotPreviewCard(ParkingSpot spot) {
         if (binding == null || spot == null) return;
 
         selectedSpotForBooking = spot;

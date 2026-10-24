@@ -34,6 +34,8 @@
     <string name="title_register_account">Załóż konto</string>
     <string name="label_name_and_surname">Imię i Nazwisko</string>
     <string name="hint_name_sample">Jan Kowalski</string>
+    <string name="label_phone_number">Numer telefonu</string>
+    <string name="hint_phone_number">6832380753</string>
     <string name="label_confirm_password">Potwierdź hasło</string>
     <string name="btn_register">Zarejestruj się</string>
     <string name="divider_or_join">LUB DOŁĄCZ PRZEZ</string>
@@ -41,6 +43,7 @@
     <string name="link_login_here">Zaloguj się</string>
 
     <!-- Auth Validation Toasts -->
+    <string name="error_fill_all_fields">Proszę wypełnić wszystkie pola</string>
     <string name="error_invalid_credentials">Podaj poprawny email i hasło</string>
     <string name="error_passwords_dont_match">Hasła nie są identyczne</string>
     <string name="msg_login_success">Pomyślnie zalogowano!</string>

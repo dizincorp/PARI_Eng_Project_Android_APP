@@ -18,6 +18,7 @@ public abstract class BaseActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         AppRepository.getInstance().init(getApplicationContext());
+        com.example.project.network.ApiClient.init(getApplicationContext());
     }
 
     /**

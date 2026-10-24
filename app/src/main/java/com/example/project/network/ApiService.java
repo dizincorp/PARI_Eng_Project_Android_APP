@@ -40,6 +40,15 @@ public interface ApiService {
     );
 
     /**
+     * Retrieves the profile details of the currently authenticated user
+     * using the automatic Authorization header injected by AuthInterceptor.
+     *
+     * @return Retrofit Call delivering the authenticated user's profile
+     */
+    @GET("api/auth/me")
+    Call<UserProfileResponse> getCurrentUser();
+
+    /**
      * Retrieves the profile details of the currently authenticated user.
      *
      * @param authToken Bearer authorization token header (e.g. "Bearer eyJhbGci...")

@@ -20,15 +20,15 @@ public class Resource<T> {
     }
 
     @NonNull
-    private final Status status;
+    public final Status status;
 
     @Nullable
-    private final T data;
+    public final T data;
 
     @Nullable
-    private final String message;
+    public final String message;
 
-    private Resource(@NonNull Status status, @Nullable T data, @Nullable String message) {
+    public Resource(@NonNull Status status, @Nullable T data, @Nullable String message) {
         this.status = status;
         this.data = data;
         this.message = message;

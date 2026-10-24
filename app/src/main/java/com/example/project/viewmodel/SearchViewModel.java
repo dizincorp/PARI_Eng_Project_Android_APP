@@ -14,7 +14,7 @@ import androidx.lifecycle.ViewModel;
 
 import com.example.project.R;
 import com.example.project.network.Resource;
-import com.example.project.network.model.ParkingSpotResponse;
+import com.example.project.network.model.ParkingSpot;
 import com.example.project.repository.ParkingSpotRepository;
 import com.google.android.gms.maps.model.LatLng;
 
@@ -86,7 +86,7 @@ public class SearchViewModel extends ViewModel {
     private final ParkingSpotRepository parkingSpotRepository;
     private final MutableLiveData<SearchResult> searchResultLiveData = new MutableLiveData<>();
     private final MutableLiveData<SearchQuery> searchQueryLiveData = new MutableLiveData<>();
-    private final LiveData<Resource<List<ParkingSpotResponse>>> spotsLiveData;
+    private final LiveData<Resource<List<ParkingSpot>>> spotsLiveData;
 
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -114,13 +114,7 @@ public class SearchViewModel extends ViewModel {
             return this.parkingSpotRepository.searchSpots(
                     query.lat,
                     query.lng,
-                    query.radiusMeters,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null
+                    query.radiusMeters
             );
         });
     }
@@ -137,9 +131,9 @@ public class SearchViewModel extends ViewModel {
     /**
      * Gets the reactive LiveData stream of parking spots fetched from backend service.
      *
-     * @return LiveData containing Resource with list of ParkingSpotResponse
+     * @return LiveData containing Resource with list of ParkingSpot items
      */
-    public LiveData<Resource<List<ParkingSpotResponse>>> getSpotsLiveData() {
+    public LiveData<Resource<List<ParkingSpot>>> getSpotsLiveData() {
         return spotsLiveData;
     }
 

@@ -1,10 +1,16 @@
 package com.example.project.network;
 
+import android.content.Context;
+
+import com.example.project.utils.SessionManager;
+
+import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 /**
- * Singleton client providing configured Retrofit ApiService and SpotApiService instances.
+ * Singleton client providing configured Retrofit ApiService and SpotApiService instances
+ * with automatic JWT authorization header injection via {@link AuthInterceptor}.
  */
 public class ApiClient {
 
@@ -18,14 +24,41 @@ public class ApiClient {
     private static Retrofit retrofitInstance;
     private static ApiService apiService;
     private static SpotApiService spotApiService;
+    private static OkHttpClient okHttpClient;
 
     private ApiClient() {
+    }
+
+    /**
+     * Initializes ApiClient with application context to ensure SessionManager is initialized.
+     *
+     * @param context Application context
+     */
+    public static synchronized void init(Context context) {
+        if (context != null) {
+            SessionManager.getInstance(context.getApplicationContext());
+        }
+    }
+
+    /**
+     * Gets or creates the configured singleton OkHttpClient with {@link AuthInterceptor} attached.
+     *
+     * @return Configured OkHttpClient instance
+     */
+    public static synchronized OkHttpClient getOkHttpClient() {
+        if (okHttpClient == null) {
+            okHttpClient = new OkHttpClient.Builder()
+                    .addInterceptor(new AuthInterceptor())
+                    .build();
+        }
+        return okHttpClient;
     }
 
     private static synchronized Retrofit getRetrofit() {
         if (retrofitInstance == null) {
             retrofitInstance = new Retrofit.Builder()
                     .baseUrl(baseUrl)
+                    .client(getOkHttpClient())
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
         }

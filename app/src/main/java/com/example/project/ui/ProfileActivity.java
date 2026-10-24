@@ -15,11 +15,14 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.project.R;
 import com.example.project.databinding.ActivityProfileBinding;
 import com.example.project.databinding.DialogEditProfileBinding;
+import com.example.project.network.Resource;
+import com.example.project.network.model.UserProfileResponse;
 import com.example.project.utils.SessionManager;
 import com.example.project.viewmodel.ProfileViewModel;
 
 /**
- * Activity for user profile management with session management.
+ * Activity for user profile management with local Room caching,
+ * remote profile synchronization via /api/auth/me, and session termination.
  */
 public class ProfileActivity extends BaseActivity {
 
@@ -48,6 +51,12 @@ public class ProfileActivity extends BaseActivity {
 
         setupClickListeners();
         observeViewModel();
+
+        // Synchronize latest profile data from backend if authenticated
+        String authToken = sessionManager.getAuthToken();
+        if (!authToken.isEmpty()) {
+            viewModel.fetchRemoteProfile(authToken);
+        }
     }
 
     private void setupClickListeners() {
@@ -88,6 +97,16 @@ public class ProfileActivity extends BaseActivity {
             binding.textUserName.setText(profile.getName());
             binding.textUserEmail.setText(profile.getEmail());
             binding.imgProfileAvatar.setImageResource(profile.getAvatarResId());
+        });
+
+        viewModel.getRemoteProfileLiveData().observe(this, resource -> {
+            if (binding == null || resource == null) return;
+
+            if (resource.status == Resource.Status.SUCCESS && resource.data != null) {
+                UserProfileResponse data = resource.data;
+                binding.textUserName.setText(data.getFullName());
+                binding.textUserEmail.setText(data.getEmail());
+            }
         });
     }
 

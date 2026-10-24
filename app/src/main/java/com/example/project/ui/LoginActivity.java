@@ -13,12 +13,16 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.project.R;
 import com.example.project.databinding.ActivityLoginBinding;
+import com.example.project.network.Resource;
+import com.example.project.network.model.LoginResponse;
+import com.example.project.network.model.UserResponse;
 import com.example.project.repository.AppRepository;
 import com.example.project.utils.SessionManager;
 import com.example.project.viewmodel.AuthViewModel;
 
 /**
- * Login Activity providing Email/Password and Google Authentication with session persistence.
+ * Login Activity providing Email/Password and Google Authentication with session persistence
+ * backed by REST API and {@link SessionManager}.
  */
 public class LoginActivity extends AppCompatActivity {
 
@@ -32,6 +36,7 @@ public class LoginActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
 
         AppRepository.getInstance().init(getApplicationContext());
+        com.example.project.network.ApiClient.init(getApplicationContext());
         sessionManager = new SessionManager(this);
 
         // Auto-login check: if user session exists, navigate directly to MainActivity
@@ -80,24 +85,43 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void observeViewModel() {
-        viewModel.getLoginSuccessLiveData().observe(this, success -> {
-            if (Boolean.TRUE.equals(success)) {
-                String email = binding.editLoginEmail.getText() != null ? binding.editLoginEmail.getText().toString() : "jan_kowalski@gmail.com";
-                String name = "Jan Kowalski";
+        viewModel.getLoginResultLiveData().observe(this, resource -> {
+            if (resource == null || binding == null) return;
 
-                AppRepository.getInstance().loginUser(email, name);
-                sessionManager.createLoginSession(email, name);
+            switch (resource.status) {
+                case LOADING:
+                    binding.btnLogin.setEnabled(false);
+                    break;
+                case SUCCESS:
+                    binding.btnLogin.setEnabled(true);
+                    if (resource.data != null) {
+                        LoginResponse response = resource.data;
+                        String token = response.getToken();
+                        UserResponse user = response.getUser();
 
-                Toast.makeText(this, R.string.msg_login_success, Toast.LENGTH_SHORT).show();
-                Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                startActivity(intent);
-                finish();
-            }
-        });
+                        String userId = (user != null && user.getId() != null) ? user.getId() : "";
+                        String email = (user != null && user.getEmail() != null)
+                                ? user.getEmail()
+                                : (binding.editLoginEmail.getText() != null ? binding.editLoginEmail.getText().toString() : "");
+                        String name = (user != null && user.getFullName() != null && !user.getFullName().isEmpty())
+                                ? user.getFullName()
+                                : "Jan Kowalski";
+                        String role = (user != null && user.getRole() != null) ? user.getRole() : "DRIVER";
 
-        viewModel.getErrorMessageLiveData().observe(this, error -> {
-            if (error != null) {
-                Toast.makeText(this, error, Toast.LENGTH_SHORT).show();
+                        sessionManager.createLoginSession(token, userId, email, name, role);
+                        AppRepository.getInstance().loginUser(email, name);
+
+                        Toast.makeText(this, R.string.msg_login_success, Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                        startActivity(intent);
+                        finish();
+                    }
+                    break;
+                case ERROR:
+                    binding.btnLogin.setEnabled(true);
+                    String errorMsg = resource.message != null ? resource.message : getString(R.string.error_invalid_credentials);
+                    Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show();
+                    break;
             }
         });
     }

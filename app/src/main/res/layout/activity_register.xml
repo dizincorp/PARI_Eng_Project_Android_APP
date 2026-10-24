@@ -81,6 +81,30 @@
                 android:textColor="@color/text_primary"
                 android:textSize="14sp" />
 
+            <!-- Numer telefonu -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:text="@string/label_phone_number"
+                android:textColor="@color/text_primary"
+                android:textSize="13sp"
+                android:textStyle="bold" />
+
+            <EditText
+                android:id="@+id/edit_reg_phone"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="6dp"
+                android:autofillHints="phone"
+                android:background="@drawable/bg_dashed_border"
+                android:backgroundTint="@color/gray_input_bg"
+                android:hint="@string/hint_phone_number"
+                android:inputType="phone"
+                android:paddingHorizontal="16dp"
+                android:textColor="@color/text_primary"
+                android:textSize="14sp" />
+
             <!-- Hasło -->
             <TextView
                 android:layout_width="wrap_content"
