@@ -2,6 +2,7 @@ package com.example.project.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
@@ -16,8 +17,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.project.R;
 import com.example.project.databinding.ActivityMainBinding;
-import com.example.project.model.ParkingPlace;
-import com.example.project.repository.AppRepository;
+import com.example.project.network.model.ParkingSpotResponse;
 import com.example.project.viewmodel.SearchViewModel;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -35,15 +35,19 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Main map activity allowing users to search and discover parking spots with color-coded markers.
+ * Main map activity hosting {@link SupportMapFragment} to discover and reserve
+ * parking spots loaded dynamically from the backend via {@link SearchViewModel} and LiveData.
  */
 public class MainActivity extends BaseActivity implements OnMapReadyCallback {
+
+    private static final String TAG = "MainActivity";
 
     private ActivityMainBinding binding;
     private SearchViewModel viewModel;
     private GoogleMap googleMap;
-    private final Map<String, ParkingPlace> markerPlaceMap = new HashMap<>();
-    private ParkingPlace selectedPlaceForBooking = null;
+
+    private final Map<String, ParkingSpotResponse> markerSpotMap = new HashMap<>();
+    private ParkingSpotResponse selectedSpotForBooking = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -91,20 +95,14 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
         if (binding == null) return;
 
         binding.btnReserveNow.setOnClickListener(v -> {
-            if (selectedPlaceForBooking != null) {
-                String currentEmail = AppRepository.getInstance().getUserEmailLiveData().getValue();
-                if (currentEmail != null && currentEmail.equalsIgnoreCase(selectedPlaceForBooking.getOwnerEmail())) {
-                    Toast.makeText(this, R.string.error_owner_cannot_reserve, Toast.LENGTH_LONG).show();
-                    return;
-                }
-
-                if (selectedPlaceForBooking.isOccupied()) {
+            if (selectedSpotForBooking != null) {
+                if (!selectedSpotForBooking.isFree()) {
                     Toast.makeText(this, "To miejsce jest obecnie zajęte!", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
                 Intent intent = new Intent(MainActivity.this, ReservePlaceActivity.class);
-                intent.putExtra(ReservePlaceActivity.EXTRA_PLACE_ID, selectedPlaceForBooking.getId());
+                intent.putExtra(ReservePlaceActivity.EXTRA_PLACE_ID, selectedSpotForBooking.getId());
                 startActivity(intent);
             }
         });
@@ -135,10 +133,9 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
     }
 
     private void observeViewModel() {
+        // Observe geocoding search results to animate map camera
         viewModel.getSearchResultLiveData().observe(this, result -> {
-            if (result == null) {
-                return;
-            }
+            if (result == null) return;
 
             if (result.isSuccess() && googleMap != null) {
                 googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(result.getLatLng(), 14f));
@@ -147,45 +144,50 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
             }
         });
 
-        AppRepository.getInstance().getPlacesLiveData().observe(this, places -> {
-            if (googleMap != null && places != null) {
-                displayPlacesOnMap(places);
+        // Observe reactive parking spots from backend REST API
+        viewModel.getSpotsLiveData().observe(this, resource -> {
+            if (resource == null) return;
+
+            if (resource.isSuccess() && resource.getData() != null) {
+                displaySpotsOnMap(resource.getData());
+            } else if (resource.isError()) {
+                if (resource.getMessage() != null) {
+                    Log.e(TAG, "Error loading parking spots from API: " + resource.getMessage());
+                }
             }
         });
     }
 
-    private void displayPlacesOnMap(List<ParkingPlace> places) {
-        if (googleMap == null || places == null) return;
+    /**
+     * Renders parking spot markers dynamically onto Google Map.
+     *
+     * @param spots List of parking spots returned from backend service
+     */
+    private void displaySpotsOnMap(List<ParkingSpotResponse> spots) {
+        if (googleMap == null || spots == null) return;
 
         googleMap.clear();
-        markerPlaceMap.clear();
+        markerSpotMap.clear();
 
-        String currentUserEmail = AppRepository.getInstance().getUserEmailLiveData().getValue();
-        if (currentUserEmail == null) currentUserEmail = "";
+        for (ParkingSpotResponse spot : spots) {
+            if (spot == null) continue;
 
-        for (ParkingPlace p : places) {
-            if (p == null) continue;
-
-            boolean isOwner = currentUserEmail.equalsIgnoreCase(p.getOwnerEmail());
             float markerColor;
-
-            if (isOwner) {
-                markerColor = BitmapDescriptorFactory.HUE_AZURE; // Blue: your spot
-            } else if (p.isOccupied()) {
+            if (!spot.isFree()) {
                 markerColor = BitmapDescriptorFactory.HUE_RED;   // Red: occupied spot
             } else {
                 markerColor = BitmapDescriptorFactory.HUE_GREEN; // Green: available spot to reserve
             }
 
-            LatLng pos = new LatLng(p.getLatitude(), p.getLongitude());
+            LatLng pos = new LatLng(spot.getLat(), spot.getLng());
             Marker marker = googleMap.addMarker(new MarkerOptions()
                     .position(pos)
-                    .title(p.getTitle())
-                    .snippet(String.format(Locale.getDefault(), "%.2f zł/h", p.getPrice()))
+                    .title(spot.getName())
+                    .snippet(String.format(Locale.getDefault(), "%.2f zł/h", spot.getHourlyPrice()))
                     .icon(BitmapDescriptorFactory.defaultMarker(markerColor)));
 
             if (marker != null) {
-                markerPlaceMap.put(marker.getId(), p);
+                markerSpotMap.put(marker.getId(), spot);
             }
         }
     }
@@ -198,15 +200,21 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
         LatLng defaultLocation = new LatLng(52.2297, 21.0122);
         this.googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 12f));
 
-        List<ParkingPlace> currentPlaces = AppRepository.getInstance().getPlacesLiveData().getValue();
-        if (currentPlaces != null) {
-            displayPlacesOnMap(currentPlaces);
-        }
+        // Initial spot loading for default location
+        viewModel.loadNearbySpots(defaultLocation.latitude, defaultLocation.longitude, 5000.0);
+
+        // Dynamically load spots around camera center when map panning stops
+        googleMap.setOnCameraIdleListener(() -> {
+            if (googleMap != null) {
+                LatLng center = googleMap.getCameraPosition().target;
+                viewModel.loadNearbySpots(center.latitude, center.longitude, 5000.0);
+            }
+        });
 
         googleMap.setOnMarkerClickListener(marker -> {
-            ParkingPlace place = markerPlaceMap.get(marker.getId());
-            if (place != null) {
-                showPlacePreviewCard(place);
+            ParkingSpotResponse spot = markerSpotMap.get(marker.getId());
+            if (spot != null) {
+                showSpotPreviewCard(spot);
                 return true;
             }
             return false;
@@ -219,18 +227,24 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
         });
     }
 
-    private void showPlacePreviewCard(ParkingPlace place) {
-        if (binding == null || place == null) return;
+    /**
+     * Displays the preview card overlay for a clicked parking spot marker.
+     *
+     * @param spot Selected parking spot
+     */
+    private void showSpotPreviewCard(ParkingSpotResponse spot) {
+        if (binding == null || spot == null) return;
 
-        selectedPlaceForBooking = place;
+        selectedSpotForBooking = spot;
 
-        binding.textPreviewTitle.setText(place.getTitle());
-        binding.textPreviewRating.setText(place.getRatingDisplayText());
-        binding.textPreviewPriceValue.setText(String.format(Locale.getDefault(), "%.0f", place.getPrice()));
+        binding.textPreviewTitle.setText(spot.getName());
+        binding.textPreviewRating.setText(String.format(Locale.getDefault(), "★ %.1f (%d)",
+                spot.getAvgRating(), spot.getReviewCount()));
+        binding.textPreviewPriceValue.setText(String.format(Locale.getDefault(), "%.0f", spot.getHourlyPrice()));
 
         binding.chipGroupPreviewAmenities.removeAllViews();
-        if (place.getAmenities() != null) {
-            for (String amenity : place.getAmenities()) {
+        if (spot.getAmenities() != null) {
+            for (String amenity : spot.getAmenities()) {
                 Chip chip = new Chip(this);
                 chip.setText(amenity);
                 chip.setClickable(false);
