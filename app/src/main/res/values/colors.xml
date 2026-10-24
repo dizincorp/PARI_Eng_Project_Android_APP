@@ -44,4 +44,8 @@
     <!-- Onboarding / Dark Card Colors -->
     <color name="dark_card_bg">#0F172A</color>
     <color name="dark_card_icon_bg">#1E293B</color>
+
+    <!-- Action / Delete Colors -->
+    <color name="delete_btn_bg">#FEE2E2</color>
+    <color name="delete_btn_text">#DC2626</color>
 </resources>

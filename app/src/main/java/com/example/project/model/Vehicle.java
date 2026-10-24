@@ -58,12 +58,28 @@ public class Vehicle {
         this.makeAndModel = makeAndModel;
     }
 
+    public String getModel() {
+        return makeAndModel;
+    }
+
+    public void setModel(String model) {
+        this.makeAndModel = model;
+    }
+
     public String getLicensePlate() {
         return licensePlate;
     }
 
     public void setLicensePlate(String licensePlate) {
         this.licensePlate = licensePlate;
+    }
+
+    public String getPlateNumber() {
+        return licensePlate;
+    }
+
+    public void setPlateNumber(String plateNumber) {
+        this.licensePlate = plateNumber;
     }
 
     public String getColor() {

@@ -14,8 +14,8 @@ ParkShare is a modern Android application written in **Java** following the **MV
 ### 2. 📝 Reservation Process (`ReservePlaceActivity`)
 * **Spot Details & Pricing**: Full pricing breakdown (hourly rate, service fee, total).
 * **Schedule Selector**: Time interval schedule selector.
-* **Vehicle Selector & Vehicle Management**: Select existing vehicle or add a new vehicle (car make/model, license plate, color) via dialog.
-* **Booking & Payment**: Reserving a spot updates its status to occupied, marks it on the map, and creates an active reservation.
+* **Vehicle Selector & Vehicle Management**: Select existing vehicle or add a new vehicle via `POST /api/vehicles` and `VehicleRepository`.
+* **Real REST Reservations**: Reserving a spot calls `POST /api/reservations` via `ReservationRepository`, updates status to occupied, marks it on the map, and creates an active reservation.
 
 ### 3. 📅 Active & Past Reservations (`ReservationsActivity`)
 * **Active Tab (`Aktywne`)**:
@@ -29,8 +29,9 @@ ParkShare is a modern Android application written in **Java** following the **MV
 ### 4. 🅿️ Owner Dashboard & Spot Management (`PlacesActivity` & `AddPlaceActivity`)
 * **Dashboard Subtitle**: Displays dynamic user greeting and current month/year (`Dashboard • [Aktualny Miesiąc i Rok]`).
 * **Moje Miejsca**: Lists owned parking spots with status badges (**Wolne** / **Zajęte**).
-* **Spot Editing**: Tapping any spot opens `AddPlaceActivity` with pre-filled fields to edit spot details, pricing, amenities, and **Czas dostępu** (availability window).
-* **New Spot Creation**: Spots created by the owner are initially marked as free (**Wolne**) and immediately rendered on the map.
+* **Geocoding via Google Maps**: Coordinates (`lat`, `lng`) are obtained dynamically using Android Google Geocoding API (`Geocoder`) in background thread from street, postal code, and city.
+* **Real REST Spot Creation**: Dispatches `POST /api/spots` through `SpotRepository`, validating constraints (country: `PL`, ISO 2-letter code, positive price, ownership confirmation).
+* **Spot Editing & Deletion**: Tapping any spot opens `AddPlaceActivity` with pre-filled fields to edit spot details, pricing, amenities, and **Czas dostępu**.
 
 ### 5. 🗓️ Availability Calendar (`AvailabilityCalendarActivity`)
 * **Interactive Calendar**: Dynamic calendar view allowing owners to check availability for any date.
@@ -42,19 +43,24 @@ ParkShare is a modern Android application written in **Java** following the **MV
 * **Monthly Summary**: Displays overall earnings summary card.
 * **Transaction History**: Itemized list of earnings per reservation with vehicle, duration, date, and price.
 
+### 7. 🚘 Driver Vehicles Management (`VehicleApiService`)
+* **POJO Models**: `CreateVehicleRequest` (`model`, `plateNumber`), `VehicleResponse` (`id`, `model`, `plateNumber`, `createdAt`).
+* **Endpoints**: `POST /api/vehicles`, `GET /api/vehicles`, `DELETE /api/vehicles/{id}`.
+* **Room DB Caching**: `VehicleDao` and `VehicleRepository` guarantee Single Source of Truth offline caching.
+
 ---
 
 ## 🛠️ Tech Stack & Architecture
 
 * **Language**: Java 11
 * **Architecture**: MVVM (Model-View-ViewModel) + Single Source of Truth Repository Pattern
-* **Networking**: Retrofit2 + Gson (`SpotApiService`, `AuthInterceptor` with Bearer JWT token)
-* **Local Database**: Room Database (`AppDatabase`, `ParkingPlaceDao` with batch inserts)
+* **Networking**: Retrofit2 + Gson (`SpotApiService`, `ReservationApiService`, `VehicleApiService`, `AuthInterceptor` with Bearer JWT token)
+* **Local Database**: Room Database (`AppDatabase`, `ParkingPlaceDao`, `ReservationDao`, `VehicleDao`, `UserDao`)
 * **UI Layer**: View Binding, Material Design Components 3, `ConstraintLayout`, `RecyclerView`
-* **Maps**: Google Maps SDK for Android (`SupportMapFragment`)
-* **Reactivity**: `LiveData`, `MutableLiveData`
+* **Maps**: Google Maps SDK for Android (`SupportMapFragment`), Google Maps Geocoding API (`Geocoder`)
+* **Reactivity**: `LiveData`, `MutableLiveData`, `MediatorLiveData`
 * **Asynchronous Execution**: `ExecutorService`, `Handler`, `Looper`
-* **Package Structure**: Package-by-layer (`.ui`, `.viewmodel`, `.model`, `.adapter`, `.repository`, `.network`, `.database`)
+* **Package Structure**: Package-by-layer (`.ui`, `.viewmodel`, `.model`, `.adapter`, `.repository`, `.network`, `.database`, `.utils`)
 
 ---
 
@@ -66,30 +72,82 @@ com.example.project/
 │   ├── PlacesAdapter.java
 │   ├── ReservationsAdapter.java
 │   └── TransactionsAdapter.java
+├── database/
+│   ├── dao/
+│   │   ├── ParkingPlaceDao.java
+│   │   ├── ReservationDao.java
+│   │   ├── TransactionDao.java
+│   │   ├── UserDao.java
+│   │   └── VehicleDao.java
+│   ├── entity/
+│   │   ├── ParkingPlaceEntity.java
+│   │   ├── ReservationEntity.java
+│   │   ├── TransactionEntity.java
+│   │   ├── UserEntity.java
+│   │   └── VehicleEntity.java
+│   ├── AppDatabase.java
+│   └── Converters.java
 ├── model/
 │   ├── ParkingPlace.java
 │   ├── Reservation.java
 │   ├── Transaction.java
+│   ├── UserProfile.java
 │   └── Vehicle.java
+├── network/
+│   ├── model/
+│   │   ├── CreateSpotRequest.java
+│   │   ├── CreateVehicleRequest.java
+│   │   ├── LoginRequest.java
+│   │   ├── LoginResponse.java
+│   │   ├── ParkingSpot.java
+│   │   ├── RegisterRequest.java
+│   │   ├── RegisterResponse.java
+│   │   ├── ReservationRequest.java
+│   │   ├── ReservationResponse.java
+│   │   ├── UserProfileResponse.java
+│   │   └── VehicleResponse.java
+│   ├── ApiClient.java
+│   ├── ApiService.java
+│   ├── AuthInterceptor.java
+│   ├── ReservationApiService.java
+│   ├── Resource.java
+│   ├── SpotApiService.java
+│   └── VehicleApiService.java
 ├── repository/
-│   └── AppRepository.java
+│   ├── AppRepository.java
+│   ├── AuthRepository.java
+│   ├── ReservationRepository.java
+│   ├── SpotRepository.java
+│   └── VehicleRepository.java
 ├── ui/
 │   ├── AddPlaceActivity.java
 │   ├── AvailabilityCalendarActivity.java
 │   ├── BaseActivity.java
 │   ├── EarningsActivity.java
+│   ├── LoginActivity.java
 │   ├── MainActivity.java
+│   ├── OnboardingActivity.java
+│   ├── PaymentMethodsActivity.java
 │   ├── PlacesActivity.java
 │   ├── ProfileActivity.java
+│   ├── RegisterActivity.java
 │   ├── ReservationsActivity.java
-│   └── ReservePlaceActivity.java
+│   ├── ReservePlaceActivity.java
+│   └── SettingsActivity.java
+├── utils/
+│   ├── AccessTimeParser.java
+│   ├── NotificationHelper.java
+│   └── SessionManager.java
 └── viewmodel/
     ├── AddPlaceViewModel.java
+    ├── AuthViewModel.java
     ├── AvailabilityCalendarViewModel.java
     ├── PlacesViewModel.java
     ├── ProfileViewModel.java
     ├── ReservationsViewModel.java
-    └── SearchViewModel.java
+    ├── ReservePlaceViewModel.java
+    ├── SearchViewModel.java
+    └── SettingsViewModel.java
 ```
 
 ---
@@ -103,9 +161,9 @@ com.example.project/
 2. **Open in Android Studio**:
    Open the project folder in Android Studio Jellyfish / Ladybug or newer.
 3. **Configure Google Maps API Key**:
-   In `app/src/main/res/values/strings.xml`, replace `YOUR_API_KEY_HERE` with a valid Google Maps API Key:
+   In `app/src/main/res/values/strings.xml`, check or replace the Google Maps API Key:
    ```xml
    <string name="google_maps_key" translatable="false">YOUR_ACTUAL_API_KEY</string>
    ```
 4. **Build & Run**:
-   Sync project with Gradle files and run `app:assembleDebug` or launch on an Android device/emulator (API level 24+).
+   Sync project with Gradle files in Android Studio and run `:app:assembleDebug` or launch on an Android device/emulator (API level 24+).

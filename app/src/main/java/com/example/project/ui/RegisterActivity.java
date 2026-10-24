@@ -59,13 +59,15 @@ public class RegisterActivity extends AppCompatActivity {
         if (binding == null) return;
 
         binding.btnRegister.setOnClickListener(v -> {
-            String name = binding.editRegName.getText() != null ? binding.editRegName.getText().toString() : "";
-            String email = binding.editRegEmail.getText() != null ? binding.editRegEmail.getText().toString() : "";
-            String phone = binding.editRegPhone.getText() != null ? binding.editRegPhone.getText().toString() : "";
+            String firstName = binding.editRegFirstName.getText() != null ? binding.editRegFirstName.getText().toString().trim() : "";
+            String lastName = binding.editRegLastName.getText() != null ? binding.editRegLastName.getText().toString().trim() : "";
+            String email = binding.editRegEmail.getText() != null ? binding.editRegEmail.getText().toString().trim() : "";
+            String phone = binding.editRegPhone.getText() != null ? binding.editRegPhone.getText().toString().trim() : "";
             String password = binding.editRegPassword.getText() != null ? binding.editRegPassword.getText().toString() : "";
             String confirmPassword = binding.editRegConfirmPassword.getText() != null ? binding.editRegConfirmPassword.getText().toString() : "";
 
-            viewModel.register(name, email, password, confirmPassword, phone, "DRIVER");
+            String selectedRole = (binding.radioRoleOwner != null && binding.radioRoleOwner.isChecked()) ? "OWNER" : "DRIVER";
+            viewModel.register(firstName, lastName, email, password, confirmPassword, phone, selectedRole);
         });
 
         binding.btnGoogleRegister.setOnClickListener(v -> viewModel.loginWithGoogle());

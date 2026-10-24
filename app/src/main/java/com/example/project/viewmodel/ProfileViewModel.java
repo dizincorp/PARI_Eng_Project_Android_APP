@@ -1,42 +1,66 @@
 package com.example.project.viewmodel;
 
+import android.app.Application;
+
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
-import androidx.lifecycle.ViewModel;
 
 import com.example.project.model.UserProfile;
+import com.example.project.model.Vehicle;
 import com.example.project.network.Resource;
+import com.example.project.network.model.CreateVehicleRequest;
 import com.example.project.network.model.UserProfileResponse;
+import com.example.project.network.model.VehicleResponse;
 import com.example.project.repository.AppRepository;
 import com.example.project.repository.AuthRepository;
+import com.example.project.repository.VehicleRepository;
+
+import java.util.List;
+import java.util.UUID;
 
 /**
- * ViewModel for user profile management supporting local Room cache and
- * remote profile synchronization via {@link AuthRepository}.
+ * ViewModel for user profile and vehicles management supporting Room DB SSOT caching,
+ * remote profile synchronization via /api/auth/me, and vehicles management via /api/vehicles.
  */
-public class ProfileViewModel extends ViewModel {
+public class ProfileViewModel extends AndroidViewModel {
 
     private final AppRepository appRepository;
     private final AuthRepository authRepository;
+    private final VehicleRepository vehicleRepository;
+
     private final MediatorLiveData<Resource<UserProfileResponse>> remoteProfileLiveData = new MediatorLiveData<>();
 
     /**
-     * Default constructor for ProfileViewModel using singleton repositories.
+     * Default constructor for ProfileViewModel using Android Application context.
+     *
+     * @param application Android Application instance
      */
-    public ProfileViewModel() {
-        this(AppRepository.getInstance(), AuthRepository.getInstance());
+    public ProfileViewModel(@NonNull Application application) {
+        this(application,
+                AppRepository.getInstance(),
+                AuthRepository.getInstance(),
+                VehicleRepository.getInstance(application));
     }
 
     /**
-     * Constructor allowing repository injection for testing.
+     * Parameterized constructor for dependency injection during testing.
      *
-     * @param appRepository  Application central repository
-     * @param authRepository Authentication network repository
+     * @param application       Android Application instance
+     * @param appRepository     Application central repository
+     * @param authRepository    Authentication network repository
+     * @param vehicleRepository Vehicle network & Room repository
      */
-    public ProfileViewModel(@NonNull AppRepository appRepository, @NonNull AuthRepository authRepository) {
+    public ProfileViewModel(@NonNull Application application,
+                            @NonNull AppRepository appRepository,
+                            @NonNull AuthRepository authRepository,
+                            @NonNull VehicleRepository vehicleRepository) {
+        super(application);
         this.appRepository = appRepository;
         this.authRepository = authRepository;
+        this.vehicleRepository = vehicleRepository;
     }
 
     /**
@@ -58,6 +82,15 @@ public class ProfileViewModel extends ViewModel {
     }
 
     /**
+     * Gets reactive LiveData of user's registered vehicles.
+     *
+     * @return LiveData containing list of Vehicle items
+     */
+    public LiveData<List<Vehicle>> getVehiclesLiveData() {
+        return appRepository.getVehiclesLiveData();
+    }
+
+    /**
      * Updates user full name in local database and session.
      *
      * @param newName New full name
@@ -67,22 +100,33 @@ public class ProfileViewModel extends ViewModel {
     }
 
     /**
-     * Refreshes user profile directly from backend using automatic JWT Bearer authorization from AuthInterceptor.
+     * Adds a new vehicle directly to the backend REST API via POST /api/vehicles
+     * and caches it in local Room Database.
+     *
+     * @param model       Vehicle model
+     * @param plateNumber License plate number
+     * @return LiveData of vehicle creation Resource
      */
-    public void fetchRemoteProfile() {
-        remoteProfileLiveData.setValue(Resource.loading(null));
-        LiveData<Resource<UserProfileResponse>> source = authRepository.getCurrentUser();
-        remoteProfileLiveData.addSource(source, resource -> {
-            remoteProfileLiveData.setValue(resource);
-            if (resource.status == Resource.Status.SUCCESS) {
-                if (resource.data != null) {
-                    appRepository.loginUser(resource.data.getEmail(), resource.data.getFullName());
-                }
-                remoteProfileLiveData.removeSource(source);
-            } else if (resource.status == Resource.Status.ERROR) {
-                remoteProfileLiveData.removeSource(source);
-            }
-        });
+    public LiveData<Resource<VehicleResponse>> addVehicle(@NonNull String model, @NonNull String plateNumber) {
+        String currentEmail = appRepository.getUserEmailLiveData().getValue();
+        CreateVehicleRequest request = new CreateVehicleRequest(model, plateNumber);
+
+        // Optimistically insert locally
+        Vehicle localVehicle = new Vehicle(UUID.randomUUID().toString(), model.trim(), plateNumber.trim(), "");
+        appRepository.addVehicle(localVehicle);
+
+        // Submit to REST API POST /api/vehicles
+        return vehicleRepository.createVehicle(request, currentEmail);
+    }
+
+    /**
+     * Deletes a vehicle by its UUID via DELETE /api/vehicles/{id} and Room DB.
+     *
+     * @param vehicleId Unique vehicle UUID
+     */
+    public void deleteVehicle(@NonNull String vehicleId) {
+        vehicleRepository.deleteVehicle(vehicleId);
+        appRepository.deleteVehicle(vehicleId);
     }
 
     /**
@@ -90,7 +134,7 @@ public class ProfileViewModel extends ViewModel {
      *
      * @param token JWT authentication token
      */
-    public void fetchRemoteProfile(String token) {
+    public void fetchRemoteProfile(@Nullable String token) {
         if (token == null || token.trim().isEmpty()) {
             return;
         }

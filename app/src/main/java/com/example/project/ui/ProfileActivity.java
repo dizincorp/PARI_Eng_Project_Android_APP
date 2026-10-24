@@ -3,6 +3,7 @@ package com.example.project.ui;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -11,10 +12,15 @@ import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.project.R;
+import com.example.project.adapter.VehiclesAdapter;
 import com.example.project.databinding.ActivityProfileBinding;
+import com.example.project.databinding.DialogAddVehicleBinding;
 import com.example.project.databinding.DialogEditProfileBinding;
+import com.example.project.databinding.DialogVehiclesListBinding;
+import com.example.project.model.Vehicle;
 import com.example.project.network.Resource;
 import com.example.project.network.model.UserProfileResponse;
 import com.example.project.utils.SessionManager;
@@ -22,7 +28,7 @@ import com.example.project.viewmodel.ProfileViewModel;
 
 /**
  * Activity for user profile management with local Room caching,
- * remote profile synchronization via /api/auth/me, and session termination.
+ * vehicles management (/api/vehicles), remote profile synchronization, and session termination.
  */
 public class ProfileActivity extends BaseActivity {
 
@@ -70,6 +76,8 @@ public class ProfileActivity extends BaseActivity {
             startActivity(intent);
         });
 
+        binding.cardMyVehicles.setOnClickListener(v -> showVehiclesDialog());
+
         binding.cardPaymentMethods.setOnClickListener(v -> {
             Intent intent = new Intent(ProfileActivity.this, PaymentMethodsActivity.class);
             startActivity(intent);
@@ -108,6 +116,66 @@ public class ProfileActivity extends BaseActivity {
                 binding.textUserEmail.setText(data.getEmail());
             }
         });
+    }
+
+    private void showVehiclesDialog() {
+        DialogVehiclesListBinding dialogBinding = DialogVehiclesListBinding.inflate(LayoutInflater.from(this));
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogBinding.getRoot())
+                .setNegativeButton(R.string.btn_cancel, null)
+                .create();
+
+        VehiclesAdapter adapter = new VehiclesAdapter(vehicle -> {
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.dialog_delete_vehicle_title)
+                    .setMessage(R.string.dialog_delete_vehicle_confirm)
+                    .setPositiveButton(R.string.btn_delete_place, (d, which) -> {
+                        viewModel.deleteVehicle(vehicle.getId());
+                        Toast.makeText(this, R.string.msg_vehicle_deleted, Toast.LENGTH_SHORT).show();
+                    })
+                    .setNegativeButton(R.string.btn_cancel, null)
+                    .show();
+        });
+
+        dialogBinding.recyclerVehicles.setLayoutManager(new LinearLayoutManager(this));
+        dialogBinding.recyclerVehicles.setAdapter(adapter);
+
+        viewModel.getVehiclesLiveData().observe(this, vehicles -> {
+            if (vehicles != null && !vehicles.isEmpty()) {
+                adapter.submitList(vehicles);
+                dialogBinding.recyclerVehicles.setVisibility(View.VISIBLE);
+                dialogBinding.textNoVehicles.setVisibility(View.GONE);
+            } else {
+                adapter.submitList(null);
+                dialogBinding.recyclerVehicles.setVisibility(View.GONE);
+                dialogBinding.textNoVehicles.setVisibility(View.VISIBLE);
+            }
+        });
+
+        dialogBinding.btnAddNewVehicle.setOnClickListener(v -> showAddVehicleDialog());
+
+        dialog.show();
+    }
+
+    private void showAddVehicleDialog() {
+        DialogAddVehicleBinding addBinding = DialogAddVehicleBinding.inflate(LayoutInflater.from(this));
+
+        new AlertDialog.Builder(this)
+                .setView(addBinding.getRoot())
+                .setPositiveButton(R.string.btn_save_vehicle, (dialog, which) -> {
+                    String make = addBinding.editVehicleMake.getText() != null ? addBinding.editVehicleMake.getText().toString().trim() : "";
+                    String plate = addBinding.editVehiclePlate.getText() != null ? addBinding.editVehiclePlate.getText().toString().trim() : "";
+
+                    if (make.isEmpty() || plate.length() < 2 || plate.length() > 15) {
+                        Toast.makeText(this, R.string.error_vehicle_validation, Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    viewModel.addVehicle(make, plate);
+                    Toast.makeText(this, R.string.msg_vehicle_added, Toast.LENGTH_SHORT).show();
+                })
+                .setNegativeButton(R.string.btn_cancel, null)
+                .show();
     }
 
     private void showEditProfileDialog() {

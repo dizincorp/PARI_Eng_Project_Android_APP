@@ -24,4 +24,7 @@ public interface VehicleDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertOrUpdate(VehicleEntity vehicle);
+
+    @Query("DELETE FROM vehicles WHERE id = :id")
+    void deleteById(String id);
 }

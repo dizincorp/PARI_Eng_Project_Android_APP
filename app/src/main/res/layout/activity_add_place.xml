@@ -207,7 +207,7 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Card 2: Szczegóły miejsca -->
+            <!-- Card 2: Informacje o miejscu (name, description, place number, floor) -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -232,75 +232,252 @@
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
+                    <!-- Nazwa miejsca (name) -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
-                        android:text="@string/label_place_number"
+                        android:text="@string/label_spot_name"
                         android:textColor="@color/text_secondary"
                         android:textSize="13sp" />
 
                     <EditText
-                        android:id="@+id/edit_place_number"
+                        android:id="@+id/edit_spot_name"
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
                         android:layout_marginTop="6dp"
                         android:autofillHints="none"
                         android:background="@drawable/bg_dashed_border"
                         android:backgroundTint="@color/gray_input_bg"
-                        android:hint="@string/hint_place_number"
-                        android:inputType="text"
+                        android:hint="@string/hint_spot_name"
+                        android:inputType="textCapSentences"
                         android:paddingHorizontal="12dp"
                         android:textColor="@color/text_primary"
                         android:textSize="14sp" />
 
+                    <!-- Opis miejsca (description) -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
-                        android:text="@string/label_floor"
+                        android:text="@string/label_spot_description"
                         android:textColor="@color/text_secondary"
                         android:textSize="13sp" />
 
                     <EditText
-                        android:id="@+id/edit_floor"
+                        android:id="@+id/edit_spot_description"
                         android:layout_width="match_parent"
-                        android:layout_height="48dp"
+                        android:layout_height="72dp"
                         android:layout_marginTop="6dp"
                         android:autofillHints="none"
                         android:background="@drawable/bg_dashed_border"
                         android:backgroundTint="@color/gray_input_bg"
-                        android:hint="@string/hint_floor"
-                        android:inputType="numberSigned"
-                        android:paddingHorizontal="12dp"
+                        android:gravity="top|start"
+                        android:hint="@string/hint_spot_description"
+                        android:inputType="textMultiLine"
+                        android:lines="3"
+                        android:padding="12dp"
                         android:textColor="@color/text_primary"
                         android:textSize="14sp" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <!-- Numer miejsca i Piętro -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
-                        android:text="@string/label_access_time"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="13sp" />
+                        android:baselineAligned="false"
+                        android:orientation="horizontal">
 
-                    <EditText
-                        android:id="@+id/edit_access_time"
-                        android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:layout_marginTop="6dp"
-                        android:autofillHints="none"
-                        android:background="@drawable/bg_dashed_border"
-                        android:backgroundTint="@color/gray_input_bg"
-                        android:hint="@string/hint_access_time"
-                        android:inputType="text"
-                        android:paddingHorizontal="12dp"
-                        android:textColor="@color/text_primary"
-                        android:textSize="14sp" />
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="8dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/label_place_number"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="13sp" />
+
+                            <EditText
+                                android:id="@+id/edit_place_number"
+                                android:layout_width="match_parent"
+                                android:layout_height="48dp"
+                                android:layout_marginTop="6dp"
+                                android:autofillHints="none"
+                                android:background="@drawable/bg_dashed_border"
+                                android:backgroundTint="@color/gray_input_bg"
+                                android:hint="@string/hint_place_number"
+                                android:inputType="text"
+                                android:paddingHorizontal="12dp"
+                                android:textColor="@color/text_primary"
+                                android:textSize="14sp" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/label_floor"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="13sp" />
+
+                            <EditText
+                                android:id="@+id/edit_floor"
+                                android:layout_width="match_parent"
+                                android:layout_height="48dp"
+                                android:layout_marginTop="6dp"
+                                android:autofillHints="none"
+                                android:background="@drawable/bg_dashed_border"
+                                android:backgroundTint="@color/gray_input_bg"
+                                android:hint="@string/hint_floor"
+                                android:inputType="numberSigned"
+                                android:paddingHorizontal="12dp"
+                                android:textColor="@color/text_primary"
+                                android:textSize="14sp" />
+                        </LinearLayout>
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Card 3: Cena -->
+            <!-- Card 3: Wymiary miejsca (lengthCm, widthCm, heightCm) -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardBackgroundColor="@color/card_background"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="1dp"
+                app:strokeColor="@color/gray_border"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/section_dimensions"
+                        android:textColor="@color/text_primary"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:baselineAligned="false"
+                        android:orientation="horizontal">
+
+                        <!-- Długość (lengthCm) -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="6dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/label_length_cm"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp" />
+
+                            <EditText
+                                android:id="@+id/edit_length_cm"
+                                android:layout_width="match_parent"
+                                android:layout_height="48dp"
+                                android:layout_marginTop="6dp"
+                                android:autofillHints="none"
+                                android:background="@drawable/bg_dashed_border"
+                                android:backgroundTint="@color/gray_input_bg"
+                                android:hint="@string/hint_length_cm"
+                                android:inputType="number"
+                                android:paddingHorizontal="10dp"
+                                android:text="500"
+                                android:textColor="@color/text_primary"
+                                android:textSize="14sp" />
+                        </LinearLayout>
+
+                        <!-- Szerokość (widthCm) -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginHorizontal="6dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/label_width_cm"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp" />
+
+                            <EditText
+                                android:id="@+id/edit_width_cm"
+                                android:layout_width="match_parent"
+                                android:layout_height="48dp"
+                                android:layout_marginTop="6dp"
+                                android:autofillHints="none"
+                                android:background="@drawable/bg_dashed_border"
+                                android:backgroundTint="@color/gray_input_bg"
+                                android:hint="@string/hint_width_cm"
+                                android:inputType="number"
+                                android:paddingHorizontal="10dp"
+                                android:text="250"
+                                android:textColor="@color/text_primary"
+                                android:textSize="14sp" />
+                        </LinearLayout>
+
+                        <!-- Wysokość (heightCm) -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/label_height_cm"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp" />
+
+                            <EditText
+                                android:id="@+id/edit_height_cm"
+                                android:layout_width="match_parent"
+                                android:layout_height="48dp"
+                                android:layout_marginTop="6dp"
+                                android:autofillHints="none"
+                                android:background="@drawable/bg_dashed_border"
+                                android:backgroundTint="@color/gray_input_bg"
+                                android:hint="@string/hint_height_cm"
+                                android:inputType="number"
+                                android:paddingHorizontal="10dp"
+                                android:text="200"
+                                android:textColor="@color/text_primary"
+                                android:textSize="14sp" />
+                        </LinearLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Card 4: Cena i Dostępność (hourlyPrice, accessInstructions, accessTime) -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -325,6 +502,7 @@
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
+                    <!-- Stawka godzinowa (hourlyPrice) -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
@@ -346,10 +524,56 @@
                         android:paddingHorizontal="12dp"
                         android:textColor="@color/text_primary"
                         android:textSize="14sp" />
+
+                    <!-- Instrukcje dostępu (accessInstructions) -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="@string/label_access_instructions"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp" />
+
+                    <EditText
+                        android:id="@+id/edit_access_instructions"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="6dp"
+                        android:autofillHints="none"
+                        android:background="@drawable/bg_dashed_border"
+                        android:backgroundTint="@color/gray_input_bg"
+                        android:hint="@string/hint_access_instructions"
+                        android:inputType="textCapSentences"
+                        android:paddingHorizontal="12dp"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp" />
+
+                    <!-- Godziny dostępu (accessTime) -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:text="@string/label_access_time"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="13sp" />
+
+                    <EditText
+                        android:id="@+id/edit_access_time"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:layout_marginTop="6dp"
+                        android:autofillHints="none"
+                        android:background="@drawable/bg_dashed_border"
+                        android:backgroundTint="@color/gray_input_bg"
+                        android:hint="@string/hint_access_time"
+                        android:inputType="text"
+                        android:paddingHorizontal="12dp"
+                        android:textColor="@color/text_primary"
+                        android:textSize="14sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Card 4: Udogodnienia -->
+            <!-- Card 5: Udogodnienia (amenities: CCTV, LIGHTING, EV_CHARGER, UNDERGROUND, GATE, COVERED) -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -409,11 +633,149 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/amenity_underground" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_gate"
+                            style="@style/Widget.MaterialComponents.Chip.Filter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/amenity_gate" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_covered"
+                            style="@style/Widget.MaterialComponents.Chip.Filter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/amenity_covered" />
                     </com.google.android.material.chip.ChipGroup>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Card 5: Zdjęcia -->
+            <!-- Card 6: Opcje i Oświadczenia (autoAccept, requestVerification, ownershipDeclared) -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardBackgroundColor="@color/card_background"
+                app:cardCornerRadius="16dp"
+                app:cardElevation="1dp"
+                app:strokeColor="@color/gray_border"
+                app:strokeWidth="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/section_options"
+                        android:textColor="@color/text_primary"
+                        android:textSize="18sp"
+                        android:textStyle="bold" />
+
+                    <!-- Auto Accept Switch -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/label_auto_accept"
+                                android:textColor="@color/text_primary"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="@string/desc_auto_accept"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switch_auto_accept"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="true" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginVertical="12dp"
+                        android:background="@color/gray_bar" />
+
+                    <!-- Request Verification Switch -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/label_request_verification"
+                                android:textColor="@color/text_primary"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="@string/desc_request_verification"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp" />
+                        </LinearLayout>
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/switch_request_verification"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="false" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginVertical="12dp"
+                        android:background="@color/gray_bar" />
+
+                    <!-- Ownership Declaration Checkbox (Mandatory by Backend) -->
+                    <com.google.android.material.checkbox.MaterialCheckBox
+                        android:id="@+id/check_ownership_declared"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:checked="true"
+                        android:text="@string/label_ownership_declaration"
+                        android:textColor="@color/text_primary"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Card 7: Zdjęcia -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -505,10 +867,10 @@
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_marginTop="8dp"
-            android:backgroundTint="#FEE2E2"
-            android:text="Usuń miejsce"
+            android:backgroundTint="@color/delete_btn_bg"
+            android:text="@string/btn_delete_place"
             android:textAllCaps="false"
-            android:textColor="#DC2626"
+            android:textColor="@color/delete_btn_text"
             android:textSize="14sp"
             android:textStyle="bold"
             android:visibility="gone"

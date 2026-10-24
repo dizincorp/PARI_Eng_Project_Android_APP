@@ -145,6 +145,64 @@ public class AuthViewModel extends ViewModel {
      * @param phoneNumber     Contact phone number
      * @param role            Chosen role ("DRIVER" or "OWNER")
      */
+    /**
+     * Registers a new user directly with first and last name matching backend /api/auth/register endpoint.
+     *
+     * @param firstName       User's first name
+     * @param lastName        User's last name
+     * @param email           User email
+     * @param password        Account password
+     * @param confirmPassword Confirmed password matching check
+     * @param phoneNumber     Contact phone number
+     * @param role            Chosen role ("DRIVER" or "OWNER")
+     */
+    public void register(String firstName, String lastName, String email, String password,
+                         String confirmPassword, String phoneNumber, String role) {
+        if (firstName == null || firstName.trim().isEmpty()
+                || lastName == null || lastName.trim().isEmpty()
+                || email == null || email.trim().isEmpty()
+                || password == null || password.trim().isEmpty()) {
+            String validationError = "Proszę wypełnić wszystkie pola";
+            errorMessageLiveData.setValue(validationError);
+            registerResultLiveData.setValue(Resource.error(validationError, null));
+            return;
+        }
+
+        if (!password.equals(confirmPassword)) {
+            String mismatchError = "Hasła nie są identyczne";
+            errorMessageLiveData.setValue(mismatchError);
+            registerResultLiveData.setValue(Resource.error(mismatchError, null));
+            return;
+        }
+
+        String phone = (phoneNumber != null && !phoneNumber.trim().isEmpty()) ? phoneNumber.trim() : "6832380753";
+        String userRole = (role != null && !role.trim().isEmpty()) ? role.trim() : "DRIVER";
+
+        RegisterRequest request = new RegisterRequest(
+                email.trim(),
+                password,
+                firstName.trim(),
+                lastName.trim(),
+                phone,
+                userRole
+        );
+
+        registerResultLiveData.setValue(Resource.loading(null));
+
+        LiveData<Resource<RegisterResponse>> repoSource = authRepository.register(request);
+        registerResultLiveData.addSource(repoSource, resource -> {
+            registerResultLiveData.setValue(resource);
+            if (resource != null && !resource.isLoading()) {
+                registerResultLiveData.removeSource(repoSource);
+                if (resource.isSuccess()) {
+                    registerSuccessLiveData.setValue(true);
+                } else if (resource.isError()) {
+                    errorMessageLiveData.setValue(resource.message);
+                    registerSuccessLiveData.setValue(false);
+                }
+            }
+        });
+    }
     public void register(String name, String email, String password, String confirmPassword,
                          String phoneNumber, String role) {
         if (name == null || name.trim().isEmpty()

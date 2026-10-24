@@ -14,6 +14,7 @@ import com.example.project.database.entity.ParkingPlaceEntity;
 import com.example.project.network.ApiClient;
 import com.example.project.network.Resource;
 import com.example.project.network.SpotApiService;
+import com.example.project.network.model.CreateSpotRequest;
 import com.example.project.network.model.ParkingSpot;
 
 import java.util.ArrayList;
@@ -98,6 +99,64 @@ public class SpotRepository {
      */
     public LiveData<Resource<Void>> getSyncStatusLiveData() {
         return syncStatusLiveData;
+    }
+
+    /**
+     * Creates a new parking spot on the backend via POST /api/spots and caches it in Room DB.
+     *
+     * @param request    CreateSpotRequest payload
+     * @param ownerEmail Owner email address for local account isolation
+     * @return LiveData emitting Resource with created ParkingSpot
+     */
+    public LiveData<Resource<ParkingSpot>> createSpot(@NonNull CreateSpotRequest request, @Nullable String ownerEmail) {
+        MutableLiveData<Resource<ParkingSpot>> resultLiveData = new MutableLiveData<>();
+        resultLiveData.setValue(Resource.loading(null));
+
+        apiService.createSpot(request).enqueue(new Callback<ParkingSpot>() {
+            @Override
+            public void onResponse(@NonNull Call<ParkingSpot> call, @NonNull Response<ParkingSpot> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    ParkingSpot spot = response.body();
+                    diskExecutor.execute(() -> {
+                        ParkingPlaceEntity entity = toEntity(spot);
+                        if (ownerEmail != null && !ownerEmail.isEmpty()) {
+                            entity.setOwnerEmail(ownerEmail);
+                        }
+                        parkingPlaceDao.insertOrUpdate(entity);
+                        resultLiveData.postValue(Resource.success(spot));
+                    });
+                } else {
+                    String errorMsg = "Błąd tworzenia miejsca: HTTP " + response.code();
+                    if (response.code() == 409) {
+                        errorMsg = "Wystąpił konflikt danych podczas tworzenia miejsca (409 Conflict).";
+                    } else if (response.code() == 400) {
+                        errorMsg = "Niepoprawne dane formularza dodawania miejsca.";
+                    }
+                    Log.e(TAG, errorMsg);
+                    resultLiveData.setValue(Resource.error(errorMsg, null));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ParkingSpot> call, @NonNull Throwable t) {
+                String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd sieci";
+                Log.e(TAG, "createSpot network failure: " + errorMsg, t);
+                resultLiveData.setValue(Resource.error(errorMsg, null));
+            }
+        });
+
+        return resultLiveData;
+    }
+
+    /**
+     * Deletes a parking spot from Room Database.
+     *
+     * @param id Parking spot ID to delete
+     */
+    public void deleteSpot(@Nullable String id) {
+        if (id != null && !id.isEmpty()) {
+            diskExecutor.execute(() -> parkingPlaceDao.deleteById(id));
+        }
     }
 
     /**

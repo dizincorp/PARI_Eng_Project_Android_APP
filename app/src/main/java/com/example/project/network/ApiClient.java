@@ -24,6 +24,8 @@ public class ApiClient {
     private static Retrofit retrofitInstance;
     private static ApiService apiService;
     private static SpotApiService spotApiService;
+    private static ReservationApiService reservationApiService;
+    private static VehicleApiService vehicleApiService;
     private static OkHttpClient okHttpClient;
 
     private ApiClient() {
@@ -90,6 +92,30 @@ public class ApiClient {
     }
 
     /**
+     * Gets the configured singleton instance of ReservationApiService (Reservations).
+     *
+     * @return Retrofit ReservationApiService instance
+     */
+    public static synchronized ReservationApiService getReservationApiService() {
+        if (reservationApiService == null) {
+            reservationApiService = getRetrofit().create(ReservationApiService.class);
+        }
+        return reservationApiService;
+    }
+
+    /**
+     * Gets the configured singleton instance of VehicleApiService (Vehicles).
+     *
+     * @return Retrofit VehicleApiService instance
+     */
+    public static synchronized VehicleApiService getVehicleApiService() {
+        if (vehicleApiService == null) {
+            vehicleApiService = getRetrofit().create(VehicleApiService.class);
+        }
+        return vehicleApiService;
+    }
+
+    /**
      * Sets a custom base URL (useful for physical test devices or staging environments).
      *
      * @param newBaseUrl New base URL ending with a trailing slash
@@ -100,6 +126,8 @@ public class ApiClient {
             retrofitInstance = null;
             apiService = null;
             spotApiService = null;
+            reservationApiService = null;
+            vehicleApiService = null;
         }
     }
 }

@@ -262,4 +262,60 @@
     <string name="hint_review_comment">Napisz krótki komentarz (opcjonalnie)&#8230;</string>
     <string name="toast_rating_submitted">Dziękujemy za ocenę!</string>
     <string name="error_owner_cannot_reserve">Nie możesz zarezerwować własnego miejsca parkingowego!</string>
+    <string name="error_spot_already_reserved">To miejsce jest już zarezerwowane w wybranym terminie!</string>
+    <string name="error_booking_failed">Błąd rezerwacji: %1$s</string>
+    <string name="error_payment_failed">Płatność została odrzucona.</string>
+    <!-- Role Selection & Place Creation -->
+    <string name="label_select_role">Rola w aplikacji</string>
+    <string name="role_driver">Kierowca</string>
+    <string name="role_owner">Właściciel miejsc</string>
+    <string name="msg_geocoding_in_progress">Wyszukiwanie współrzędnych adresu&#8230;</string>
+    <string name="error_spot_creation_failed">Błąd podczas tworzenia miejsca: %1$s</string>
+    <string name="menu_my_vehicles">Moje Pojazdy</string>
+    <string name="menu_sub_vehicles">Zarządzaj dodanymi samochodami</string>
+    <string name="msg_vehicle_added">Pojazd został pomyślnie dodany!</string>
+    <!-- Extended Registration Strings -->
+    <string name="label_first_name">Imię</string>
+    <string name="hint_first_name">Jan</string>
+    <string name="label_last_name">Nazwisko</string>
+    <string name="hint_last_name">Kowalski</string>
+
+    <!-- Extended Place Creation Strings -->
+    <string name="label_spot_name">Nazwa miejsca</string>
+    <string name="hint_spot_name">np. Parking Podziemny Centrum</string>
+    <string name="label_spot_description">Opis miejsca</string>
+    <string name="hint_spot_description">np. Szerokie miejsce blisko windy, poziom -1</string>
+    <string name="section_dimensions">Wymiary miejsca (cm)</string>
+    <string name="label_length_cm">Długość</string>
+    <string name="hint_length_cm">500</string>
+    <string name="label_width_cm">Szerokość</string>
+    <string name="hint_width_cm">250</string>
+    <string name="label_height_cm">Wysokość</string>
+    <string name="hint_height_cm">200</string>
+    <string name="label_access_instructions">Instrukcje wjazdu / dostępu</string>
+    <string name="hint_access_instructions">np. Kod do szlabanu 4321, poziom -1</string>
+    <string name="amenity_gate">Brama automatyczna</string>
+    <string name="amenity_covered">Zadaszone</string>
+    <string name="section_options">Opcje i weryfikacja</string>
+    <string name="label_auto_accept">Automatyczna akceptacja rezerwacji</string>
+    <string name="desc_auto_accept">Rezerwacje będą zatwierdzane natychmiast</string>
+    <string name="label_request_verification">Poproś o weryfikację miejsca</string>
+    <string name="desc_request_verification">Zweryfikowane miejsca są częściej wybierane przez kierowców</string>
+    <string name="label_ownership_declaration">Oświadczam, że posiadam prawo do dysponowania tym miejscem</string>
+    <string name="error_ownership_required">Wymagane jest potwierdzenie prawa do dysponowania miejscem!</string>
+    <string name="error_dimensions_invalid">Wymiary miejsca muszą być większe od zera!</string>
+
+    <!-- Vehicles Management Strings -->
+    <string name="title_my_vehicles">Moje Pojazdy</string>
+    <string name="subtitle_my_vehicles">Zarządzaj dodanymi samochodami</string>
+    <string name="btn_add_vehicle_dialog">Dodaj pojazd</string>
+    <string name="label_vehicle_model">Model pojazdu</string>
+    <string name="hint_vehicle_model">np. Skoda Octavia</string>
+    <string name="label_plate_number">Numer rejestracyjny</string>
+    <string name="hint_plate_number">np. LU 12345</string>
+    <string name="msg_vehicle_deleted">Pojazd został usunięty!</string>
+    <string name="msg_no_vehicles">Brak dodanych pojazdów. Dodaj swój pierwszy pojazd!</string>
+    <string name="dialog_delete_vehicle_title">Usunięcie pojazdu</string>
+    <string name="dialog_delete_vehicle_confirm">Czy na pewno chcesz usunąć ten pojazd?</string>
+    <string name="error_vehicle_validation">Podaj poprawny model i numer rejestracyjny (2-15 znaków)!</string>
 </resources>

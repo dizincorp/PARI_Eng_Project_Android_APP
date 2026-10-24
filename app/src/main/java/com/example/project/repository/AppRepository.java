@@ -299,6 +299,11 @@ public class AppRepository {
         executor.execute(() -> database.vehicleDao().insertOrUpdate(toVehicleEntity(vehicle)));
     }
 
+    public void deleteVehicle(String vehicleId) {
+        if (vehicleId == null || database == null) return;
+        executor.execute(() -> database.vehicleDao().deleteById(vehicleId));
+    }
+
     public void createReservation(Reservation reservation) {
         if (reservation == null || database == null) return;
 

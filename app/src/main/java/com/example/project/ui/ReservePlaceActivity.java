@@ -12,30 +12,34 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.lifecycle.ViewModelProvider;
 
 import com.example.project.R;
 import com.example.project.databinding.ActivityReservePlaceBinding;
 import com.example.project.databinding.DialogAddVehicleBinding;
 import com.example.project.model.ParkingPlace;
-import com.example.project.model.Reservation;
 import com.example.project.model.Vehicle;
 import com.example.project.repository.AppRepository;
 import com.example.project.utils.AccessTimeParser;
 import com.example.project.utils.NotificationHelper;
+import com.example.project.viewmodel.ReservePlaceViewModel;
 
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 
 /**
- * Activity for booking a spot with strict validation against owner's access time limits.
+ * Activity for booking a spot with strict validation against owner's access time limits
+ * and reactive reservation dispatch via {@link ReservePlaceViewModel}.
  */
 public class ReservePlaceActivity extends BaseActivity {
 
     public static final String EXTRA_PLACE_ID = "EXTRA_PLACE_ID";
 
     private ActivityReservePlaceBinding binding;
+    private ReservePlaceViewModel viewModel;
     private ParkingPlace currentPlace;
     private final List<Vehicle> currentVehiclesList = new ArrayList<>();
 
@@ -65,8 +69,10 @@ public class ReservePlaceActivity extends BaseActivity {
 
         setupBottomNavigation(binding.bottomNavigation, R.id.nav_search);
 
+        viewModel = new ViewModelProvider(this).get(ReservePlaceViewModel.class);
+
         String placeId = getIntent() != null ? getIntent().getStringExtra(EXTRA_PLACE_ID) : null;
-        currentPlace = AppRepository.getInstance().getPlaceById(placeId);
+        currentPlace = viewModel.getPlaceById(placeId);
 
         if (currentPlace == null) {
             List<ParkingPlace> places = AppRepository.getInstance().getPlacesLiveData().getValue();
@@ -76,7 +82,7 @@ public class ReservePlaceActivity extends BaseActivity {
         }
 
         // Prevent owner from reserving their own place
-        String currentEmail = AppRepository.getInstance().getUserEmailLiveData().getValue();
+        String currentEmail = viewModel.getUserEmailLiveData().getValue();
         if (currentPlace != null && currentEmail != null && currentEmail.equalsIgnoreCase(currentPlace.getOwnerEmail())) {
             Toast.makeText(this, R.string.error_owner_cannot_reserve, Toast.LENGTH_LONG).show();
             finish();
@@ -98,7 +104,7 @@ public class ReservePlaceActivity extends BaseActivity {
 
         setupUI();
         setupClickListeners();
-        observeVehicles();
+        observeViewModel();
     }
 
     private void setupUI() {
@@ -172,12 +178,12 @@ public class ReservePlaceActivity extends BaseActivity {
                 return;
             }
 
-            String selectedVehicleText = "Tesla Model 3 - WX 12345";
+            String vehicleId = "00000000-0000-0000-0000-0000000000a1";
             int selectedPos = binding.spinnerVehicles.getSelectedItemPosition();
             if (selectedPos >= 0 && selectedPos < currentVehiclesList.size()) {
                 Vehicle selectedV = currentVehiclesList.get(selectedPos);
-                if (selectedV != null) {
-                    selectedVehicleText = selectedV.getDisplayText();
+                if (selectedV != null && selectedV.getId() != null && !selectedV.getId().isEmpty()) {
+                    vehicleId = selectedV.getId();
                 }
             }
 
@@ -191,38 +197,62 @@ public class ReservePlaceActivity extends BaseActivity {
             endCal.set(Calendar.MINUTE, selectedEndMinute);
             endCal.set(Calendar.SECOND, 0);
 
-            double rate = currentPlace.getPrice();
-            double hours = Math.max(0.5, (double) (selectedEndHour * 60 + selectedEndMinute - (selectedStartHour * 60 + selectedStartMinute)) / 60.0);
-
-            String timeRange = String.format(Locale.getDefault(), "%02d:%02d - %02d:%02d",
-                    selectedStartHour, selectedStartMinute, selectedEndHour, selectedEndMinute);
-
-            Reservation reservation = new Reservation(
-                    "r_" + System.currentTimeMillis(),
+            // Dispatch reservation via ViewModel to ReservationRepository (POST /api/reservations)
+            viewModel.submitReservation(
                     currentPlace.getId(),
-                    currentPlace.getTitle(),
-                    currentPlace.getStreet() != null ? currentPlace.getStreet() : "",
-                    currentPlace.getCity() != null ? currentPlace.getCity() : "Warszawa",
-                    currentPlace.getPlaceNumber() != null ? currentPlace.getPlaceNumber() : "1",
-                    "Dziś, 14 Października",
-                    timeRange,
+                    vehicleId,
                     startCal.getTimeInMillis(),
                     endCal.getTimeInMillis(),
-                    selectedVehicleText,
-                    "AKTYWNA",
-                    rate * hours + 2.50,
-                    currentPlace.getPinCode(),
-                    currentPlace.getPhotoResId()
+                    "pm_card_visa"
             );
+        });
+    }
 
-            AppRepository.getInstance().createReservation(reservation);
-            NotificationHelper.showNotification(this, "ParkShare", getString(R.string.toast_reservation_success));
+    private void observeViewModel() {
+        // Observe user vehicles for spinner dropdown
+        viewModel.getVehiclesLiveData().observe(this, vehicles -> {
+            if (binding == null || vehicles == null) return;
 
-            Toast.makeText(this, R.string.toast_reservation_success, Toast.LENGTH_SHORT).show();
+            currentVehiclesList.clear();
+            currentVehiclesList.addAll(vehicles);
 
-            Intent intent = new Intent(ReservePlaceActivity.this, ReservationsActivity.class);
-            startActivity(intent);
-            finish();
+            List<String> vehicleStrings = new ArrayList<>();
+            for (Vehicle v : vehicles) {
+                vehicleStrings.add(v.getDisplayText());
+            }
+
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                    this,
+                    android.R.layout.simple_spinner_item,
+                    vehicleStrings
+            );
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            binding.spinnerVehicles.setAdapter(adapter);
+        });
+
+        // Observe reactive reservation submission status (loading, success, error)
+        viewModel.getReservationStatusLiveData().observe(this, resource -> {
+            if (binding == null || resource == null) return;
+
+            if (resource.isLoading()) {
+                binding.btnReserveAndPay.setEnabled(false);
+            } else {
+                binding.btnReserveAndPay.setEnabled(true);
+
+                if (resource.isSuccess()) {
+                    NotificationHelper.showNotification(this, "ParkShare", getString(R.string.toast_reservation_success));
+                    Toast.makeText(this, R.string.toast_reservation_success, Toast.LENGTH_SHORT).show();
+
+                    Intent intent = new Intent(ReservePlaceActivity.this, ReservationsActivity.class);
+                    startActivity(intent);
+                    finish();
+                } else if (resource.isError()) {
+                    String errorMsg = resource.getMessage() != null
+                            ? resource.getMessage()
+                            : getString(R.string.error_booking_failed, "Nieznany błąd");
+                    Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show();
+                }
+            }
         });
     }
 
@@ -267,28 +297,6 @@ public class ReservePlaceActivity extends BaseActivity {
         startPicker.show();
     }
 
-    private void observeVehicles() {
-        AppRepository.getInstance().getVehiclesLiveData().observe(this, vehicles -> {
-            if (binding == null || vehicles == null) return;
-
-            currentVehiclesList.clear();
-            currentVehiclesList.addAll(vehicles);
-
-            List<String> vehicleStrings = new ArrayList<>();
-            for (Vehicle v : vehicles) {
-                vehicleStrings.add(v.getDisplayText());
-            }
-
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                    this,
-                    android.R.layout.simple_spinner_item,
-                    vehicleStrings
-            );
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            binding.spinnerVehicles.setAdapter(adapter);
-        });
-    }
-
     private void showAddVehicleDialog() {
         DialogAddVehicleBinding dialogBinding = DialogAddVehicleBinding.inflate(LayoutInflater.from(this));
 
@@ -299,13 +307,16 @@ public class ReservePlaceActivity extends BaseActivity {
                     String plate = dialogBinding.editVehiclePlate.getText() != null ? dialogBinding.editVehiclePlate.getText().toString() : "";
                     String color = dialogBinding.editVehicleColor.getText() != null ? dialogBinding.editVehicleColor.getText().toString() : "";
 
-                    if (!make.trim().isEmpty() && !plate.trim().isEmpty()) {
-                        Vehicle newVehicle = new Vehicle("v_" + System.currentTimeMillis(), make.trim(), plate.trim(), color.trim());
-                        AppRepository.getInstance().addVehicle(newVehicle);
-                        Toast.makeText(this, "Dodano pojazd!", Toast.LENGTH_SHORT).show();
+                    if (make.trim().isEmpty() || plate.trim().length() < 2 || plate.trim().length() > 15) {
+                        Toast.makeText(this, R.string.error_vehicle_validation, Toast.LENGTH_LONG).show();
+                        return;
                     }
+
+                    Vehicle newVehicle = new Vehicle(UUID.randomUUID().toString(), make.trim(), plate.trim(), color.trim());
+                    viewModel.addVehicle(newVehicle);
+                    Toast.makeText(this, R.string.msg_vehicle_added, Toast.LENGTH_SHORT).show();
                 })
-                .setNegativeButton("Anuluj", null)
+                .setNegativeButton(R.string.btn_cancel, null)
                 .show();
     }
 
