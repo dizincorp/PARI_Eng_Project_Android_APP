@@ -7,8 +7,8 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.project.network.ApiClient;
-import com.example.project.network.ApiService;
 import com.example.project.network.Resource;
+import com.example.project.network.SpotApiService;
 import com.example.project.network.model.ParkingSpotResponse;
 
 import java.util.List;
@@ -18,7 +18,7 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 /**
- * Repository responsible for executing parking spot REST API requests via {@link ApiService}
+ * Repository responsible for executing parking spot REST API requests via {@link SpotApiService}
  * and exposing reactive {@link LiveData} wrapped in {@link Resource} to ViewModels.
  */
 public class ParkingSpotRepository {
@@ -26,21 +26,21 @@ public class ParkingSpotRepository {
     private static final String TAG = "ParkingSpotRepository";
     private static ParkingSpotRepository instance;
 
-    private final ApiService apiService;
+    private final SpotApiService apiService;
 
     /**
-     * Private constructor initializing default ApiService from ApiClient.
+     * Private constructor initializing default SpotApiService from ApiClient.
      */
     private ParkingSpotRepository() {
-        this(ApiClient.getApiService());
+        this(ApiClient.getSpotApiService());
     }
 
     /**
-     * Constructor allowing custom ApiService injection for modularity and testing.
+     * Constructor allowing custom SpotApiService injection for modularity and testing.
      *
-     * @param apiService Retrofit ApiService instance
+     * @param apiService Retrofit SpotApiService instance
      */
-    public ParkingSpotRepository(@NonNull ApiService apiService) {
+    public ParkingSpotRepository(@NonNull SpotApiService apiService) {
         this.apiService = apiService;
     }
 
