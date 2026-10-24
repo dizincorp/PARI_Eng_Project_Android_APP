@@ -1,5 +1,6 @@
 package com.example.project.viewmodel;
 
+import android.app.Application;
 import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
@@ -7,44 +8,28 @@ import android.os.Handler;
 import android.os.Looper;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
-import androidx.lifecycle.Transformations;
-import androidx.lifecycle.ViewModel;
 
 import com.example.project.R;
+import com.example.project.database.entity.ParkingPlaceEntity;
 import com.example.project.network.Resource;
-import com.example.project.network.model.ParkingSpot;
-import com.example.project.repository.ParkingSpotRepository;
+import com.example.project.repository.SpotRepository;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * ViewModel for map search screen managing async geocoding requests and
- * reactive parking spot discovery via {@link ParkingSpotRepository}.
+ * ViewModel for map search screen backed by {@link SpotRepository} (Room Database SSOT)
+ * and asynchronous Geocoder search operations.
  */
-public class SearchViewModel extends ViewModel {
-
-    /**
-     * Internal parameter class representing search query coordinates.
-     */
-    private static class SearchQuery {
-        final double lat;
-        final double lng;
-        final double radiusMeters;
-
-        SearchQuery(double lat, double lng, double radiusMeters) {
-            this.lat = lat;
-            this.lng = lng;
-            this.radiusMeters = radiusMeters;
-        }
-    }
+public class SearchViewModel extends AndroidViewModel {
 
     /**
      * Wrapper class for geocoding search result state.
@@ -83,40 +68,33 @@ public class SearchViewModel extends ViewModel {
         }
     }
 
-    private final ParkingSpotRepository parkingSpotRepository;
+    private final SpotRepository spotRepository;
     private final MutableLiveData<SearchResult> searchResultLiveData = new MutableLiveData<>();
-    private final MutableLiveData<SearchQuery> searchQueryLiveData = new MutableLiveData<>();
-    private final LiveData<Resource<List<ParkingSpot>>> spotsLiveData;
+    private final LiveData<List<ParkingPlaceEntity>> spotsLiveData;
 
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     /**
-     * Default constructor initializing default ParkingSpotRepository singleton.
+     * Default constructor initializing dependencies using Android Application context.
+     *
+     * @param application Application instance
      */
-    public SearchViewModel() {
-        this(ParkingSpotRepository.getInstance());
+    public SearchViewModel(@NonNull Application application) {
+        this(application, SpotRepository.getInstance(application));
     }
 
     /**
-     * Constructor allowing custom repository injection for testability.
+     * Parameterized constructor allowing repository injection for testing.
      *
-     * @param parkingSpotRepository Parking spot repository instance
+     * @param application    Application instance
+     * @param spotRepository SpotRepository instance
      */
-    public SearchViewModel(@NonNull ParkingSpotRepository parkingSpotRepository) {
-        this.parkingSpotRepository = parkingSpotRepository;
-
-        // Reactive pipeline: whenever searchQueryLiveData changes, execute network search
-        this.spotsLiveData = Transformations.switchMap(searchQueryLiveData, query -> {
-            if (query == null) {
-                return new MutableLiveData<>(Resource.success(Collections.emptyList()));
-            }
-            return this.parkingSpotRepository.searchSpots(
-                    query.lat,
-                    query.lng,
-                    query.radiusMeters
-            );
-        });
+    public SearchViewModel(@NonNull Application application, @NonNull SpotRepository spotRepository) {
+        super(application);
+        this.spotRepository = spotRepository;
+        // Single Source of Truth: spots are observed directly from local Room Database
+        this.spotsLiveData = this.spotRepository.getSpotsFromRoom();
     }
 
     /**
@@ -129,24 +107,33 @@ public class SearchViewModel extends ViewModel {
     }
 
     /**
-     * Gets the reactive LiveData stream of parking spots fetched from backend service.
+     * Gets the reactive LiveData stream of parking spots directly from Room Database.
      *
-     * @return LiveData containing Resource with list of ParkingSpot items
+     * @return LiveData containing cached list of ParkingPlaceEntity items
      */
-    public LiveData<Resource<List<ParkingSpot>>> getSpotsLiveData() {
+    public LiveData<List<ParkingPlaceEntity>> getSpotsLiveData() {
         return spotsLiveData;
     }
 
     /**
-     * Triggers loading nearby parking spots from the backend API for the given coordinates.
+     * Gets the network sync operation status from repository.
+     *
+     * @return LiveData containing sync status Resource
+     */
+    public LiveData<Resource<Void>> getSyncStatusLiveData() {
+        return spotRepository.getSyncStatusLiveData();
+    }
+
+    /**
+     * Triggers background download of nearby parking spots from REST API and updates Room cache.
      *
      * @param lat          Latitude coordinate
      * @param lng          Longitude coordinate
      * @param radiusMeters Search radius in meters (defaults to 5000.0 if null)
      */
-    public void loadNearbySpots(double lat, double lng, Double radiusMeters) {
+    public void loadNearbySpots(double lat, double lng, @Nullable Double radiusMeters) {
         double radius = (radiusMeters != null && radiusMeters > 0) ? radiusMeters : 5000.0;
-        searchQueryLiveData.setValue(new SearchQuery(lat, lng, radius));
+        spotRepository.fetchAndSaveSpots(lat, lng, radius);
     }
 
     /**
@@ -173,7 +160,6 @@ public class SearchViewModel extends ViewModel {
 
                     mainHandler.post(() -> {
                         searchResultLiveData.setValue(new SearchResult(latLng, title));
-                        // Automatically query parking spots around found location
                         loadNearbySpots(latLng.latitude, latLng.longitude, 5000.0);
                     });
                 } else {

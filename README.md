@@ -48,11 +48,13 @@ ParkShare is a modern Android application written in **Java** following the **MV
 
 * **Language**: Java 11
 * **Architecture**: MVVM (Model-View-ViewModel) + Single Source of Truth Repository Pattern
+* **Networking**: Retrofit2 + Gson (`SpotApiService`, `AuthInterceptor` with Bearer JWT token)
+* **Local Database**: Room Database (`AppDatabase`, `ParkingPlaceDao` with batch inserts)
 * **UI Layer**: View Binding, Material Design Components 3, `ConstraintLayout`, `RecyclerView`
 * **Maps**: Google Maps SDK for Android (`SupportMapFragment`)
 * **Reactivity**: `LiveData`, `MutableLiveData`
 * **Asynchronous Execution**: `ExecutorService`, `Handler`, `Looper`
-* **Package Structure**: Package-by-layer (`.ui`, `.viewmodel`, `.model`, `.adapter`, `.repository`)
+* **Package Structure**: Package-by-layer (`.ui`, `.viewmodel`, `.model`, `.adapter`, `.repository`, `.network`, `.database`)
 
 ---
 

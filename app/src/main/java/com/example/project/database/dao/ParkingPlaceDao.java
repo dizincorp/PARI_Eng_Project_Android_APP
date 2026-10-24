@@ -32,6 +32,9 @@ public interface ParkingPlaceDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertOrUpdate(ParkingPlaceEntity place);
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insertOrUpdateAll(List<ParkingPlaceEntity> places);
+
     @Delete
     void delete(ParkingPlaceEntity place);
 

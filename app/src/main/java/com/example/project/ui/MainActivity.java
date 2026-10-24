@@ -9,15 +9,14 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.appcompat.widget.SearchView;
-import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.project.R;
+import com.example.project.database.entity.ParkingPlaceEntity;
 import com.example.project.databinding.ActivityMainBinding;
-import com.example.project.network.model.ParkingSpot;
 import com.example.project.viewmodel.SearchViewModel;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -35,8 +34,8 @@ import java.util.Locale;
 import java.util.Map;
 
 /**
- * Main map activity hosting {@link SupportMapFragment} to discover and reserve
- * parking spots loaded dynamically from the backend via {@link SearchViewModel} and LiveData.
+ * Main Activity hosting the Google Maps search fragment with reactive parking spot discovery
+ * backed by Room Database as the Single Source of Truth.
  */
 public class MainActivity extends BaseActivity implements OnMapReadyCallback {
 
@@ -46,8 +45,8 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
     private SearchViewModel viewModel;
     private GoogleMap googleMap;
 
-    private final Map<String, ParkingSpot> markerSpotMap = new HashMap<>();
-    private ParkingSpot selectedSpotForBooking = null;
+    private final Map<String, ParkingPlaceEntity> markerSpotMap = new HashMap<>();
+    private ParkingPlaceEntity selectedSpotForBooking = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -57,22 +56,9 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        int margin16Px = Math.round(16 * getResources().getDisplayMetrics().density);
         ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-
-            if (binding != null && binding.cardSearch != null) {
-                ConstraintLayout.LayoutParams cardParams =
-                        (ConstraintLayout.LayoutParams) binding.cardSearch.getLayoutParams();
-                if (cardParams != null) {
-                    cardParams.topMargin = systemBars.top + margin16Px;
-                    binding.cardSearch.setLayoutParams(cardParams);
-                }
-            }
-
-            if (binding != null && binding.bottomNavigation != null) {
-                binding.bottomNavigation.setPadding(0, 0, 0, systemBars.bottom);
-            }
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
         });
 
@@ -81,7 +67,7 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
         viewModel = new ViewModelProvider(this).get(SearchViewModel.class);
 
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
-                .findFragmentById(R.id.map);
+                .findFragmentById(binding.map.getId());
         if (mapFragment != null) {
             mapFragment.getMapAsync(this);
         }
@@ -96,7 +82,7 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
 
         binding.btnReserveNow.setOnClickListener(v -> {
             if (selectedSpotForBooking != null) {
-                if (!selectedSpotForBooking.isFree()) {
+                if (selectedSpotForBooking.isOccupied()) {
                     Toast.makeText(this, "To miejsce jest obecnie zajęte!", Toast.LENGTH_SHORT).show();
                     return;
                 }
@@ -144,16 +130,17 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
             }
         });
 
-        // Observe reactive parking spots from backend REST API
-        viewModel.getSpotsLiveData().observe(this, resource -> {
-            if (resource == null) return;
+        // Observe reactive parking spots from local Room Database (Single Source of Truth)
+        viewModel.getSpotsLiveData().observe(this, spots -> {
+            if (spots != null) {
+                displaySpotsOnMap(spots);
+            }
+        });
 
-            if (resource.isSuccess() && resource.getData() != null) {
-                displaySpotsOnMap(resource.getData());
-            } else if (resource.isError()) {
-                if (resource.getMessage() != null) {
-                    Log.e(TAG, "Error loading parking spots from API: " + resource.getMessage());
-                }
+        // Observe network sync status
+        viewModel.getSyncStatusLiveData().observe(this, resource -> {
+            if (resource != null && resource.isError() && resource.getMessage() != null) {
+                Log.e(TAG, "Sync error: " + resource.getMessage());
             }
         });
     }
@@ -161,29 +148,29 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
     /**
      * Renders parking spot markers dynamically onto Google Map.
      *
-     * @param spots List of parking spots returned from backend service
+     * @param spots List of parking spots from Room Database
      */
-    private void displaySpotsOnMap(List<ParkingSpot> spots) {
+    private void displaySpotsOnMap(List<ParkingPlaceEntity> spots) {
         if (googleMap == null || spots == null) return;
 
         googleMap.clear();
         markerSpotMap.clear();
 
-        for (ParkingSpot spot : spots) {
+        for (ParkingPlaceEntity spot : spots) {
             if (spot == null) continue;
 
             float markerColor;
-            if (!spot.isFree()) {
+            if (spot.isOccupied()) {
                 markerColor = BitmapDescriptorFactory.HUE_RED;   // Red: occupied spot
             } else {
                 markerColor = BitmapDescriptorFactory.HUE_GREEN; // Green: available spot to reserve
             }
 
-            LatLng pos = new LatLng(spot.getLat(), spot.getLng());
+            LatLng pos = new LatLng(spot.getLatitude(), spot.getLongitude());
             Marker marker = googleMap.addMarker(new MarkerOptions()
                     .position(pos)
-                    .title(spot.getName())
-                    .snippet(String.format(Locale.getDefault(), "%.2f zł/h", spot.getHourlyPrice()))
+                    .title(spot.getTitle())
+                    .snippet(String.format(Locale.getDefault(), "%.2f zł/h", spot.getPrice()))
                     .icon(BitmapDescriptorFactory.defaultMarker(markerColor)));
 
             if (marker != null) {
@@ -200,7 +187,7 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
         LatLng defaultLocation = new LatLng(52.2297, 21.0122);
         this.googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 12f));
 
-        // Initial spot loading for default location
+        // Initial spot loading from backend into Room for default location
         viewModel.loadNearbySpots(defaultLocation.latitude, defaultLocation.longitude, 5000.0);
 
         // Dynamically load spots around camera center when map panning stops
@@ -212,7 +199,7 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
         });
 
         googleMap.setOnMarkerClickListener(marker -> {
-            ParkingSpot spot = markerSpotMap.get(marker.getId());
+            ParkingPlaceEntity spot = markerSpotMap.get(marker.getId());
             if (spot != null) {
                 showSpotPreviewCard(spot);
                 return true;
@@ -230,26 +217,44 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
     /**
      * Displays the preview card overlay for a clicked parking spot marker.
      *
-     * @param spot Selected parking spot
+     * @param spot Selected parking spot from Room Database
      */
-    private void showSpotPreviewCard(ParkingSpot spot) {
+    private void showSpotPreviewCard(ParkingPlaceEntity spot) {
         if (binding == null || spot == null) return;
 
         selectedSpotForBooking = spot;
 
-        binding.textPreviewTitle.setText(spot.getName());
-        binding.textPreviewRating.setText(String.format(Locale.getDefault(), "★ %.1f (%d)",
-                spot.getAvgRating(), spot.getReviewCount()));
-        binding.textPreviewPriceValue.setText(String.format(Locale.getDefault(), "%.0f", spot.getHourlyPrice()));
+        binding.textPreviewTitle.setText(spot.getTitle());
+        String locationStr = String.format("%s, %s",
+                spot.getCity() != null ? spot.getCity() : "",
+                spot.getStreet() != null ? spot.getStreet() : "").trim();
+        if (locationStr.startsWith(",")) {
+            locationStr = locationStr.substring(1).trim();
+        }
+        if (locationStr.endsWith(",")) {
+            locationStr = locationStr.substring(0, locationStr.length() - 1).trim();
+        }
+
+        if (!locationStr.isEmpty()) {
+            binding.textPreviewRating.setText(String.format(Locale.getDefault(), "★ %.1f (%d) • %s",
+                    spot.getRating(), spot.getRatingCount(), locationStr));
+        } else {
+            binding.textPreviewRating.setText(String.format(Locale.getDefault(), "★ %.1f (%d)",
+                    spot.getRating(), spot.getRatingCount()));
+        }
+        binding.textPreviewPriceValue.setText(String.format(Locale.getDefault(), "%.0f", spot.getPrice()));
 
         binding.chipGroupPreviewAmenities.removeAllViews();
-        if (spot.getAmenities() != null) {
-            for (String amenity : spot.getAmenities()) {
-                Chip chip = new Chip(this);
-                chip.setText(amenity);
-                chip.setClickable(false);
-                chip.setCheckable(false);
-                binding.chipGroupPreviewAmenities.addView(chip);
+        if (spot.getAmenitiesCsv() != null && !spot.getAmenitiesCsv().isEmpty()) {
+            String[] amenities = spot.getAmenitiesCsv().split(",");
+            for (String amenity : amenities) {
+                if (!amenity.trim().isEmpty()) {
+                    Chip chip = new Chip(this);
+                    chip.setText(amenity.trim());
+                    chip.setClickable(false);
+                    chip.setCheckable(false);
+                    binding.chipGroupPreviewAmenities.addView(chip);
+                }
             }
         }
 
