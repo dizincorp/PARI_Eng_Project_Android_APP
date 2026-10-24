@@ -2,13 +2,15 @@ package com.example.project.network;
 
 import com.example.project.network.model.LoginRequest;
 import com.example.project.network.model.LoginResponse;
+import com.example.project.network.model.RegisterRequest;
+import com.example.project.network.model.RegisterResponse;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.POST;
 
 /**
- * Retrofit REST API interface defining authentication endpoints.
+ * Retrofit REST API interface defining authentication and account endpoints.
  */
 public interface ApiService {
 
@@ -21,5 +23,16 @@ public interface ApiService {
     @POST("api/auth/login")
     Call<LoginResponse> login(
             @Body LoginRequest request
+    );
+
+    /**
+     * Registers a new user account on the backend service.
+     *
+     * @param request Registration payload containing user credentials and details
+     * @return Retrofit Call delivering the registered user profile
+     */
+    @POST("api/auth/register")
+    Call<RegisterResponse> register(
+            @Body RegisterRequest request
     );
 }
