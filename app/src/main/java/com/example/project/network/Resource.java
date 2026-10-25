@@ -143,6 +143,15 @@ public class Resource<T> {
     }
 
     /**
+     * Alias for getCode() returning the HTTP status code.
+     *
+     * @return HTTP status code (e.g. 200, 404, 409) or 0 if not an HTTP error
+     */
+    public int getStatusCode() {
+        return code;
+    }
+
+    /**
      * Checks if the resource is in a successful state.
      *
      * @return True if status is SUCCESS

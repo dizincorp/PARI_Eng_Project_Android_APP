@@ -1,4 +1,4 @@
-<resources>
+﻿<resources>
     <string name="app_name">ParkShare</string>
     <string name="nav_search">Szukaj</string>
     <string name="nav_reservations">Rezerwacje</string>
@@ -367,9 +367,14 @@
     <string name="btn_select_datetime">Wybierz datę i czas</string>
 
     <!-- User Reservations List Strings -->
-    <string name="msg_no_history_reservation">Brak wcześniejszych rezerwacji w historii.</string>
-    <string name="btn_refresh">Odśwież</string>
     <string name="status_pending_payment">OCZEKUJE NA PŁATNOŚĆ</string>
     <string name="status_cancelled">ANULOWANA</string>
     <string name="status_completed">ZAKOŃCZONA</string>
+    <!-- Reservation Lifecycle Strings -->
+    <string name="toast_cancel_success">Rezerwacja została pomyślnie anulowana.</string>
+    <string name="toast_cancel_failed">Nie udało się anulować rezerwacji.</string>
+    <string name="error_cannot_cancel_started">Nie można anulować rezerwacji: parkowanie zostało już rozpoczęte lub zakończone.</string>
+    <string name="toast_checkin_success">Rozpoczęto parkowanie (Check-in). Witamy na miejscu!</string>
+    <string name="toast_checkin_failed">Nie udało się rozpocząć parkowania.</string>
+    <string name="error_checkin_not_allowed">Nie można rozpocząć parkowania przed czasem rozpoczęcia rezerwacji.</string>
 </resources>

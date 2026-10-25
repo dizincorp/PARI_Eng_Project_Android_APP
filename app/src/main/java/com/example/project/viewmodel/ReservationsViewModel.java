@@ -3,6 +3,7 @@ package com.example.project.viewmodel;
 import android.app.Application;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
@@ -21,10 +22,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * ViewModel managing the state of the Reservations screen.
- * Connects to {@link ReservationRepository} to fetch reservations from REST endpoints
- * (GET /api/reservations and GET /api/reservations/incoming) and exposes Room LiveData streams
- * enforcing the Single Source of Truth principle.
+ * ViewModel managing the state of the Reservations screen and the lifecycle operations
+ * (cancellation, check-in) for user parking reservations.
+ * Connects to {@link ReservationRepository} to dispatch REST API requests and exposes
+ * Room LiveData streams enforcing the Single Source of Truth principle.
  */
 public class ReservationsViewModel extends AndroidViewModel {
 
@@ -33,6 +34,12 @@ public class ReservationsViewModel extends AndroidViewModel {
 
     private final MutableLiveData<Boolean> isLoadingLiveData = new MutableLiveData<>(false);
     private final MutableLiveData<String> errorMessageLiveData = new MutableLiveData<>(null);
+
+    // LiveData streams for reservation lifecycle actions (Cancel, Check-in)
+    private final MutableLiveData<Resource<ReservationResponse>> actionStatusLiveData = new MutableLiveData<>();
+    private final MutableLiveData<String> toastMessageLiveData = new MutableLiveData<>(null);
+    private final MutableLiveData<ReservationResponse> updatedReservationLiveData = new MutableLiveData<>(null);
+    private final MutableLiveData<String> actionErrorLiveData = new MutableLiveData<>(null);
 
     /**
      * Default constructor for ReservationsViewModel.
@@ -81,7 +88,7 @@ public class ReservationsViewModel extends AndroidViewModel {
     }
 
     /**
-     * LiveData emitting loading status of network requests.
+     * LiveData emitting loading status of list refresh requests.
      *
      * @return LiveData boolean
      */
@@ -90,12 +97,59 @@ public class ReservationsViewModel extends AndroidViewModel {
     }
 
     /**
-     * LiveData emitting user-facing error messages if a network error occurs.
+     * LiveData emitting user-facing error messages if a network error occurs during list sync.
      *
      * @return LiveData string
      */
     public LiveData<String> getErrorMessageLiveData() {
         return errorMessageLiveData;
+    }
+
+    /**
+     * LiveData tracking the status (Loading, Success, Error) of the latest lifecycle action (Cancel, Check-in).
+     *
+     * @return LiveData Resource containing {@link ReservationResponse}
+     */
+    public LiveData<Resource<ReservationResponse>> getActionStatusLiveData() {
+        return actionStatusLiveData;
+    }
+
+    /**
+     * LiveData emitting user-facing feedback messages intended to be displayed in a Toast.
+     *
+     * @return LiveData string message
+     */
+    public LiveData<String> getToastMessageLiveData() {
+        return toastMessageLiveData;
+    }
+
+    /**
+     * LiveData emitting the updated {@link ReservationResponse} after a successful server operation (HTTP 200)
+     * so that the View can instantly update its displayed state.
+     *
+     * @return LiveData containing the latest ReservationResponse
+     */
+    public LiveData<ReservationResponse> getUpdatedReservationLiveData() {
+        return updatedReservationLiveData;
+    }
+
+    /**
+     * LiveData emitting user-facing error descriptions when an action fails (e.g. canceling already started parking).
+     *
+     * @return LiveData string error message
+     */
+    public LiveData<String> getActionErrorLiveData() {
+        return actionErrorLiveData;
+    }
+
+    /**
+     * Gets reactive LiveData stream for a single reservation by ID from Room DB cache.
+     *
+     * @param id Unique reservation ID
+     * @return LiveData emitting ReservationEntity
+     */
+    public LiveData<ReservationEntity> getReservationByIdLiveData(@NonNull String id) {
+        return reservationRepository.getReservationByIdLiveData(id);
     }
 
     /**
@@ -140,6 +194,106 @@ public class ReservationsViewModel extends AndroidViewModel {
                     remainingCalls[0]--;
                     if (remainingCalls[0] <= 0) {
                         isLoadingLiveData.setValue(false);
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * Cancels an active reservation via POST /api/reservations/{id}/cancel.
+     * Upon HTTP 200 success, emits the updated model to {@link #getUpdatedReservationLiveData()},
+     * triggers {@link #getToastMessageLiveData()} with a confirmation message, updates local Room cache,
+     * and refreshes the reservation lists.
+     * On error (e.g. HTTP 409 when parking has already started), emits the error message to
+     * {@link #getActionErrorLiveData()} and {@link #getToastMessageLiveData()}.
+     *
+     * @param id Unique identifier of the reservation to cancel
+     */
+    public void cancelReservation(@Nullable String id) {
+        if (id == null || id.trim().isEmpty()) {
+            String validationMsg = getApplication().getString(R.string.toast_cancel_failed);
+            actionErrorLiveData.setValue(validationMsg);
+            toastMessageLiveData.setValue(validationMsg);
+            return;
+        }
+
+        String currentEmail = appRepository.getUserEmailLiveData().getValue();
+        actionStatusLiveData.setValue(Resource.loading(null));
+
+        LiveData<Resource<ReservationResponse>> source = reservationRepository.cancelReservation(id.trim(), currentEmail);
+        source.observeForever(new Observer<Resource<ReservationResponse>>() {
+            @Override
+            public void onChanged(Resource<ReservationResponse> resource) {
+                if (resource != null && !resource.isLoading()) {
+                    source.removeObserver(this);
+                    actionStatusLiveData.setValue(resource);
+
+                    if (resource.isSuccess() && resource.getData() != null) {
+                        ReservationResponse updated = resource.getData();
+                        updatedReservationLiveData.setValue(updated);
+                        toastMessageLiveData.setValue(getApplication().getString(R.string.toast_cancel_success));
+                        // Automatically synchronize lists from backend and Room cache
+                        refreshReservations();
+                    } else if (resource.isError()) {
+                        String errorMsg = resource.getMessage();
+                        if (resource.getCode() == 409 || resource.getCode() == 400) {
+                            errorMsg = getApplication().getString(R.string.error_cannot_cancel_started);
+                        } else if (errorMsg == null || errorMsg.trim().isEmpty()) {
+                            errorMsg = getApplication().getString(R.string.toast_cancel_failed);
+                        }
+                        actionErrorLiveData.setValue(errorMsg);
+                        toastMessageLiveData.setValue(errorMsg);
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * Performs check-in to begin parking for the reservation via POST /api/reservations/{id}/check-in.
+     * Upon HTTP 200 success, emits the updated model to {@link #getUpdatedReservationLiveData()},
+     * triggers {@link #getToastMessageLiveData()} with a welcome message, updates local Room cache,
+     * and refreshes the reservation lists.
+     * On error (e.g. before start time or already checked-in), emits error message to
+     * {@link #getActionErrorLiveData()} and {@link #getToastMessageLiveData()}.
+     *
+     * @param id Unique identifier of the reservation to check in
+     */
+    public void checkIn(@Nullable String id) {
+        if (id == null || id.trim().isEmpty()) {
+            String validationMsg = getApplication().getString(R.string.toast_checkin_failed);
+            actionErrorLiveData.setValue(validationMsg);
+            toastMessageLiveData.setValue(validationMsg);
+            return;
+        }
+
+        String currentEmail = appRepository.getUserEmailLiveData().getValue();
+        actionStatusLiveData.setValue(Resource.loading(null));
+
+        LiveData<Resource<ReservationResponse>> source = reservationRepository.checkInReservation(id.trim(), currentEmail);
+        source.observeForever(new Observer<Resource<ReservationResponse>>() {
+            @Override
+            public void onChanged(Resource<ReservationResponse> resource) {
+                if (resource != null && !resource.isLoading()) {
+                    source.removeObserver(this);
+                    actionStatusLiveData.setValue(resource);
+
+                    if (resource.isSuccess() && resource.getData() != null) {
+                        ReservationResponse updated = resource.getData();
+                        updatedReservationLiveData.setValue(updated);
+                        toastMessageLiveData.setValue(getApplication().getString(R.string.toast_checkin_success));
+                        // Automatically synchronize lists from backend and Room cache
+                        refreshReservations();
+                    } else if (resource.isError()) {
+                        String errorMsg = resource.getMessage();
+                        if (resource.getCode() == 400) {
+                            errorMsg = getApplication().getString(R.string.error_checkin_not_allowed);
+                        } else if (errorMsg == null || errorMsg.trim().isEmpty()) {
+                            errorMsg = getApplication().getString(R.string.toast_checkin_failed);
+                        }
+                        actionErrorLiveData.setValue(errorMsg);
+                        toastMessageLiveData.setValue(errorMsg);
                     }
                 }
             }

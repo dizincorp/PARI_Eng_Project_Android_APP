@@ -17,6 +17,8 @@ import com.example.project.database.entity.ReservationEntity;
 import com.example.project.network.ApiClient;
 import com.example.project.network.ReservationApiService;
 import com.example.project.network.Resource;
+import com.example.project.network.model.CancelReservationRequest;
+import com.example.project.network.model.CheckInReservationRequest;
 import com.example.project.network.model.ReservationRequest;
 import com.example.project.network.model.ReservationResponse;
 import com.google.gson.JsonObject;
@@ -35,8 +37,9 @@ import retrofit2.Response;
 
 /**
  * Repository enforcing the Single Source of Truth (SSOT) pattern for reservations.
- * Sends reservation requests and fetches user reservations from the backend REST API
- * via {@link ReservationApiService} and synchronizes them into the local Room Database.
+ * Sends reservation requests, fetches user reservations, and manages lifecycle transitions
+ * (check-in, cancellation) from the backend REST API via {@link ReservationApiService}
+ * and synchronizes them into the local Room Database.
  */
 public class ReservationRepository {
 
@@ -121,6 +124,16 @@ public class ReservationRepository {
      */
     public LiveData<List<ReservationEntity>> getAllReservationsLiveData(@Nullable String userEmail) {
         return reservationDao.getAllReservationsListLiveData(userEmail != null ? userEmail : "");
+    }
+
+    /**
+     * Gets a reactive LiveData stream for a single reservation by ID from the Room database cache.
+     *
+     * @param reservationId Unique identifier of the reservation
+     * @return LiveData emitting the ReservationEntity
+     */
+    public LiveData<ReservationEntity> getReservationByIdLiveData(@NonNull String reservationId) {
+        return reservationDao.getReservationByIdLiveData(reservationId);
     }
 
     /**
@@ -260,6 +273,182 @@ public class ReservationRepository {
         });
 
         return resultLiveData;
+    }
+
+    /**
+     * Cancels an existing reservation by its unique identifier via POST /api/reservations/{id}/cancel
+     * and synchronizes the updated state to the local Room database cache.
+     *
+     * @param reservationId Unique identifier of the reservation to cancel
+     * @param userEmail     Current user's email address for local account isolation
+     * @return LiveData emitting Resource with the updated {@link ReservationResponse}
+     */
+    public LiveData<Resource<ReservationResponse>> cancelReservation(@NonNull String reservationId,
+                                                                     @Nullable String userEmail) {
+        MutableLiveData<Resource<ReservationResponse>> resultLiveData = new MutableLiveData<>();
+        resultLiveData.setValue(Resource.loading(null));
+
+        if (reservationId == null || reservationId.trim().isEmpty()) {
+            resultLiveData.setValue(Resource.error("Nieprawidłowy identyfikator rezerwacji", null, 400));
+            return resultLiveData;
+        }
+
+        apiService.cancelReservation(reservationId.trim()).enqueue(new Callback<ReservationResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<ReservationResponse> call,
+                                   @NonNull Response<ReservationResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    ReservationResponse body = response.body();
+                    diskExecutor.execute(() -> {
+                        ParkingPlaceEntity place = parkingPlaceDao.getPlaceById(body.getSpotId());
+                        if (place != null) {
+                            place.setOccupied(false);
+                            parkingPlaceDao.insertOrUpdate(place);
+                        }
+
+                        ReservationEntity entity = toEntity(body, userEmail, place);
+                        entity.setStatus("ANULOWANA");
+                        reservationDao.insertOrUpdate(entity);
+
+                        resultLiveData.postValue(Resource.success(body));
+                    });
+                } else {
+                    String errorMsg = parseCancelErrorMessage(response);
+                    Log.e(TAG, "cancelReservation failed with HTTP " + response.code() + ": " + errorMsg);
+                    resultLiveData.setValue(Resource.error(errorMsg, null, response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ReservationResponse> call, @NonNull Throwable t) {
+                String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd połączenia z serwerem";
+                Log.e(TAG, "cancelReservation network failure: " + errorMsg, t);
+                resultLiveData.setValue(Resource.error(errorMsg, null, 0));
+            }
+        });
+
+        return resultLiveData;
+    }
+
+    /**
+     * Performs check-in to begin parking for the reservation via POST /api/reservations/{id}/check-in
+     * and synchronizes the active parking state into Room database cache.
+     *
+     * @param reservationId Unique identifier of the reservation
+     * @param userEmail     Current user's email address for local account isolation
+     * @return LiveData emitting Resource with the updated {@link ReservationResponse}
+     */
+    public LiveData<Resource<ReservationResponse>> checkInReservation(@NonNull String reservationId,
+                                                                      @Nullable String userEmail) {
+        MutableLiveData<Resource<ReservationResponse>> resultLiveData = new MutableLiveData<>();
+        resultLiveData.setValue(Resource.loading(null));
+
+        if (reservationId == null || reservationId.trim().isEmpty()) {
+            resultLiveData.setValue(Resource.error("Nieprawidłowy identyfikator rezerwacji", null, 400));
+            return resultLiveData;
+        }
+
+        apiService.checkInReservation(reservationId.trim()).enqueue(new Callback<ReservationResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<ReservationResponse> call,
+                                   @NonNull Response<ReservationResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    ReservationResponse body = response.body();
+                    diskExecutor.execute(() -> {
+                        ParkingPlaceEntity place = parkingPlaceDao.getPlaceById(body.getSpotId());
+                        if (place != null) {
+                            place.setOccupied(true);
+                            parkingPlaceDao.insertOrUpdate(place);
+                        }
+
+                        ReservationEntity entity = toEntity(body, userEmail, place);
+                        entity.setStatus("AKTYWNA");
+                        reservationDao.insertOrUpdate(entity);
+
+                        resultLiveData.postValue(Resource.success(body));
+                    });
+                } else {
+                    String errorMsg = parseCheckInErrorMessage(response);
+                    Log.e(TAG, "checkInReservation failed with HTTP " + response.code() + ": " + errorMsg);
+                    resultLiveData.setValue(Resource.error(errorMsg, null, response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ReservationResponse> call, @NonNull Throwable t) {
+                String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd połączenia z serwerem";
+                Log.e(TAG, "checkInReservation network failure: " + errorMsg, t);
+                resultLiveData.setValue(Resource.error(errorMsg, null, 0));
+            }
+        });
+
+        return resultLiveData;
+    }
+
+    /**
+     * Parses backend error response for cancel reservation requests into human-readable messages.
+     * Handles HTTP 409/400 (e.g. if reservation is already active or completed and cannot be canceled).
+     *
+     * @param response Retrofit response
+     * @return User-facing error message
+     */
+    private String parseCancelErrorMessage(Response<?> response) {
+        String defaultMsg = "Nie można anulować rezerwacji (HTTP " + response.code() + ")";
+        if (response.code() == 409 || response.code() == 400) {
+            defaultMsg = "Nie można anulować rezerwacji: parkowanie zostało już rozpoczęte lub zakończone.";
+        } else if (response.code() == 404) {
+            defaultMsg = "Nie znaleziono wybranej rezerwacji.";
+        } else if (response.code() == 403) {
+            defaultMsg = "Brak uprawnień do anulowania tej rezerwacji.";
+        }
+
+        try {
+            if (response.errorBody() != null) {
+                String errorBodyStr = response.errorBody().string();
+                JsonObject obj = JsonParser.parseString(errorBodyStr).getAsJsonObject();
+                if (obj.has("message") && !obj.get("message").isJsonNull()) {
+                    String serverMsg = obj.get("message").getAsString();
+                    if (response.code() == 409 || response.code() == 400) {
+                        return "Nie można anulować rezerwacji (" + serverMsg + ")";
+                    }
+                    return serverMsg;
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return defaultMsg;
+    }
+
+    /**
+     * Parses backend error response for check-in requests into human-readable messages.
+     * Handles HTTP 400/409 (e.g. if check-in is attempted before start time or already checked-in).
+     *
+     * @param response Retrofit response
+     * @return User-facing error message
+     */
+    private String parseCheckInErrorMessage(Response<?> response) {
+        String defaultMsg = "Nie można rozpocząć parkowania (HTTP " + response.code() + ")";
+        if (response.code() == 409) {
+            defaultMsg = "Parkowanie dla tej rezerwacji zostało już wcześniej rozpoczęte.";
+        } else if (response.code() == 400) {
+            defaultMsg = "Nie można rozpocząć parkowania przed czasem rozpoczęcia rezerwacji.";
+        } else if (response.code() == 404) {
+            defaultMsg = "Nie znaleziono wybranej rezerwacji.";
+        } else if (response.code() == 403) {
+            defaultMsg = "Brak uprawnień do zameldowania na tym miejscu.";
+        }
+
+        try {
+            if (response.errorBody() != null) {
+                String errorBodyStr = response.errorBody().string();
+                JsonObject obj = JsonParser.parseString(errorBodyStr).getAsJsonObject();
+                if (obj.has("message") && !obj.get("message").isJsonNull()) {
+                    return obj.get("message").getAsString();
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return defaultMsg;
     }
 
     /**
