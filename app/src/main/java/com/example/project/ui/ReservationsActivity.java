@@ -25,6 +25,8 @@ import com.example.project.model.Reservation;
 import com.example.project.repository.AppRepository;
 import com.example.project.utils.NotificationHelper;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -177,7 +179,6 @@ public class ReservationsActivity extends BaseActivity {
         }
 
         LayoutInflater inflater = LayoutInflater.from(this);
-
         for (Reservation h : historyList) {
             if (h == null) continue;
 
@@ -238,10 +239,16 @@ public class ReservationsActivity extends BaseActivity {
         dialogBinding.textDialogStreet.setText(reservation.getStreet());
         dialogBinding.textDialogPin.setText(reservation.getPinCode());
 
-        dialogBinding.textDialogEntryTime.setText(R.string.sample_time_start);
-        dialogBinding.textDialogEntryDate.setText(R.string.sample_date_dialog);
-        dialogBinding.textDialogExitTime.setText(R.string.sample_time_end);
-        dialogBinding.textDialogExitDate.setText(R.string.sample_date_dialog);
+        long startMs = reservation.getStartTimeMs() > 0 ? reservation.getStartTimeMs() : System.currentTimeMillis();
+        long endMs = reservation.getEndTimeMs() > 0 ? reservation.getEndTimeMs() : (startMs + 3600000L);
+
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+
+        dialogBinding.textDialogEntryTime.setText(timeFormat.format(new Date(startMs)));
+        dialogBinding.textDialogEntryDate.setText(dateFormat.format(new Date(startMs)));
+        dialogBinding.textDialogExitTime.setText(timeFormat.format(new Date(endMs)));
+        dialogBinding.textDialogExitDate.setText(dateFormat.format(new Date(endMs)));
 
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setView(dialogBinding.getRoot())

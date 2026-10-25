@@ -2,8 +2,11 @@ package com.example.project.network.model;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.Date;
+
 /**
  * Data Transfer Object (DTO) representing the JSON response body returned by POST /api/reservations.
+ * Uses {@link Date} for all ISO-8601 temporal fields to support seamless parsing via Gson.
  */
 public class ReservationResponse {
 
@@ -29,10 +32,10 @@ public class ReservationResponse {
     private String vehiclePlate;
 
     @SerializedName("startsAt")
-    private String startsAt;
+    private Date startsAt;
 
     @SerializedName("endsAt")
-    private String endsAt;
+    private Date endsAt;
 
     @SerializedName("status")
     private String status;
@@ -62,13 +65,13 @@ public class ReservationResponse {
     private String cancelReason;
 
     @SerializedName("createdAt")
-    private String createdAt;
+    private Date createdAt;
 
     @SerializedName("checkInAt")
-    private String checkInAt;
+    private Date checkInAt;
 
     @SerializedName("checkOutAt")
-    private String checkOutAt;
+    private Date checkOutAt;
 
     @SerializedName("overstayPenalty")
     private Double overstayPenalty;
@@ -142,20 +145,38 @@ public class ReservationResponse {
         this.vehiclePlate = vehiclePlate;
     }
 
-    public String getStartsAt() {
-        return startsAt != null ? startsAt : "";
+    public Date getStartsAt() {
+        return startsAt;
     }
 
-    public void setStartsAt(String startsAt) {
+    public void setStartsAt(Date startsAt) {
         this.startsAt = startsAt;
     }
 
-    public String getEndsAt() {
-        return endsAt != null ? endsAt : "";
+    public Date getEndsAt() {
+        return endsAt;
     }
 
-    public void setEndsAt(String endsAt) {
+    public void setEndsAt(Date endsAt) {
         this.endsAt = endsAt;
+    }
+
+    /**
+     * Convenience method returning startsAt timestamp in milliseconds.
+     *
+     * @return Milliseconds since epoch, or 0 if startsAt is null
+     */
+    public long getStartsAtMillis() {
+        return startsAt != null ? startsAt.getTime() : 0L;
+    }
+
+    /**
+     * Convenience method returning endsAt timestamp in milliseconds.
+     *
+     * @return Milliseconds since epoch, or 0 if endsAt is null
+     */
+    public long getEndsAtMillis() {
+        return endsAt != null ? endsAt.getTime() : 0L;
     }
 
     public String getStatus() {
@@ -230,27 +251,27 @@ public class ReservationResponse {
         this.cancelReason = cancelReason;
     }
 
-    public String getCreatedAt() {
+    public Date getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(String createdAt) {
+    public void setCreatedAt(Date createdAt) {
         this.createdAt = createdAt;
     }
 
-    public String getCheckInAt() {
+    public Date getCheckInAt() {
         return checkInAt;
     }
 
-    public void setCheckInAt(String checkInAt) {
+    public void setCheckInAt(Date checkInAt) {
         this.checkInAt = checkInAt;
     }
 
-    public String getCheckOutAt() {
+    public Date getCheckOutAt() {
         return checkOutAt;
     }
 
-    public void setCheckOutAt(String checkOutAt) {
+    public void setCheckOutAt(Date checkOutAt) {
         this.checkOutAt = checkOutAt;
     }
 

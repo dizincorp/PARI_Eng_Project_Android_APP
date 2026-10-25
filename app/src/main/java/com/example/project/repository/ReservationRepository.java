@@ -23,7 +23,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
+import java.util.Date;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -180,6 +180,8 @@ public class ReservationRepository {
 
     /**
      * Converts network ReservationResponse DTO into local Room ReservationEntity.
+     * Maps ISO-8601 startsAt and endsAt timestamps into local millisecond values,
+     * human-readable dateString, and timeRange.
      *
      * @param res       ReservationResponse DTO
      * @param userEmail User email
@@ -204,13 +206,21 @@ public class ReservationRepository {
             entity.setPhotoResId(R.drawable.default_parking_spot);
         }
         entity.setPinCode(res.getPinCode() != null && !res.getPinCode().isEmpty() ? res.getPinCode() : "4829");
-        entity.setStatus("AKTYWNA");
+        entity.setStatus(res.getStatus() != null && !res.getStatus().isEmpty() ? res.getStatus() : "AKTYWNA");
         entity.setTotalPrice(res.getTotal());
         entity.setCarPlate(res.getVehiclePlate());
         entity.setVehicleInfo(res.getVehiclePlate());
 
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        entity.setDateString(sdf.format(Calendar.getInstance().getTime()));
+        // Accurately map timestamps from backend response
+        long startMs = res.getStartsAtMillis() > 0 ? res.getStartsAtMillis() : System.currentTimeMillis();
+        long endMs = res.getEndsAtMillis() > 0 ? res.getEndsAtMillis() : (startMs + 3600000L);
+        entity.setStartTimeMs(startMs);
+        entity.setEndTimeMs(endMs);
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
+        entity.setDateString(dateFormat.format(new Date(startMs)));
+        entity.setTimeRange(timeFormat.format(new Date(startMs)) + " - " + timeFormat.format(new Date(endMs)));
 
         return entity;
     }

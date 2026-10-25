@@ -3,6 +3,12 @@ package com.example.project.network;
 import android.content.Context;
 
 import com.example.project.utils.SessionManager;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+
+import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.util.Date;
 
 import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
@@ -10,7 +16,8 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 /**
  * Singleton client providing configured Retrofit ApiService and SpotApiService instances
- * with automatic JWT authorization header injection via {@link AuthInterceptor}.
+ * with automatic JWT authorization header injection via {@link AuthInterceptor}
+ * and robust ISO-8601 date-time adapters registered in Gson.
  */
 public class ApiClient {
 
@@ -27,6 +34,7 @@ public class ApiClient {
     private static ReservationApiService reservationApiService;
     private static VehicleApiService vehicleApiService;
     private static OkHttpClient okHttpClient;
+    private static Gson gsonInstance;
 
     private ApiClient() {
     }
@@ -56,12 +64,31 @@ public class ApiClient {
         return okHttpClient;
     }
 
+    /**
+     * Creates and returns a configured Gson instance with custom ISO-8601 date adapters
+     * for {@link Date}, {@link LocalDateTime}, and {@link ZonedDateTime} to ensure reliable
+     * bidirectional serialization and deserialization with the backend REST API.
+     *
+     * @return Configured Gson instance
+     */
+    public static synchronized Gson getGson() {
+        if (gsonInstance == null) {
+            gsonInstance = new GsonBuilder()
+                    .setDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+                    .registerTypeAdapter(Date.class, new IsoDateTimeAdapter.DateAdapter())
+                    .registerTypeAdapter(LocalDateTime.class, new IsoDateTimeAdapter.LocalDateTimeAdapter())
+                    .registerTypeAdapter(ZonedDateTime.class, new IsoDateTimeAdapter.ZonedDateTimeAdapter())
+                    .create();
+        }
+        return gsonInstance;
+    }
+
     private static synchronized Retrofit getRetrofit() {
         if (retrofitInstance == null) {
             retrofitInstance = new Retrofit.Builder()
                     .baseUrl(baseUrl)
                     .client(getOkHttpClient())
-                    .addConverterFactory(GsonConverterFactory.create())
+                    .addConverterFactory(GsonConverterFactory.create(getGson()))
                     .build();
         }
         return retrofitInstance;
@@ -128,6 +155,7 @@ public class ApiClient {
             spotApiService = null;
             reservationApiService = null;
             vehicleApiService = null;
+            gsonInstance = null;
         }
     }
 }

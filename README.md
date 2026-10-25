@@ -13,21 +13,31 @@ ParkShare is a modern Android application written in **Java** following the **MV
 
 ### 2. 📝 Reservation Process (`ReservePlaceActivity`)
 * **Spot Details & Pricing**: Full pricing breakdown (hourly rate, service fee, total).
-* **Schedule Selector**: Time interval schedule selector with boundary validation against allowed spot hours.
+* **Precise Date & Time Selection (RRRR-MM-DD GG:mm:ss)**:
+  * Beautiful Material dialog (`DialogDateTimePickerBinding` / `dialog_date_time_picker.xml`) with rounded corners, pill toggle for Start vs End, date wheel spinner, and side-by-side NumberPickers for Hour (00-23), Minute (00-59), and Second (00-59).
+  * Real-time preview pill and validation ensuring start time is strictly earlier than end time and falls within owner access hours.
+  * Separate clickable start and end datetime cards on the reservation screen.
 * **Vehicle Selector & Deduplicated Vehicle Management**: Select existing vehicle or add a new vehicle via `POST /api/vehicles` and `VehicleRepository` without duplicate records.
-* **Real REST Reservations (`POST /api/reservations`)**: Reserving a spot calls backend via `ReservationRepository`, updates status to occupied, marks it on the map, and creates an active reservation in Room.
+* **Real REST Reservations (`POST /api/reservations`)**: Reserving a spot dispatches ISO-8601 UTC timestamps to backend via `ReservationRepository`, updates status to occupied, marks it on the map, and creates an active reservation in Room.
 * **HTTP 409 Conflict Handling**: Detects concurrent booking conflicts (HTTP 409) and alerts the user with a dialog to select another time slot.
 
 ### 3. 📅 Active & Past Reservations (`ReservationsActivity`)
 * **Active Tab (`Aktywne`)**:
   * Displays active reservation card with countdown timer (`HH:mm:ss`), spot location, and **Nawiguj do miejsca** button launching Google Maps navigation.
-  * Interactive details dialog showing entry PIN code, entry/exit schedule, **Pobierz potwierdzenie**, and **Anuluj rezerwację** button.
+  * Accurately calculates remaining / upcoming time using parsed start and end epoch milliseconds (eliminating 0h 00m 00s display issues).
+  * Interactive details dialog showing entry PIN code, entry/exit schedule dynamically formatted from timestamps, **Pobierz potwierdzenie**, and **Anuluj rezerwację** button.
   * Canceling a reservation sets spot status back to free and restores it on the map.
   * Empty state with a quick link back to search on map if no active reservation exists.
 * **History Tab (`Historia`)**:
   * Lists all past and canceled reservations with vehicle details, dates, and total amount paid.
 
-### 4. 🅿️ Owner Dashboard & Spot Management (`PlacesActivity` & `AddPlaceActivity`)
+### 4. 🌐 Robust ISO-8601 Gson Date Adapters (`IsoDateTimeAdapter`)
+* **Multi-Format Deserialization**:
+  * Handles standard ISO-8601 with milliseconds (`yyyy-MM-dd'T'HH:mm:ss.SSS'Z'`), without milliseconds (`yyyy-MM-dd'T'HH:mm:ss'Z'`), timezone offsets (`+02:00`, `+00:00`), SQL timestamps, and epoch timestamps.
+  * Registered in `ApiClient` for `Date`, `LocalDateTime`, and `ZonedDateTime`.
+  * `ReservationResponse` utilizes `Date` for all timestamp fields (`startsAt`, `endsAt`, `createdAt`, `checkInAt`, `checkOutAt`) with millis helper methods.
+
+### 5. 🅿️ Owner Dashboard & Spot Management (`PlacesActivity` & `AddPlaceActivity`)
 * **Dashboard Subtitle**: Displays dynamic user greeting and current month/year (`Dashboard • [Aktualny Miesiąc i Rok]`).
 * **Moje Miejsca**: Lists owned parking spots with status badges (**Wolne** / **Zajęte**).
 * **Separate Spot Availability Fragment**: Standalone `SpotAvailabilityFragment` managing availability time ranges.
@@ -36,7 +46,7 @@ ParkShare is a modern Android application written in **Java** following the **MV
 * **Real REST Spot Creation**: Dispatches `POST /api/spots` through `SpotRepository`, validating constraints (country: `PL`, ISO 2-letter code, positive price, ownership confirmation).
 * **Spot Editing & Deletion**: Tapping any spot opens `AddPlaceActivity` with pre-filled fields to edit spot details, pricing, amenities, and **Czas dostępu**.
 
-### 5. 👤 Profile & Profile Details (`ProfileActivity` & `ProfileDetailsActivity`)
+### 6. 👤 Profile & Profile Details (`ProfileActivity` & `ProfileDetailsActivity`)
 * **Minimalist Profile Header**: Displays user avatar, first and last name, and user rating (no extraneous membership badges).
 * **Dedicated Profile Details Screen (`ProfileDetailsActivity`)**:
   * Profile avatar image picker with runtime permission handling.
@@ -48,13 +58,13 @@ ParkShare is a modern Android application written in **Java** following the **MV
   * Endpoints: `POST /api/vehicles`, `GET /api/vehicles`, `DELETE /api/vehicles/{id}`.
   * Single Source of Truth caching in Room (`VehicleDao`) with plate-based deduplication preventing repeated entries.
 
-### 6. 🗓️ Availability Calendar (`AvailabilityCalendarActivity`)
+### 7. 🗓️ Availability Calendar (`AvailabilityCalendarActivity`)
 * **Interactive Calendar**: Dynamic calendar view allowing owners to check availability for any date.
 * **Spot & Time Range Selection**: Dropdown to select spot and input custom time range.
 * **Block Slot**: Ability to block slots for maintenance or private use.
 * **Quick Navigation**: Button to return back to the Places dashboard.
 
-### 7. 💰 Earnings & Transaction Logs (`EarningsActivity`)
+### 8. 💰 Earnings & Transaction Logs (`EarningsActivity`)
 * **Monthly Summary**: Displays overall earnings summary card.
 * **Transaction History**: Itemized list of earnings per reservation with vehicle, duration, date, and price.
 
@@ -64,7 +74,7 @@ ParkShare is a modern Android application written in **Java** following the **MV
 
 * **Language**: Java 11
 * **Architecture**: MVVM (Model-View-ViewModel) + Single Source of Truth Repository Pattern
-* **Networking**: Retrofit2 + Gson (`SpotApiService`, `ReservationApiService`, `VehicleApiService`, `AuthInterceptor` with Bearer JWT token)
+* **Networking**: Retrofit2 + Gson (`SpotApiService`, `ReservationApiService`, `VehicleApiService`, `AuthInterceptor` with Bearer JWT token, `IsoDateTimeAdapter`)
 * **Local Database**: Room Database (`AppDatabase`, `ParkingPlaceDao`, `ReservationDao`, `VehicleDao`, `UserDao`)
 * **UI Layer**: View Binding, Material Design Components 3, `ConstraintLayout`, `RecyclerView`
 * **Maps**: Google Maps SDK for Android (`SupportMapFragment`), Google Maps Geocoding API (`Geocoder`)
@@ -120,6 +130,7 @@ com.example.project/
 │   ├── ApiClient.java
 │   ├── ApiService.java
 │   ├── AuthInterceptor.java
+│   ├── IsoDateTimeAdapter.java
 │   ├── ReservationApiService.java
 │   ├── Resource.java
 │   ├── SpotApiService.java

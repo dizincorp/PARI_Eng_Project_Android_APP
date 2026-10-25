@@ -348,4 +348,19 @@
     <string name="dialog_delete_vehicle_title">Usunięcie pojazdu</string>
     <string name="dialog_delete_vehicle_confirm">Czy na pewno chcesz usunąć ten pojazd?</string>
     <string name="error_vehicle_validation">Podaj poprawny model i numer rejestracyjny (2-15 znaków)!</string>
+
+    <!-- Date and Time Picker Strings (ISO Format: yyyy-MM-dd HH:mm:ss) -->
+    <string name="title_date_time_picker">Wybierz termin rezerwacji</string>
+    <string name="subtitle_date_time_format">Format: RRRR-MM-DD GG:mm:ss</string>
+    <string name="tab_picker_start">Początek</string>
+    <string name="tab_picker_end">Koniec</string>
+    <string name="label_date_picker_header">Data (Rok, Miesiąc, Dzień)</string>
+    <string name="label_time_picker_header">Czas (Godzina : Minuta : Sekunda)</string>
+    <string name="unit_hour_label">GG</string>
+    <string name="unit_minute_label">mm</string>
+    <string name="unit_second_label">ss</string>
+    <string name="preview_start_format">Początek: %1$s</string>
+    <string name="preview_end_format">Koniec: %1$s</string>
+    <string name="btn_apply_datetime">Zatwierdź termin</string>
+    <string name="btn_select_datetime">Wybierz datę i czas</string>
 </resources>
