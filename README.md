@@ -22,14 +22,19 @@ ParkShare is a modern Android application written in **Java** following the **MV
 * **HTTP 409 Conflict Handling**: Detects concurrent booking conflicts (HTTP 409) and alerts the user with a dialog to select another time slot.
 
 ### 3. 📅 Active & Past Reservations (`ReservationsActivity`)
-* **Active Tab (`Aktywne`)**:
-  * Displays active reservation card with countdown timer (`HH:mm:ss`), spot location, and **Nawiguj do miejsca** button launching Google Maps navigation.
-  * Accurately calculates remaining / upcoming time using parsed start and end epoch milliseconds (eliminating 0h 00m 00s display issues).
-  * Interactive details dialog showing entry PIN code, entry/exit schedule dynamically formatted from timestamps, **Pobierz potwierdzenie**, and **Anuluj rezerwację** button.
-  * Canceling a reservation sets spot status back to free and restores it on the map.
-  * Empty state with a quick link back to search on map if no active reservation exists.
-* **History Tab (`Historia`)**:
-  * Lists all past and canceled reservations with vehicle details, dates, and total amount paid.
+* **REST Synchronization (`GET /api/reservations/incoming` & `GET /api/reservations`)**:
+  * Seamlessly fetches incoming / active reservations and full user history from backend endpoints via `ReservationRepository`.
+  * Synchronizes responses into the local Room Database cache (`ReservationDao`) acting as Single Source of Truth.
+  * Real-time refresh button (`btn_refresh_reservations`) and auto-refresh on activity start/resume.
+* **Modern `RecyclerView` List Display (`ReservationsAdapter` / `item_reservation.xml`)**:
+  * **Active Tab (`Aktywne`)**:
+    * Displays incoming and active bookings with color-coded status badges (**AKTYWNA TERAZ**, **OCZEKUJE NA PŁATNOŚĆ**), exact schedule, vehicle info, and entry PIN codes.
+    * Live ticking countdown timer banner (`HH:mm:ss`) calculating real-time remaining or upcoming duration.
+    * **Nawiguj do miejsca** button launching Google Maps navigation directly to the parking spot.
+    * Tapping any reservation opens a detailed modal dialog with PIN code, exact dates, confirmation download, and cancellation options.
+    * Empty state with a quick link back to search on map if no active reservations exist.
+  * **History Tab (`Historia`)**:
+    * Lists all past and canceled reservations with vehicle details, formatted dates, status badges (**ZAKOŃCZONA**, **ANULOWANA**), and total amounts paid.
 
 ### 4. 🌐 Robust ISO-8601 Gson Date Adapters (`IsoDateTimeAdapter`)
 * **Multi-Format Deserialization**:

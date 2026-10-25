@@ -205,7 +205,9 @@
     <string name="tab_active">Aktywne</string>
     <string name="tab_history">Historia</string>
     <string name="msg_no_active_reservation">nie masz zarezerwowanego miejsca, odszukaj swoje na mapie</string>
+    <string name="msg_no_history_reservation">Brak wcześniejszych rezerwacji w historii.</string>
     <string name="btn_search_on_map">Odszukaj swoje na mapie</string>
+    <string name="btn_refresh">Odśwież</string>
 
     <string name="badge_active_now">AKTYWNA TERAZ</string>
     <string name="label_remaining_time">Pozostało</string>
@@ -363,4 +365,11 @@
     <string name="preview_end_format">Koniec: %1$s</string>
     <string name="btn_apply_datetime">Zatwierdź termin</string>
     <string name="btn_select_datetime">Wybierz datę i czas</string>
+
+    <!-- User Reservations List Strings -->
+    <string name="msg_no_history_reservation">Brak wcześniejszych rezerwacji w historii.</string>
+    <string name="btn_refresh">Odśwież</string>
+    <string name="status_pending_payment">OCZEKUJE NA PŁATNOŚĆ</string>
+    <string name="status_cancelled">ANULOWANA</string>
+    <string name="status_completed">ZAKOŃCZONA</string>
 </resources>

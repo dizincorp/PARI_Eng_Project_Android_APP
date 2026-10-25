@@ -15,35 +15,46 @@ import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.project.R;
+import com.example.project.adapter.ReservationsAdapter;
 import com.example.project.databinding.ActivityReservationsBinding;
 import com.example.project.databinding.DialogActiveReservationDetailsBinding;
 import com.example.project.databinding.DialogRatingBinding;
-import com.example.project.databinding.ItemHistoryReservationBinding;
 import com.example.project.model.Reservation;
 import com.example.project.repository.AppRepository;
 import com.example.project.utils.NotificationHelper;
+import com.example.project.viewmodel.ReservationsViewModel;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
 /**
- * Activity for viewing active reservations and reservation history with rating capability.
+ * Activity for viewing user reservations pulled from the REST backend (GET /api/reservations/incoming
+ * and GET /api/reservations) and displayed in an interactive RecyclerView using MVVM architecture.
  */
-public class ReservationsActivity extends BaseActivity {
+public class ReservationsActivity extends BaseActivity implements ReservationsAdapter.OnReservationItemClickListener {
 
     private ActivityReservationsBinding binding;
+    private ReservationsViewModel viewModel;
+    private ReservationsAdapter adapter;
+
     private boolean isHistoryTab = false;
-    private Reservation currentActiveReservation = null;
+    private final List<Reservation> activeReservationsList = new ArrayList<>();
+    private final List<Reservation> historyReservationsList = new ArrayList<>();
 
     private final Handler timerHandler = new Handler(Looper.getMainLooper());
     private final Runnable timerRunnable = new Runnable() {
         @Override
         public void run() {
-            updateCountdownText();
+            if (adapter != null) {
+                adapter.updateCountdowns();
+            }
             timerHandler.postDelayed(this, 1000);
         }
     };
@@ -64,9 +75,39 @@ public class ReservationsActivity extends BaseActivity {
 
         setupBottomNavigation(binding.bottomNavigation, R.id.nav_reservations);
 
+        viewModel = new ViewModelProvider(this).get(ReservationsViewModel.class);
+
+        setupRecyclerView();
         setupTabs();
         setupClickListeners();
         observeViewModel();
+
+        // Initial fetch of reservations from REST API
+        viewModel.refreshReservations();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        startTimer();
+        // Automatically sync fresh reservations from REST backend
+        if (viewModel != null) {
+            viewModel.refreshReservations();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        stopTimer();
+    }
+
+    private void setupRecyclerView() {
+        if (binding == null) return;
+
+        adapter = new ReservationsAdapter(this);
+        binding.recyclerReservations.setLayoutManager(new LinearLayoutManager(this));
+        binding.recyclerReservations.setAdapter(adapter);
     }
 
     private void setupTabs() {
@@ -80,7 +121,9 @@ public class ReservationsActivity extends BaseActivity {
 
     private void selectTab(boolean isHistory) {
         isHistoryTab = isHistory;
-        if (binding == null) return;
+        if (binding == null || adapter == null) return;
+
+        adapter.setIsHistoryTab(isHistory);
 
         if (isHistory) {
             binding.btnTabActive.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.gray_input_bg));
@@ -89,9 +132,7 @@ public class ReservationsActivity extends BaseActivity {
             binding.btnTabHistory.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.chip_bg_selected));
             binding.btnTabHistory.setTextColor(ContextCompat.getColor(this, R.color.white));
 
-            binding.cardActiveReservation.setVisibility(View.GONE);
-            binding.layoutEmptyActive.setVisibility(View.GONE);
-            binding.containerHistoryReservations.setVisibility(View.VISIBLE);
+            renderList(historyReservationsList);
         } else {
             binding.btnTabActive.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.chip_bg_selected));
             binding.btnTabActive.setTextColor(ContextCompat.getColor(this, R.color.white));
@@ -99,98 +140,109 @@ public class ReservationsActivity extends BaseActivity {
             binding.btnTabHistory.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.gray_input_bg));
             binding.btnTabHistory.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
 
-            binding.containerHistoryReservations.setVisibility(View.GONE);
-            updateActiveReservationUI();
+            renderList(activeReservationsList);
+        }
+    }
+
+    private void renderList(List<Reservation> list) {
+        if (binding == null || adapter == null) return;
+
+        adapter.setReservations(list);
+
+        if (list == null || list.isEmpty()) {
+            binding.recyclerReservations.setVisibility(View.GONE);
+            binding.layoutEmptyState.setVisibility(View.VISIBLE);
+
+            if (isHistoryTab) {
+                binding.textEmptyTitle.setText(R.string.tab_history);
+                binding.textEmptyMessage.setText(R.string.msg_no_history_reservation);
+                binding.btnSearchOnMap.setVisibility(View.GONE);
+            } else {
+                binding.textEmptyTitle.setText(R.string.title_reservations);
+                binding.textEmptyMessage.setText(R.string.msg_no_active_reservation);
+                binding.btnSearchOnMap.setVisibility(View.VISIBLE);
+            }
+        } else {
+            binding.layoutEmptyState.setVisibility(View.GONE);
+            binding.recyclerReservations.setVisibility(View.VISIBLE);
         }
     }
 
     private void setupClickListeners() {
         if (binding == null) return;
 
+        binding.btnRefreshReservations.setOnClickListener(v -> {
+            if (viewModel != null) {
+                viewModel.refreshReservations();
+            }
+        });
+
         binding.btnSearchOnMap.setOnClickListener(v -> {
             Intent intent = new Intent(ReservationsActivity.this, MainActivity.class);
             startActivity(intent);
             finish();
         });
-
-        binding.cardActiveReservation.setOnClickListener(v -> {
-            if (currentActiveReservation != null) {
-                showActiveReservationDialog(currentActiveReservation);
-            }
-        });
-
-        binding.btnNavigateMap.setOnClickListener(v -> {
-            if (currentActiveReservation != null) {
-                String street = currentActiveReservation.getStreet() != null ? currentActiveReservation.getStreet() : "Warszawa";
-                Uri gmmIntentUri = Uri.parse("geo:0,0?q=" + Uri.encode(street));
-                Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
-                mapIntent.setPackage("com.google.android.apps.maps");
-                if (mapIntent.resolveActivity(getPackageManager()) != null) {
-                    startActivity(mapIntent);
-                } else {
-                    Intent genericMapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
-                    startActivity(genericMapIntent);
-                }
-            }
-        });
     }
 
     private void observeViewModel() {
-        AppRepository.getInstance().getActiveReservationLiveData().observe(this, activeReservation -> {
-            this.currentActiveReservation = activeReservation;
+        // Observe incoming / active reservations from Room Single Source of Truth
+        viewModel.getIncomingReservationsLiveData().observe(this, activeList -> {
+            activeReservationsList.clear();
+            if (activeList != null) {
+                activeReservationsList.addAll(activeList);
+            }
             if (!isHistoryTab) {
-                updateActiveReservationUI();
+                renderList(activeReservationsList);
             }
         });
 
-        AppRepository.getInstance().getHistoryReservationsLiveData().observe(this, this::updateHistoryUI);
+        // Observe past / history reservations from Room Single Source of Truth
+        viewModel.getHistoryReservationsLiveData().observe(this, historyList -> {
+            historyReservationsList.clear();
+            if (historyList != null) {
+                historyReservationsList.addAll(historyList);
+            }
+            if (isHistoryTab) {
+                renderList(historyReservationsList);
+            }
+        });
+
+        // Observe loading state to toggle progress bar
+        viewModel.getIsLoadingLiveData().observe(this, isLoading -> {
+            if (binding == null) return;
+            binding.progressBarReservations.setVisibility(Boolean.TRUE.equals(isLoading) ? View.VISIBLE : View.GONE);
+        });
+
+        // Observe error messages
+        viewModel.getErrorMessageLiveData().observe(this, errorMsg -> {
+            if (errorMsg != null && !errorMsg.trim().isEmpty()) {
+                Toast.makeText(this, errorMsg, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
-    private void updateActiveReservationUI() {
-        if (binding == null) return;
+    @Override
+    public void onReservationClick(Reservation reservation) {
+        if (reservation != null) {
+            showActiveReservationDialog(reservation);
+        }
+    }
 
-        if (currentActiveReservation == null) {
-            binding.cardActiveReservation.setVisibility(View.GONE);
-            binding.layoutEmptyActive.setVisibility(View.VISIBLE);
-            stopTimer();
+    @Override
+    public void onNavigateClick(Reservation reservation) {
+        if (reservation == null) return;
+
+        String street = reservation.getStreet() != null && !reservation.getStreet().isEmpty()
+                ? reservation.getStreet() : "Warszawa";
+        Uri gmmIntentUri = Uri.parse("geo:0,0?q=" + Uri.encode(street));
+        Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+        mapIntent.setPackage("com.google.android.apps.maps");
+
+        if (mapIntent.resolveActivity(getPackageManager()) != null) {
+            startActivity(mapIntent);
         } else {
-            binding.layoutEmptyActive.setVisibility(View.GONE);
-            binding.cardActiveReservation.setVisibility(View.VISIBLE);
-
-            binding.textResTitle.setText(currentActiveReservation.getPlaceName() != null ? currentActiveReservation.getPlaceName() : "Centrum Park");
-            String city = currentActiveReservation.getCity() != null ? currentActiveReservation.getCity() : "Warszawa";
-            String street = currentActiveReservation.getStreet() != null ? currentActiveReservation.getStreet() : "";
-            binding.textResAddress.setText(getString(R.string.format_city_street, city, street));
-            binding.textResPlaceNumber.setText(currentActiveReservation.getPlaceNumber() != null ? currentActiveReservation.getPlaceNumber() : "42");
-            binding.textResDate.setText(currentActiveReservation.getDateString() != null ? currentActiveReservation.getDateString() : "Dziś");
-            binding.imgResPhoto.setImageResource(currentActiveReservation.getPhotoResId());
-
-            startTimer();
-        }
-    }
-
-    private void updateHistoryUI(List<Reservation> historyList) {
-        if (binding == null) return;
-
-        binding.containerHistoryReservations.removeAllViews();
-
-        if (historyList == null || historyList.isEmpty()) {
-            return;
-        }
-
-        LayoutInflater inflater = LayoutInflater.from(this);
-        for (Reservation h : historyList) {
-            if (h == null) continue;
-
-            ItemHistoryReservationBinding itemBinding = ItemHistoryReservationBinding.inflate(inflater, binding.containerHistoryReservations, false);
-
-            itemBinding.textHistoryTitle.setText(h.getPlaceName() != null ? h.getPlaceName() : "");
-            itemBinding.textHistoryStreet.setText(h.getStreet() != null ? h.getStreet() : "");
-            itemBinding.textHistoryVehicle.setText(h.getVehicleInfo() != null ? h.getVehicleInfo() : "");
-            itemBinding.textHistoryDate.setText(h.getDateString() != null ? h.getDateString() : "");
-            itemBinding.textHistoryPrice.setText(String.format(Locale.getDefault(), "%.2f PLN", h.getTotalPrice()));
-
-            binding.containerHistoryReservations.addView(itemBinding.getRoot());
+            Intent genericMapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+            startActivity(genericMapIntent);
         }
     }
 
@@ -203,41 +255,18 @@ public class ReservationsActivity extends BaseActivity {
         timerHandler.removeCallbacks(timerRunnable);
     }
 
-    private void updateCountdownText() {
-        if (binding == null || currentActiveReservation == null) return;
-
-        long now = System.currentTimeMillis();
-        long startTime = currentActiveReservation.getStartTimeMs();
-        long endTime = currentActiveReservation.getEndTimeMs();
-
-        if (now < startTime) {
-            // Not started yet
-            long diff = startTime - now;
-            long hours = diff / (1000 * 60 * 60);
-            long minutes = (diff % (1000 * 60 * 60)) / (1000 * 60);
-            long seconds = (diff % (1000 * 60)) / 1000;
-            String formattedTime = String.format(Locale.getDefault(), "Do rozpoczęcia: %dh %02dm %02ds", hours, minutes, seconds);
-            binding.textResCountdown.setText(formattedTime);
-        } else {
-            // Active now
-            long diff = endTime - now;
-            if (diff < 0) {
-                diff = 0;
-            }
-            long hours = diff / (1000 * 60 * 60);
-            long minutes = (diff % (1000 * 60 * 60)) / (1000 * 60);
-            long seconds = (diff % (1000 * 60)) / 1000;
-            String formattedTime = String.format(Locale.getDefault(), "Pozostało: %dh %02dm %02ds", hours, minutes, seconds);
-            binding.textResCountdown.setText(formattedTime);
-        }
-    }
-
+    /**
+     * Shows detailed modal dialog for the selected reservation with entry PIN code,
+     * exact schedule, confirmation download, and cancellation options.
+     *
+     * @param reservation Selected Reservation instance
+     */
     private void showActiveReservationDialog(Reservation reservation) {
         DialogActiveReservationDetailsBinding dialogBinding = DialogActiveReservationDetailsBinding.inflate(LayoutInflater.from(this));
 
-        dialogBinding.textDialogTitle.setText(reservation.getPlaceName());
-        dialogBinding.textDialogStreet.setText(reservation.getStreet());
-        dialogBinding.textDialogPin.setText(reservation.getPinCode());
+        dialogBinding.textDialogTitle.setText(reservation.getPlaceName() != null ? reservation.getPlaceName() : "Miejsce parkingowe");
+        dialogBinding.textDialogStreet.setText(reservation.getStreet() != null ? reservation.getStreet() : "Warszawa");
+        dialogBinding.textDialogPin.setText(reservation.getPinCode() != null ? reservation.getPinCode() : "4829");
 
         long startMs = reservation.getStartTimeMs() > 0 ? reservation.getStartTimeMs() : System.currentTimeMillis();
         long endMs = reservation.getEndTimeMs() > 0 ? reservation.getEndTimeMs() : (startMs + 3600000L);
@@ -269,6 +298,11 @@ public class ReservationsActivity extends BaseActivity {
             Toast.makeText(this, R.string.toast_reservation_cancelled, Toast.LENGTH_SHORT).show();
             dialog.dismiss();
             showRatingDialog();
+
+            // Refresh from REST backend
+            if (viewModel != null) {
+                viewModel.refreshReservations();
+            }
         });
 
         dialog.show();

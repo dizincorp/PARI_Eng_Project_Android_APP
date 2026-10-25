@@ -24,6 +24,7 @@ import com.google.gson.JsonParser;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -34,8 +35,8 @@ import retrofit2.Response;
 
 /**
  * Repository enforcing the Single Source of Truth (SSOT) pattern for reservations.
- * Sends reservation requests to the backend REST API via {@link ReservationApiService}
- * and synchronizes confirmed reservations into the local Room Database.
+ * Sends reservation requests and fetches user reservations from the backend REST API
+ * via {@link ReservationApiService} and synchronizes them into the local Room Database.
  */
 public class ReservationRepository {
 
@@ -93,6 +94,36 @@ public class ReservationRepository {
     }
 
     /**
+     * Gets reactive LiveData stream of incoming / active reservations from local Room DB cache.
+     *
+     * @param userEmail Current user's email
+     * @return LiveData emitting list of ReservationEntity
+     */
+    public LiveData<List<ReservationEntity>> getIncomingReservationsLiveData(@Nullable String userEmail) {
+        return reservationDao.getIncomingReservationsLiveData(userEmail != null ? userEmail : "");
+    }
+
+    /**
+     * Gets reactive LiveData stream of past / history reservations from local Room DB cache.
+     *
+     * @param userEmail Current user's email
+     * @return LiveData emitting list of ReservationEntity
+     */
+    public LiveData<List<ReservationEntity>> getHistoryReservationsLiveData(@Nullable String userEmail) {
+        return reservationDao.getHistoryReservationsListLiveData(userEmail != null ? userEmail : "");
+    }
+
+    /**
+     * Gets reactive LiveData stream of all reservations for the user from local Room DB cache.
+     *
+     * @param userEmail Current user's email
+     * @return LiveData emitting list of ReservationEntity
+     */
+    public LiveData<List<ReservationEntity>> getAllReservationsLiveData(@Nullable String userEmail) {
+        return reservationDao.getAllReservationsListLiveData(userEmail != null ? userEmail : "");
+    }
+
+    /**
      * Sends a booking request to POST /api/reservations and synchronizes response to Room DB.
      *
      * @param request   ReservationRequest payload
@@ -134,6 +165,96 @@ public class ReservationRepository {
             public void onFailure(@NonNull Call<ReservationResponse> call, @NonNull Throwable t) {
                 String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd połączenia z serwerem";
                 Log.e(TAG, "Reservation network failure: " + errorMsg, t);
+                resultLiveData.setValue(Resource.error(errorMsg, null, 0));
+            }
+        });
+
+        return resultLiveData;
+    }
+
+    /**
+     * Fetches all user reservations from GET /api/reservations and synchronizes them to Room.
+     *
+     * @param userEmail Current user's email
+     * @return LiveData emitting Resource with list of ReservationResponse
+     */
+    public LiveData<Resource<List<ReservationResponse>>> fetchReservations(@Nullable String userEmail) {
+        MutableLiveData<Resource<List<ReservationResponse>>> resultLiveData = new MutableLiveData<>();
+        resultLiveData.setValue(Resource.loading(null));
+
+        apiService.getReservations().enqueue(new Callback<List<ReservationResponse>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<ReservationResponse>> call,
+                                   @NonNull Response<List<ReservationResponse>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<ReservationResponse> body = response.body();
+                    diskExecutor.execute(() -> {
+                        for (ReservationResponse res : body) {
+                            if (res == null) continue;
+                            ParkingPlaceEntity place = parkingPlaceDao.getPlaceById(res.getSpotId());
+                            ReservationEntity entity = toEntity(res, userEmail, place);
+                            reservationDao.insertOrUpdate(entity);
+                        }
+                        resultLiveData.postValue(Resource.success(body));
+                    });
+                } else {
+                    String errorMsg = parseErrorMessage(response);
+                    Log.e(TAG, "getReservations failed with HTTP " + response.code() + ": " + errorMsg);
+                    resultLiveData.setValue(Resource.error(errorMsg, null, response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<ReservationResponse>> call, @NonNull Throwable t) {
+                String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd połączenia z serwerem";
+                Log.e(TAG, "getReservations failure: " + errorMsg, t);
+                resultLiveData.setValue(Resource.error(errorMsg, null, 0));
+            }
+        });
+
+        return resultLiveData;
+    }
+
+    /**
+     * Fetches incoming / active reservations from GET /api/reservations/incoming and synchronizes them to Room.
+     *
+     * @param userEmail Current user's email
+     * @return LiveData emitting Resource with list of incoming ReservationResponse
+     */
+    public LiveData<Resource<List<ReservationResponse>>> fetchIncomingReservations(@Nullable String userEmail) {
+        MutableLiveData<Resource<List<ReservationResponse>>> resultLiveData = new MutableLiveData<>();
+        resultLiveData.setValue(Resource.loading(null));
+
+        apiService.getIncomingReservations().enqueue(new Callback<List<ReservationResponse>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<ReservationResponse>> call,
+                                   @NonNull Response<List<ReservationResponse>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<ReservationResponse> body = response.body();
+                    diskExecutor.execute(() -> {
+                        for (ReservationResponse res : body) {
+                            if (res == null) continue;
+                            ParkingPlaceEntity place = parkingPlaceDao.getPlaceById(res.getSpotId());
+                            ReservationEntity entity = toEntity(res, userEmail, place);
+                            // Incoming reservations are marked active if not finished
+                            if (entity.getStatus() == null || entity.getStatus().isEmpty() || entity.getStatus().equalsIgnoreCase("PENDING_PAYMENT")) {
+                                entity.setStatus("AKTYWNA");
+                            }
+                            reservationDao.insertOrUpdate(entity);
+                        }
+                        resultLiveData.postValue(Resource.success(body));
+                    });
+                } else {
+                    String errorMsg = parseErrorMessage(response);
+                    Log.e(TAG, "getIncomingReservations failed with HTTP " + response.code() + ": " + errorMsg);
+                    resultLiveData.setValue(Resource.error(errorMsg, null, response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<ReservationResponse>> call, @NonNull Throwable t) {
+                String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd połączenia z serwerem";
+                Log.e(TAG, "getIncomingReservations failure: " + errorMsg, t);
                 resultLiveData.setValue(Resource.error(errorMsg, null, 0));
             }
         });
@@ -196,13 +317,16 @@ public class ReservationRepository {
         entity.setUserEmail(userEmail != null ? userEmail : "");
         entity.setPlaceId(res.getSpotId());
         entity.setPlaceName(res.getSpotName() != null && !res.getSpotName().isEmpty()
-                ? res.getSpotName() : (place != null ? place.getTitle() : ""));
+                ? res.getSpotName() : (place != null ? place.getTitle() : "Miejsce parkingowe"));
         if (place != null) {
             entity.setStreet(place.getStreet());
             entity.setCity(place.getCity());
             entity.setPlaceNumber(place.getPlaceNumber());
             entity.setPhotoResId(place.getPhotoResId() != 0 ? place.getPhotoResId() : R.drawable.default_parking_spot);
         } else {
+            entity.setStreet(res.getSpotName() != null && !res.getSpotName().isEmpty() ? res.getSpotName() : "Warszawa");
+            entity.setCity("Warszawa");
+            entity.setPlaceNumber("42");
             entity.setPhotoResId(R.drawable.default_parking_spot);
         }
         entity.setPinCode(res.getPinCode() != null && !res.getPinCode().isEmpty() ? res.getPinCode() : "4829");
