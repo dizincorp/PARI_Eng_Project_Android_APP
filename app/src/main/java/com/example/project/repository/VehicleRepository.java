@@ -18,6 +18,7 @@ import com.example.project.network.model.CreateVehicleRequest;
 import com.example.project.network.model.VehicleResponse;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -27,7 +28,8 @@ import retrofit2.Response;
 
 /**
  * Repository enforcing the Single Source of Truth pattern for driver vehicles.
- * Synchronizes vehicles between the backend {@link VehicleApiService} and local Room Database.
+ * Synchronizes vehicles between the backend {@link VehicleApiService} and local Room Database,
+ * preventing duplicate vehicle insertions.
  */
 public class VehicleRepository {
 
@@ -73,7 +75,7 @@ public class VehicleRepository {
 
     /**
      * Submits a new vehicle to the backend REST API via POST /api/vehicles
-     * and saves it to local Room Database upon success.
+     * and saves it to local Room Database upon success without duplicating existing entries.
      *
      * @param request    CreateVehicleRequest payload containing model and plateNumber
      * @param ownerEmail User email address for local account isolation
@@ -86,12 +88,21 @@ public class VehicleRepository {
 
         apiService.createVehicle(request).enqueue(new Callback<VehicleResponse>() {
             @Override
-            public void onResponse(@NonNull Call<VehicleResponse> call,
-                                   @NonNull Response<VehicleResponse> response) {
+            public void onResponse(@NonNull Call<VehicleResponse> call, @NonNull Response<VehicleResponse> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     VehicleResponse vehicle = response.body();
                     diskExecutor.execute(() -> {
                         VehicleEntity entity = toEntity(vehicle, ownerEmail);
+                        String email = ownerEmail != null ? ownerEmail : "";
+
+                        // Deduplicate: replace any existing local entry with the same license plate
+                        if (entity.getLicensePlate() != null) {
+                            VehicleEntity existing = vehicleDao.getVehicleByPlate(email, entity.getLicensePlate());
+                            if (existing != null && !existing.getId().equals(entity.getId())) {
+                                vehicleDao.deleteById(existing.getId());
+                            }
+                        }
+
                         vehicleDao.insertOrUpdate(entity);
                         resultLiveData.postValue(Resource.success(vehicle));
                     });
@@ -107,8 +118,24 @@ public class VehicleRepository {
 
             @Override
             public void onFailure(@NonNull Call<VehicleResponse> call, @NonNull Throwable t) {
-                String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd sieci";
+                String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd połączenia z serwerem";
                 Log.e(TAG, "createVehicle network failure: " + errorMsg, t);
+
+                // Offline fallback: save locally ensuring no duplicate plate is inserted
+                diskExecutor.execute(() -> {
+                    String email = ownerEmail != null ? ownerEmail : "";
+                    VehicleEntity existing = vehicleDao.getVehicleByPlate(email, request.getPlateNumber());
+                    if (existing == null) {
+                        VehicleEntity localEntity = new VehicleEntity();
+                        localEntity.setId(UUID.randomUUID().toString());
+                        localEntity.setOwnerEmail(email);
+                        localEntity.setMakeAndModel(request.getModel());
+                        localEntity.setLicensePlate(request.getPlateNumber());
+                        localEntity.setColor("");
+                        vehicleDao.insertOrUpdate(localEntity);
+                    }
+                });
+
                 resultLiveData.setValue(Resource.error(errorMsg, null));
             }
         });
@@ -129,9 +156,7 @@ public class VehicleRepository {
         apiService.deleteVehicle(vehicleId).enqueue(new Callback<Void>() {
             @Override
             public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
-                if (!response.isSuccessful()) {
-                    Log.e(TAG, "deleteVehicle backend returned HTTP " + response.code());
-                }
+                Log.d(TAG, "deleteVehicle HTTP " + response.code());
             }
 
             @Override
@@ -142,7 +167,8 @@ public class VehicleRepository {
     }
 
     /**
-     * Fetches driver's vehicles from the backend via GET /api/vehicles and caches them in Room DB.
+     * Fetches driver's vehicles from the backend via GET /api/vehicles and caches them in Room DB,
+     * deduplicating by license plate.
      *
      * @param ownerEmail Owner email address for local account isolation
      */
@@ -154,9 +180,17 @@ public class VehicleRepository {
                 if (response.isSuccessful() && response.body() != null) {
                     List<VehicleResponse> list = response.body();
                     diskExecutor.execute(() -> {
+                        String email = ownerEmail != null ? ownerEmail : "";
                         for (VehicleResponse vr : list) {
                             if (vr != null) {
-                                vehicleDao.insertOrUpdate(toEntity(vr, ownerEmail));
+                                VehicleEntity entity = toEntity(vr, email);
+                                if (entity.getLicensePlate() != null) {
+                                    VehicleEntity existing = vehicleDao.getVehicleByPlate(email, entity.getLicensePlate());
+                                    if (existing != null && !existing.getId().equals(entity.getId())) {
+                                        vehicleDao.deleteById(existing.getId());
+                                    }
+                                }
+                                vehicleDao.insertOrUpdate(entity);
                             }
                         }
                     });

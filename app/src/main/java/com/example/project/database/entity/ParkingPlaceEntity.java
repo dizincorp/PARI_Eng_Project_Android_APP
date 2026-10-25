@@ -3,6 +3,7 @@ package com.example.project.database.entity;
 import androidx.annotation.NonNull;
 import androidx.room.Entity;
 import androidx.room.PrimaryKey;
+import com.example.project.R;
 
 /**
  * Room Entity representing a parking spot in the database.
@@ -172,7 +173,7 @@ public class ParkingPlaceEntity {
     }
 
     public int getPhotoResId() {
-        return photoResId;
+        return photoResId != 0 ? photoResId : R.drawable.default_parking_spot;
     }
 
     public void setPhotoResId(int photoResId) {

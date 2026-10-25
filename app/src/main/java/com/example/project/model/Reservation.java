@@ -77,7 +77,7 @@ public class Reservation {
         this.status = status;
         this.totalPrice = totalPrice;
         this.pinCode = pinCode != null ? pinCode : "4829";
-        this.photoResId = photoResId != 0 ? photoResId : R.drawable.ic_launcher_background;
+        this.photoResId = photoResId != 0 ? photoResId : R.drawable.default_parking_spot;
         this.userName = "Jan K.";
         this.carModel = vehicleInfo != null ? vehicleInfo : "Pojazd";
         this.carPlate = "";
@@ -228,7 +228,7 @@ public class Reservation {
     }
 
     public int getPhotoResId() {
-        return photoResId != 0 ? photoResId : R.drawable.ic_launcher_background;
+        return photoResId != 0 ? photoResId : R.drawable.default_parking_spot;
     }
 
     public void setPhotoResId(int photoResId) {

@@ -15,6 +15,10 @@ public class SessionManager {
     private static final String KEY_USER_EMAIL = "userEmail";
     private static final String KEY_USER_NAME = "userName";
     private static final String KEY_USER_ROLE = "userRole";
+    private static final String KEY_FIRST_NAME = "userFirstName";
+    private static final String KEY_LAST_NAME = "userLastName";
+    private static final String KEY_USER_PHONE = "userPhone";
+    private static final String KEY_AVATAR_URI = "avatarUri";
 
     private static volatile SessionManager instance;
 
@@ -155,6 +159,47 @@ public class SessionManager {
      */
     public void updateUserName(String name) {
         editor.putString(KEY_USER_NAME, name);
+        if (name != null && name.contains(" ")) {
+            String[] parts = name.split(" ", 2);
+            editor.putString(KEY_FIRST_NAME, parts[0]);
+            editor.putString(KEY_LAST_NAME, parts[1]);
+        } else {
+            editor.putString(KEY_FIRST_NAME, name != null ? name : "");
+        }
+        editor.apply();
+    }
+
+    public String getFirstName() {
+        return pref.getString(KEY_FIRST_NAME, "Jan");
+    }
+
+    public String getLastName() {
+        return pref.getString(KEY_LAST_NAME, "Kowalski");
+    }
+
+    public String getUserPhone() {
+        return pref.getString(KEY_USER_PHONE, "+48 500 123 456");
+    }
+
+    public String getAvatarUri() {
+        return pref.getString(KEY_AVATAR_URI, "");
+    }
+
+    public void updateUserName(String firstName, String lastName) {
+        editor.putString(KEY_FIRST_NAME, firstName != null ? firstName.trim() : "");
+        editor.putString(KEY_LAST_NAME, lastName != null ? lastName.trim() : "");
+        String fullName = ((firstName != null ? firstName.trim() : "") + " " + (lastName != null ? lastName.trim() : "")).trim();
+        editor.putString(KEY_USER_NAME, fullName);
+        editor.apply();
+    }
+
+    public void updateUserPhone(String phone) {
+        editor.putString(KEY_USER_PHONE, phone != null ? phone.trim() : "");
+        editor.apply();
+    }
+
+    public void updateAvatarUri(String uri) {
+        editor.putString(KEY_AVATAR_URI, uri != null ? uri.trim() : "");
         editor.apply();
     }
 

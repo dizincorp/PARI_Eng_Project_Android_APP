@@ -100,6 +100,34 @@ public class ProfileViewModel extends AndroidViewModel {
     }
 
     /**
+     * Updates user's first and last name in local database and session.
+     *
+     * @param firstName User first name
+     * @param lastName  User last name
+     */
+    public void updateUserName(@NonNull String firstName, @NonNull String lastName) {
+        appRepository.updateUserName(firstName, lastName);
+    }
+
+    /**
+     * Updates user's contact phone number in local database and session.
+     *
+     * @param phone New phone number
+     */
+    public void updateUserPhone(@NonNull String phone) {
+        appRepository.updateUserPhone(phone);
+    }
+
+    /**
+     * Updates user's avatar image URI in local database and session.
+     *
+     * @param avatarUri Avatar URI string
+     */
+    public void updateUserAvatarUri(@NonNull String avatarUri) {
+        appRepository.updateUserAvatarUri(avatarUri);
+    }
+
+    /**
      * Adds a new vehicle directly to the backend REST API via POST /api/vehicles
      * and caches it in local Room Database.
      *
@@ -109,13 +137,8 @@ public class ProfileViewModel extends AndroidViewModel {
      */
     public LiveData<Resource<VehicleResponse>> addVehicle(@NonNull String model, @NonNull String plateNumber) {
         String currentEmail = appRepository.getUserEmailLiveData().getValue();
-        CreateVehicleRequest request = new CreateVehicleRequest(model, plateNumber);
-
-        // Optimistically insert locally
-        Vehicle localVehicle = new Vehicle(UUID.randomUUID().toString(), model.trim(), plateNumber.trim(), "");
-        appRepository.addVehicle(localVehicle);
-
-        // Submit to REST API POST /api/vehicles
+        CreateVehicleRequest request = new CreateVehicleRequest(model.trim(), plateNumber.trim());
+        // Submit directly to REST API via VehicleRepository, which handles Room caching and prevents duplicates
         return vehicleRepository.createVehicle(request, currentEmail);
     }
 

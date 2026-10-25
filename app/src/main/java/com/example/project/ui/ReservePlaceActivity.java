@@ -2,6 +2,7 @@ package com.example.project.ui;
 
 import android.app.TimePickerDialog;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.widget.ArrayAdapter;
@@ -110,7 +111,19 @@ public class ReservePlaceActivity extends BaseActivity {
     private void setupUI() {
         if (binding == null || currentPlace == null) return;
 
-        binding.imgPlacePhoto.setImageResource(currentPlace.getPhotoResId());
+        if (currentPlace.getImageUri() != null && !currentPlace.getImageUri().trim().isEmpty()) {
+            try {
+                Uri uri = Uri.parse(currentPlace.getImageUri().trim());
+                binding.imgPlacePhoto.setImageURI(uri);
+                if (binding.imgPlacePhoto.getDrawable() == null) {
+                    binding.imgPlacePhoto.setImageResource(currentPlace.getPhotoResId());
+                }
+            } catch (Exception e) {
+                binding.imgPlacePhoto.setImageResource(currentPlace.getPhotoResId());
+            }
+        } else {
+            binding.imgPlacePhoto.setImageResource(currentPlace.getPhotoResId());
+        }
         binding.textPlaceStreet.setText(currentPlace.getStreet() != null ? currentPlace.getStreet() : currentPlace.getTitle());
         binding.textPlaceCity.setText(currentPlace.getCity() != null ? currentPlace.getCity() : "Warszawa");
 
@@ -230,6 +243,17 @@ public class ReservePlaceActivity extends BaseActivity {
             binding.spinnerVehicles.setAdapter(adapter);
         });
 
+        // Observe HTTP 409 Conflict error specifically to display conflict alert
+        viewModel.getConflictErrorLiveData().observe(this, conflictMessage -> {
+            if (conflictMessage != null && !conflictMessage.isEmpty()) {
+                new AlertDialog.Builder(this)
+                        .setTitle(R.string.title_reservation_conflict)
+                        .setMessage(conflictMessage)
+                        .setPositiveButton(R.string.btn_ok, null)
+                        .show();
+            }
+        });
+
         // Observe reactive reservation submission status (loading, success, error)
         viewModel.getReservationStatusLiveData().observe(this, resource -> {
             if (binding == null || resource == null) return;
@@ -247,10 +271,12 @@ public class ReservePlaceActivity extends BaseActivity {
                     startActivity(intent);
                     finish();
                 } else if (resource.isError()) {
-                    String errorMsg = resource.getMessage() != null
-                            ? resource.getMessage()
-                            : getString(R.string.error_booking_failed, "Nieznany błąd");
-                    Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show();
+                    if (resource.getCode() != 409) {
+                        String errorMsg = resource.getMessage() != null
+                                ? resource.getMessage()
+                                : getString(R.string.error_booking_failed, "Nieznany błąd");
+                        Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show();
+                    }
                 }
             }
         });
@@ -305,15 +331,13 @@ public class ReservePlaceActivity extends BaseActivity {
                 .setPositiveButton(R.string.btn_save_vehicle, (dialog, which) -> {
                     String make = dialogBinding.editVehicleMake.getText() != null ? dialogBinding.editVehicleMake.getText().toString() : "";
                     String plate = dialogBinding.editVehiclePlate.getText() != null ? dialogBinding.editVehiclePlate.getText().toString() : "";
-                    String color = dialogBinding.editVehicleColor.getText() != null ? dialogBinding.editVehicleColor.getText().toString() : "";
 
                     if (make.trim().isEmpty() || plate.trim().length() < 2 || plate.trim().length() > 15) {
                         Toast.makeText(this, R.string.error_vehicle_validation, Toast.LENGTH_LONG).show();
                         return;
                     }
 
-                    Vehicle newVehicle = new Vehicle(UUID.randomUUID().toString(), make.trim(), plate.trim(), color.trim());
-                    viewModel.addVehicle(newVehicle);
+                    viewModel.addVehicle(make.trim(), plate.trim());
                     Toast.makeText(this, R.string.msg_vehicle_added, Toast.LENGTH_SHORT).show();
                 })
                 .setNegativeButton(R.string.btn_cancel, null)

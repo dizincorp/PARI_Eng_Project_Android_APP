@@ -29,7 +29,7 @@ import com.example.project.database.entity.VehicleEntity;
                 UserEntity.class,
                 TransactionEntity.class
         },
-        version = 3,
+        version = 4,
         exportSchema = false
 )
 @TypeConverters({Converters.class})

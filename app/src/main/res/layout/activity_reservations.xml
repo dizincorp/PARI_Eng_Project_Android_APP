@@ -221,7 +221,7 @@
                         android:layout_height="180dp"
                         android:contentDescription="@string/tab_active"
                         android:scaleType="centerCrop"
-                        android:src="@drawable/ic_launcher_background" />
+                        android:src="@drawable/default_parking_spot" />
 
                     <RelativeLayout
                         android:layout_width="match_parent"

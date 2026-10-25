@@ -15,9 +15,9 @@ public interface ReservationApiService {
     /**
      * Creates a new reservation on the backend service via POST /api/reservations.
      *
-     * @param request ReservationRequest payload containing spot, vehicle and time interval
+     * @param request ReservationRequest payload containing spot, vehicle, time interval, and payment token
      * @return Retrofit Call delivering the created {@link ReservationResponse}
      */
-    @POST("api/reservations")
+    @POST("/api/reservations")
     Call<ReservationResponse> createReservation(@Body ReservationRequest request);
 }

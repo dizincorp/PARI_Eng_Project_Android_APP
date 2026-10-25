@@ -27,4 +27,10 @@ public interface VehicleDao {
 
     @Query("DELETE FROM vehicles WHERE id = :id")
     void deleteById(String id);
+
+    @Query("SELECT * FROM vehicles WHERE ownerEmail = :ownerEmail AND UPPER(REPLACE(licensePlate, ' ', '')) = UPPER(REPLACE(:plate, ' ', '')) LIMIT 1")
+    VehicleEntity getVehicleByPlate(String ownerEmail, String plate);
+
+    @Query("DELETE FROM vehicles WHERE ownerEmail = :ownerEmail AND UPPER(REPLACE(licensePlate, ' ', '')) = UPPER(REPLACE(:plate, ' ', ''))")
+    void deleteByPlate(String ownerEmail, String plate);
 }

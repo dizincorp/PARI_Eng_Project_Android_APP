@@ -91,7 +91,7 @@ public class AvailabilityCalendarViewModel extends ViewModel {
                 "ZABLOKOWANA",
                 0.0,
                 "4829",
-                R.drawable.ic_launcher_background
+                R.drawable.default_parking_spot
         );
 
         repository.addReservation(blockReservation);

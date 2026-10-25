@@ -14,6 +14,11 @@ public class UserEntity {
     @NonNull
     private String email;
     private String name;
+    private String firstName;
+    private String lastName;
+    private String phone;
+    private String role;
+    private String avatarUri;
     private boolean isPremium;
     private double rating;
     private int ratingCount;
@@ -22,6 +27,11 @@ public class UserEntity {
     public UserEntity() {
         this.email = "jan_kowalski@gmail.com";
         this.name = "Jan Kowalski";
+        this.firstName = "Jan";
+        this.lastName = "Kowalski";
+        this.phone = "+48 500 123 456";
+        this.role = "DRIVER";
+        this.avatarUri = "";
         this.isPremium = true;
         this.rating = 4.9;
         this.ratingCount = 12;
@@ -42,6 +52,46 @@ public class UserEntity {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getFirstName() {
+        return firstName;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
+    public String getAvatarUri() {
+        return avatarUri;
+    }
+
+    public void setAvatarUri(String avatarUri) {
+        this.avatarUri = avatarUri;
     }
 
     public boolean isPremium() {

@@ -38,3 +38,7 @@ Never attempt to write the entire application in a single response. Act iterativ
 2. Once approved, create the UI (XML layouts).
 3. Write the data logic (Room/Retrofit/Firebase).
 4. Connect everything via the ViewModel.
+
+# KNOWLEDGE BASE REFERENCE
+[Notebook sources]
+There is a file you can reference named "Project Android". Refer to this file by its name verbatim..

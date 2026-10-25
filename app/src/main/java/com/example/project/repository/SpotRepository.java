@@ -8,6 +8,7 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.example.project.R;
 import com.example.project.database.AppDatabase;
 import com.example.project.database.dao.ParkingPlaceDao;
 import com.example.project.database.entity.ParkingPlaceEntity;
@@ -241,6 +242,9 @@ public class SpotRepository {
 
         if (spot.getPhotoKeys() != null && !spot.getPhotoKeys().isEmpty()) {
             entity.setImageUri(spot.getPhotoKeys().get(0));
+        } else {
+            entity.setImageUri("");
+            entity.setPhotoResId(R.drawable.default_parking_spot);
         }
 
         return entity;

@@ -8,6 +8,7 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.example.project.R;
 import com.example.project.database.AppDatabase;
 import com.example.project.database.dao.ParkingPlaceDao;
 import com.example.project.database.dao.ReservationDao;
@@ -125,15 +126,15 @@ public class ReservationRepository {
                 } else {
                     String errorMsg = parseErrorMessage(response);
                     Log.e(TAG, "Reservation failed with HTTP " + response.code() + ": " + errorMsg);
-                    resultLiveData.setValue(Resource.error(errorMsg, null));
+                    resultLiveData.setValue(Resource.error(errorMsg, null, response.code()));
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<ReservationResponse> call, @NonNull Throwable t) {
-                String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd sieci";
+                String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd połączenia z serwerem";
                 Log.e(TAG, "Reservation network failure: " + errorMsg, t);
-                resultLiveData.setValue(Resource.error(errorMsg, null));
+                resultLiveData.setValue(Resource.error(errorMsg, null, 0));
             }
         });
 
@@ -192,14 +193,17 @@ public class ReservationRepository {
         }
         entity.setUserEmail(userEmail != null ? userEmail : "");
         entity.setPlaceId(res.getSpotId());
-        entity.setPlaceName(res.getSpotName() != null ? res.getSpotName() : (place != null ? place.getTitle() : ""));
+        entity.setPlaceName(res.getSpotName() != null && !res.getSpotName().isEmpty()
+                ? res.getSpotName() : (place != null ? place.getTitle() : ""));
         if (place != null) {
             entity.setStreet(place.getStreet());
             entity.setCity(place.getCity());
             entity.setPlaceNumber(place.getPlaceNumber());
-            entity.setPhotoResId(place.getPhotoResId());
+            entity.setPhotoResId(place.getPhotoResId() != 0 ? place.getPhotoResId() : R.drawable.default_parking_spot);
+        } else {
+            entity.setPhotoResId(R.drawable.default_parking_spot);
         }
-        entity.setPinCode(res.getPinCode() != null ? res.getPinCode() : "4829");
+        entity.setPinCode(res.getPinCode() != null && !res.getPinCode().isEmpty() ? res.getPinCode() : "4829");
         entity.setStatus("AKTYWNA");
         entity.setTotalPrice(res.getTotal());
         entity.setCarPlate(res.getVehiclePlate());

@@ -1,6 +1,7 @@
 package com.example.project.ui;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,17 +19,17 @@ import com.example.project.R;
 import com.example.project.adapter.VehiclesAdapter;
 import com.example.project.databinding.ActivityProfileBinding;
 import com.example.project.databinding.DialogAddVehicleBinding;
-import com.example.project.databinding.DialogEditProfileBinding;
 import com.example.project.databinding.DialogVehiclesListBinding;
-import com.example.project.model.Vehicle;
 import com.example.project.network.Resource;
 import com.example.project.network.model.UserProfileResponse;
 import com.example.project.utils.SessionManager;
 import com.example.project.viewmodel.ProfileViewModel;
 
+import java.util.Locale;
+
 /**
- * Activity for user profile management with local Room caching,
- * vehicles management (/api/vehicles), remote profile synchronization, and session termination.
+ * Activity for user profile management displaying header info (name, rating, photo),
+ * navigation to Profile Details, vehicles management (/api/vehicles), and session termination.
  */
 public class ProfileActivity extends BaseActivity {
 
@@ -68,8 +69,10 @@ public class ProfileActivity extends BaseActivity {
     private void setupClickListeners() {
         if (binding == null) return;
 
-        binding.btnEditProfile.setOnClickListener(v -> showEditProfileDialog());
-        binding.textUserName.setOnClickListener(v -> showEditProfileDialog());
+        // Navigation to dedicated Profile details screen
+        binding.cardProfileDetails.setOnClickListener(v -> openProfileDetails());
+        binding.imgProfileAvatar.setOnClickListener(v -> openProfileDetails());
+        binding.textUserName.setOnClickListener(v -> openProfileDetails());
 
         binding.cardMyReservations.setOnClickListener(v -> {
             Intent intent = new Intent(ProfileActivity.this, ReservationsActivity.class);
@@ -98,13 +101,31 @@ public class ProfileActivity extends BaseActivity {
         });
     }
 
+    private void openProfileDetails() {
+        Intent intent = new Intent(ProfileActivity.this, ProfileDetailsActivity.class);
+        startActivity(intent);
+    }
+
     private void observeViewModel() {
         viewModel.getUserProfileLiveData().observe(this, profile -> {
             if (binding == null || profile == null) return;
 
+            // Display only name and surname in the header
             binding.textUserName.setText(profile.getName());
-            binding.textUserEmail.setText(profile.getEmail());
-            binding.imgProfileAvatar.setImageResource(profile.getAvatarResId());
+
+            // Display rating in the header
+            binding.textUserRating.setText(String.format(Locale.getDefault(), "★ %.1f Rating", profile.getRating()));
+
+            // Display avatar image (URI if selected, else default drawable)
+            if (profile.getAvatarUri() != null && !profile.getAvatarUri().isEmpty()) {
+                try {
+                    binding.imgProfileAvatar.setImageURI(Uri.parse(profile.getAvatarUri()));
+                } catch (Exception e) {
+                    binding.imgProfileAvatar.setImageResource(profile.getAvatarResId());
+                }
+            } else {
+                binding.imgProfileAvatar.setImageResource(profile.getAvatarResId());
+            }
         });
 
         viewModel.getRemoteProfileLiveData().observe(this, resource -> {
@@ -113,7 +134,6 @@ public class ProfileActivity extends BaseActivity {
             if (resource.status == Resource.Status.SUCCESS && resource.data != null) {
                 UserProfileResponse data = resource.data;
                 binding.textUserName.setText(data.getFullName());
-                binding.textUserEmail.setText(data.getEmail());
             }
         });
     }
@@ -173,27 +193,6 @@ public class ProfileActivity extends BaseActivity {
 
                     viewModel.addVehicle(make, plate);
                     Toast.makeText(this, R.string.msg_vehicle_added, Toast.LENGTH_SHORT).show();
-                })
-                .setNegativeButton(R.string.btn_cancel, null)
-                .show();
-    }
-
-    private void showEditProfileDialog() {
-        DialogEditProfileBinding dialogBinding = DialogEditProfileBinding.inflate(LayoutInflater.from(this));
-
-        if (binding != null) {
-            dialogBinding.editUserName.setText(binding.textUserName.getText());
-        }
-
-        new AlertDialog.Builder(this)
-                .setView(dialogBinding.getRoot())
-                .setPositiveButton(R.string.btn_save, (dialog, which) -> {
-                    String newName = dialogBinding.editUserName.getText() != null ? dialogBinding.editUserName.getText().toString() : "";
-                    if (!newName.trim().isEmpty()) {
-                        viewModel.updateUserName(newName.trim());
-                        sessionManager.updateUserName(newName.trim());
-                        Toast.makeText(this, R.string.msg_profile_updated, Toast.LENGTH_SHORT).show();
-                    }
                 })
                 .setNegativeButton(R.string.btn_cancel, null)
                 .show();

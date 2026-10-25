@@ -1,10 +1,12 @@
 package com.example.project.ui;
 
-import android.app.TimePickerDialog;
+import android.Manifest;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.location.Address;
 import android.location.Geocoder;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.view.View;
@@ -13,8 +15,10 @@ import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
-import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -22,21 +26,21 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.project.R;
 import com.example.project.databinding.ActivityAddPlaceBinding;
+import com.example.project.model.ParkingPlace;
 import com.example.project.repository.AppRepository;
 import com.example.project.viewmodel.AddPlaceViewModel;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.Executors;
 
 /**
- * Activity for creating or updating a parking spot with photo selection, TimePicker,
- * Google Maps Geocoding integration, and full alignment with POST /api/spots.
+ * Activity for creating or updating a parking spot with photo selection, geocoding,
+ * and decoupled availability management via {@link SpotAvailabilityFragment}.
  */
-public class AddPlaceActivity extends AppCompatActivity {
+public class AddPlaceActivity extends BaseActivity {
 
     public static final String EXTRA_PLACE_ID = "EXTRA_PLACE_ID";
 
@@ -45,13 +49,25 @@ public class AddPlaceActivity extends AppCompatActivity {
     private String currentPlaceId = null;
     private String selectedPhotoUri = "";
 
+    private final ActivityResultLauncher<String> permissionLauncher =
+            registerForActivityResult(new ActivityResultContracts.RequestPermission(), isGranted -> {
+                if (Boolean.TRUE.equals(isGranted)) {
+                    openGallery();
+                } else {
+                    Toast.makeText(this, R.string.permission_storage_denied, Toast.LENGTH_SHORT).show();
+                }
+            });
+
     private final ActivityResultLauncher<Intent> photoPickerLauncher =
             registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
                 if (result.getResultCode() == RESULT_OK && result.getData() != null) {
                     Uri imageUri = result.getData().getData();
                     if (imageUri != null) {
                         selectedPhotoUri = imageUri.toString();
-                        Toast.makeText(this, R.string.msg_place_added, Toast.LENGTH_SHORT).show();
+                        if (binding != null) {
+                            binding.imgSpotPreview.setImageURI(imageUri);
+                            binding.cardPhotoPreview.setVisibility(View.VISIBLE);
+                        }
                     }
                 }
             });
@@ -85,6 +101,9 @@ public class AddPlaceActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Sets up click listeners for all interactive form actions.
+     */
     private void setupClickListeners() {
         if (binding == null) {
             return;
@@ -92,9 +111,15 @@ public class AddPlaceActivity extends AppCompatActivity {
 
         binding.btnBack.setOnClickListener(v -> finish());
 
-        // TimePicker for access time
-        binding.editAccessTime.setFocusable(false);
-        binding.editAccessTime.setOnClickListener(v -> showTimePickerForAccessTime());
+        // Black button with white text "Dodaj zdjęcie" requesting storage permission before opening gallery
+        binding.btnAddPhoto.setOnClickListener(v -> checkPermissionAndOpenGallery());
+
+        // Remove photo button to clear selection and hide preview
+        binding.btnRemovePhoto.setOnClickListener(v -> {
+            selectedPhotoUri = "";
+            binding.imgSpotPreview.setImageDrawable(null);
+            binding.cardPhotoPreview.setVisibility(View.GONE);
+        });
 
         // Geocoding preview button
         binding.btnSetOnMap.setOnClickListener(v -> {
@@ -129,8 +154,6 @@ public class AddPlaceActivity extends AppCompatActivity {
             String street = binding.editStreet.getText() != null ? binding.editStreet.getText().toString().trim() : "";
             String city = binding.editCity.getText() != null ? binding.editCity.getText().toString().trim() : "";
             String postalCode = binding.editPostalCode.getText() != null ? binding.editPostalCode.getText().toString().trim() : "";
-            String placeNumber = binding.editPlaceNumber.getText() != null ? binding.editPlaceNumber.getText().toString().trim() : "";
-            String floor = binding.editFloor.getText() != null ? binding.editFloor.getText().toString().trim() : "";
 
             int lengthCm = 500;
             int widthCm = 250;
@@ -150,7 +173,10 @@ public class AddPlaceActivity extends AppCompatActivity {
 
             String price = binding.editPrice.getText() != null ? binding.editPrice.getText().toString().trim() : "";
             String accessInstructions = binding.editAccessInstructions.getText() != null ? binding.editAccessInstructions.getText().toString().trim() : "";
-            String accessTime = binding.editAccessTime.getText() != null ? binding.editAccessTime.getText().toString().trim() : "";
+            String accessTime = viewModel.getAccessTimeLiveData().getValue();
+            if (accessTime == null || accessTime.trim().isEmpty()) {
+                accessTime = "08:00 - 20:00";
+            }
 
             boolean autoAccept = binding.switchAutoAccept.isChecked();
             boolean requestVerification = binding.switchRequestVerification.isChecked();
@@ -173,8 +199,8 @@ public class AddPlaceActivity extends AppCompatActivity {
                     street,
                     city,
                     postalCode,
-                    placeNumber,
-                    floor,
+                    "",
+                    "",
                     lengthCm,
                     widthCm,
                     heightCm,
@@ -205,34 +231,44 @@ public class AddPlaceActivity extends AppCompatActivity {
                         .show();
             }
         });
-
-        binding.btnUploadPhotos.setOnClickListener(v -> {
-            Intent pickIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-            photoPickerLauncher.launch(pickIntent);
-        });
     }
 
-    private void showTimePickerForAccessTime() {
-        Calendar calendar = Calendar.getInstance();
-        int hour = calendar.get(Calendar.HOUR_OF_DAY);
-        int minute = calendar.get(Calendar.MINUTE);
+    /**
+     * Checks media/storage permissions and requests them or opens gallery directly.
+     */
+    private void checkPermissionAndOpenGallery() {
+        String permission;
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            permission = Manifest.permission.READ_MEDIA_IMAGES;
+        } else {
+            permission = Manifest.permission.READ_EXTERNAL_STORAGE;
+        }
 
-        TimePickerDialog fromPicker = new TimePickerDialog(this, (view, hourOfDayFrom, minuteFrom) -> {
-            String fromFormatted = String.format(Locale.getDefault(), "%02d:%02d", hourOfDayFrom, minuteFrom);
-
-            TimePickerDialog toPicker = new TimePickerDialog(this, (view2, hourOfDayTo, minuteTo) -> {
-                String toFormatted = String.format(Locale.getDefault(), "%02d:%02d", hourOfDayTo, minuteTo);
-                String timeRange = getString(R.string.format_sub_details, fromFormatted, toFormatted);
-                binding.editAccessTime.setText(timeRange);
-            }, (hourOfDayFrom + 8) % 24, minuteFrom, true);
-            toPicker.setTitle("Godzina DO");
-            toPicker.show();
-
-        }, hour, minute, true);
-        fromPicker.setTitle("Godzina OD");
-        fromPicker.show();
+        if (ContextCompat.checkSelfPermission(this, permission) == PackageManager.PERMISSION_GRANTED) {
+            openGallery();
+        } else if (ActivityCompat.shouldShowRequestPermissionRationale(this, permission)) {
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.title_permission_needed)
+                    .setMessage(R.string.permission_storage_rationale)
+                    .setPositiveButton(R.string.btn_allow, (dialog, which) -> permissionLauncher.launch(permission))
+                    .setNegativeButton(R.string.btn_cancel, null)
+                    .show();
+        } else {
+            permissionLauncher.launch(permission);
+        }
     }
 
+    /**
+     * Opens device gallery picker to allow user to choose a spot photograph.
+     */
+    private void openGallery() {
+        Intent pickIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        photoPickerLauncher.launch(pickIntent);
+    }
+
+    /**
+     * Observes ViewModel LiveData streams for editing data and creation network status.
+     */
     private void observeViewModel() {
         viewModel.getEditingPlaceLiveData().observe(this, place -> {
             if (binding == null || place == null) {
@@ -246,11 +282,28 @@ public class AddPlaceActivity extends AppCompatActivity {
             if (place.getStreet() != null) binding.editStreet.setText(place.getStreet());
             if (place.getCity() != null) binding.editCity.setText(place.getCity());
             if (place.getPostalCode() != null) binding.editPostalCode.setText(place.getPostalCode());
-            if (place.getPlaceNumber() != null) binding.editPlaceNumber.setText(place.getPlaceNumber());
-            if (place.getFloor() != null) binding.editFloor.setText(place.getFloor());
-            binding.editAccessTime.setText(place.getAccessTime());
             binding.editPrice.setText(String.format(Locale.US, "%.2f", place.getPrice()));
+
+            if (place.getAccessTime() != null) {
+                binding.editAccessInstructions.setText(place.getAccessTime());
+            }
+
             selectedPhotoUri = place.getImageUri();
+            // Do NOT show default photo in creation/edit menu; only show if user has uploaded a custom image
+            if (place.getImageUri() != null && !place.getImageUri().trim().isEmpty()) {
+                try {
+                    binding.imgSpotPreview.setImageURI(Uri.parse(place.getImageUri().trim()));
+                    if (binding.imgSpotPreview.getDrawable() != null) {
+                        binding.cardPhotoPreview.setVisibility(View.VISIBLE);
+                    } else {
+                        binding.cardPhotoPreview.setVisibility(View.GONE);
+                    }
+                } catch (Exception e) {
+                    binding.cardPhotoPreview.setVisibility(View.GONE);
+                }
+            } else {
+                binding.cardPhotoPreview.setVisibility(View.GONE);
+            }
 
             if (place.getAmenities() != null) {
                 binding.chipMonitoring.setChecked(place.getAmenities().contains("Monitoring"));

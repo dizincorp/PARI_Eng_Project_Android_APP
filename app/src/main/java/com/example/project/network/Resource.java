@@ -28,10 +28,32 @@ public class Resource<T> {
     @Nullable
     public final String message;
 
+    private final int code;
+
+    /**
+     * Constructs a Resource with status, data, and message.
+     *
+     * @param status  Resource status
+     * @param data    Payload data
+     * @param message Status message
+     */
     public Resource(@NonNull Status status, @Nullable T data, @Nullable String message) {
+        this(status, data, message, 0);
+    }
+
+    /**
+     * Constructs a Resource with status, data, message, and HTTP status code.
+     *
+     * @param status  Resource status
+     * @param data    Payload data
+     * @param message Status message
+     * @param code    HTTP response code or 0
+     */
+    public Resource(@NonNull Status status, @Nullable T data, @Nullable String message, int code) {
         this.status = status;
         this.data = data;
         this.message = message;
+        this.code = code;
     }
 
     /**
@@ -42,7 +64,7 @@ public class Resource<T> {
      * @return Success Resource instance
      */
     public static <T> Resource<T> success(@NonNull T data) {
-        return new Resource<>(Status.SUCCESS, data, null);
+        return new Resource<>(Status.SUCCESS, data, null, 200);
     }
 
     /**
@@ -54,7 +76,20 @@ public class Resource<T> {
      * @return Error Resource instance
      */
     public static <T> Resource<T> error(@Nullable String message, @Nullable T data) {
-        return new Resource<>(Status.ERROR, data, message != null ? message : "Unknown error");
+        return new Resource<>(Status.ERROR, data, message != null ? message : "Unknown error", 0);
+    }
+
+    /**
+     * Creates an error Resource instance with an error message, optional data, and HTTP status code.
+     *
+     * @param message Error description message
+     * @param data    Optional fallback data
+     * @param code    HTTP status code (e.g. 409 for Conflict)
+     * @param <T>     Data type
+     * @return Error Resource instance
+     */
+    public static <T> Resource<T> error(@Nullable String message, @Nullable T data, int code) {
+        return new Resource<>(Status.ERROR, data, message != null ? message : "Unknown error", code);
     }
 
     /**
@@ -65,7 +100,7 @@ public class Resource<T> {
      * @return Loading Resource instance
      */
     public static <T> Resource<T> loading(@Nullable T data) {
-        return new Resource<>(Status.LOADING, data, null);
+        return new Resource<>(Status.LOADING, data, null, 0);
     }
 
     /**
@@ -96,6 +131,15 @@ public class Resource<T> {
     @Nullable
     public String getMessage() {
         return message;
+    }
+
+    /**
+     * Gets the HTTP response status code associated with this resource.
+     *
+     * @return HTTP status code (e.g. 200, 404, 409) or 0 if not an HTTP error
+     */
+    public int getCode() {
+        return code;
     }
 
     /**

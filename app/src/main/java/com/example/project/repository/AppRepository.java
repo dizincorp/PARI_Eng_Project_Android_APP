@@ -6,6 +6,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Transformations;
 
+import com.example.project.R;
 import com.example.project.database.AppDatabase;
 import com.example.project.database.entity.ParkingPlaceEntity;
 import com.example.project.database.entity.ReservationEntity;
@@ -130,6 +131,75 @@ public class AppRepository {
         }
     }
 
+    public void updateUserName(String firstName, String lastName) {
+        String finalFirst = firstName != null ? firstName.trim() : "";
+        String finalLast = lastName != null ? lastName.trim() : "";
+        String fullName = (finalFirst + " " + finalLast).trim();
+        if (fullName.isEmpty()) return;
+
+        userNameLiveData.setValue(fullName);
+        UserProfile profile = userProfileLiveData.getValue();
+        if (profile != null) {
+            profile.setFirstName(finalFirst);
+            profile.setLastName(finalLast);
+            profile.setName(fullName);
+            userProfileLiveData.setValue(profile);
+        }
+
+        if (database != null) {
+            String currentEmail = userEmailLiveData.getValue();
+            executor.execute(() -> {
+                UserEntity user = database.userDao().getUserByEmail(currentEmail);
+                if (user != null) {
+                    user.setFirstName(finalFirst);
+                    user.setLastName(finalLast);
+                    user.setName(fullName);
+                    database.userDao().insertOrUpdate(user);
+                }
+            });
+        }
+    }
+
+    public void updateUserAvatarUri(String avatarUri) {
+        String finalUri = avatarUri != null ? avatarUri.trim() : "";
+        UserProfile profile = userProfileLiveData.getValue();
+        if (profile != null) {
+            profile.setAvatarUri(finalUri);
+            userProfileLiveData.setValue(profile);
+        }
+
+        if (database != null) {
+            String currentEmail = userEmailLiveData.getValue();
+            executor.execute(() -> {
+                UserEntity user = database.userDao().getUserByEmail(currentEmail);
+                if (user != null) {
+                    user.setAvatarUri(finalUri);
+                    database.userDao().insertOrUpdate(user);
+                }
+            });
+        }
+    }
+
+    public void updateUserPhone(String phone) {
+        String finalPhone = phone != null ? phone.trim() : "";
+        UserProfile profile = userProfileLiveData.getValue();
+        if (profile != null) {
+            profile.setPhone(finalPhone);
+            userProfileLiveData.setValue(profile);
+        }
+
+        if (database != null) {
+            String currentEmail = userEmailLiveData.getValue();
+            executor.execute(() -> {
+                UserEntity user = database.userDao().getUserByEmail(currentEmail);
+                if (user != null) {
+                    user.setPhone(finalPhone);
+                    database.userDao().insertOrUpdate(user);
+                }
+            });
+        }
+    }
+
     public void rateUser(double ratingScore) {
         UserProfile profile = userProfileLiveData.getValue();
         if (profile != null) {
@@ -183,7 +253,15 @@ public class AppRepository {
                 Transformations.map(database.vehicleDao().getUserVehiclesLiveData(email != null ? email : ""), entities -> {
                     List<Vehicle> list = new ArrayList<>();
                     if (entities != null) {
+                        java.util.Set<String> seenPlates = new java.util.HashSet<>();
                         for (VehicleEntity e : entities) {
+                            if (e != null && e.getLicensePlate() != null) {
+                                String plateKey = e.getLicensePlate().replaceAll("\\s+", "").toUpperCase(java.util.Locale.ROOT);
+                                if (!plateKey.isEmpty()) {
+                                    if (seenPlates.contains(plateKey)) continue;
+                                    seenPlates.add(plateKey);
+                                }
+                            }
                             list.add(toVehicle(e));
                         }
                     }
@@ -296,7 +374,15 @@ public class AppRepository {
         if (vehicle.getOwnerEmail() == null || vehicle.getOwnerEmail().isEmpty()) {
             vehicle.setOwnerEmail(userEmailLiveData.getValue() != null ? userEmailLiveData.getValue() : "");
         }
-        executor.execute(() -> database.vehicleDao().insertOrUpdate(toVehicleEntity(vehicle)));
+        executor.execute(() -> {
+            if (vehicle.getLicensePlate() != null) {
+                VehicleEntity existing = database.vehicleDao().getVehicleByPlate(vehicle.getOwnerEmail(), vehicle.getLicensePlate());
+                if (existing != null && !existing.getId().equals(vehicle.getId())) {
+                    database.vehicleDao().deleteById(existing.getId());
+                }
+            }
+            database.vehicleDao().insertOrUpdate(toVehicleEntity(vehicle));
+        });
     }
 
     public void deleteVehicle(String vehicleId) {
@@ -400,7 +486,7 @@ public class AppRepository {
         p.setOccupied(e.isOccupied());
         p.setOccupiedUntil(e.getOccupiedUntil());
         p.setPinCode(e.getPinCode());
-        p.setPhotoResId(e.getPhotoResId());
+        p.setPhotoResId(e.getPhotoResId() != 0 ? e.getPhotoResId() : R.drawable.default_parking_spot);
         return p;
     }
 
@@ -433,7 +519,7 @@ public class AppRepository {
         e.setOccupied(p.isOccupied());
         e.setOccupiedUntil(p.getOccupiedUntil());
         e.setPinCode(p.getPinCode());
-        e.setPhotoResId(p.getPhotoResId());
+        e.setPhotoResId(p.getPhotoResId() != 0 ? p.getPhotoResId() : R.drawable.default_parking_spot);
         return e;
     }
 
@@ -461,7 +547,7 @@ public class AppRepository {
                 e.getId(), e.getPlaceId(), e.getPlaceName(), e.getStreet(), e.getCity(),
                 e.getPlaceNumber(), e.getDateString(), e.getTimeRange(), e.getStartTimeMs(),
                 e.getEndTimeMs(), e.getVehicleInfo(), e.getStatus(), e.getTotalPrice(),
-                e.getPinCode(), e.getPhotoResId()
+                e.getPinCode(), e.getPhotoResId() != 0 ? e.getPhotoResId() : R.drawable.default_parking_spot
         );
         r.setUserEmail(e.getUserEmail() != null ? e.getUserEmail() : "");
         return r;
@@ -488,7 +574,7 @@ public class AppRepository {
         e.setStatus(r.getStatus());
         e.setTotalPrice(r.getTotalPrice());
         e.setPinCode(r.getPinCode());
-        e.setPhotoResId(r.getPhotoResId());
+        e.setPhotoResId(r.getPhotoResId() != 0 ? r.getPhotoResId() : R.drawable.default_parking_spot);
         return e;
     }
 

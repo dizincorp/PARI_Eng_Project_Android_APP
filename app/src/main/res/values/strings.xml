@@ -128,6 +128,17 @@
     <string name="amenity_underground">Podziemny</string>
 
     <string name="section_photos">Zdjęcia</string>
+    <string name="btn_add_photo">Dodaj zdjęcie</string>
+    <string name="btn_remove_photo">Usuń zdjęcie</string>
+    <string name="permission_storage_rationale">Aplikacja potrzebuje dostępu do galerii, aby dodać zdjęcie miejsca parkingowego.</string>
+    <string name="permission_storage_denied">Brak uprawnień do pamięci urządzenia uniemożliwia wybranie zdjęcia.</string>
+    <string name="title_permission_needed">Wymagane uprawnienie</string>
+    <string name="btn_allow">Zezwól</string>
+    <string name="section_availability">Dostępność miejsca</string>
+    <string name="opt_available_24_7">Dostępne całodobowo (24/7)</string>
+    <string name="opt_custom_hours">W określonych godzinach</string>
+    <string name="picker_time_from_title">Godzina rozpoczęcia</string>
+    <string name="picker_time_to_title">Godzina zakończenia</string>
     <string name="prompt_add_photos">Dodaj zdjęcia miejsca</string>
     <string name="photos_format_hint">JPG, PNG (max 5MB)</string>
     <string name="msg_place_added">Miejsce zostało pomyślnie zapisane!</string>
@@ -226,6 +237,23 @@
     <string name="badge_not_premium_member">NOT PREMIUM MEMBER</string>
     <string name="badge_czlonek_premium">Członek Premium</string>
     <string name="badge_user_rating">★ 4.9 Rating</string>
+    <string name="menu_profile">Profil</string>
+    <string name="menu_sub_profile">Imię, nazwisko, telefon, e-mail</string>
+    <string name="title_profile_details">Szczegóły profilu</string>
+    <string name="section_personal_info">Dane osobowe</string>
+    <string name="section_contact_info">Dane kontaktowe</string>
+    <string name="section_account_info">Informacje o koncie</string>
+    <string name="label_full_name">Imię i nazwisko</string>
+    <string name="label_role">Rola w systemie</string>
+    <string name="label_rating">Ocena</string>
+    <string name="btn_change_photo">Zmień zdjęcie</string>
+    <string name="dialog_edit_name_title">Edytuj imię i nazwisko</string>
+    <string name="dialog_edit_phone_title">Edytuj numer telefonu</string>
+    <string name="error_name_empty">Imię i nazwisko nie mogą być puste</string>
+    <string name="msg_name_updated">Imię i nazwisko zostały zaktualizowane!</string>
+    <string name="msg_phone_updated">Numer telefonu został zaktualizowany!</string>
+    <string name="msg_photo_updated">Zdjęcie profilowe zostało zaktualizowane!</string>
+    <string name="permission_profile_storage_rationale">Aplikacja potrzebuje dostępu do galerii, aby wybrać zdjęcie profilowe.</string>
 
     <string name="menu_my_reservations">Moje Rezerwacje</string>
     <string name="menu_sub_reservations">Zarządzaj swoimi postojami</string>
@@ -263,6 +291,8 @@
     <string name="toast_rating_submitted">Dziękujemy za ocenę!</string>
     <string name="error_owner_cannot_reserve">Nie możesz zarezerwować własnego miejsca parkingowego!</string>
     <string name="error_spot_already_reserved">To miejsce jest już zarezerwowane w wybranym terminie!</string>
+    <string name="title_reservation_conflict">Miejsce niedostępne</string>
+    <string name="btn_ok">OK</string>
     <string name="error_booking_failed">Błąd rezerwacji: %1$s</string>
     <string name="error_payment_failed">Płatność została odrzucona.</string>
     <!-- Role Selection & Place Creation -->

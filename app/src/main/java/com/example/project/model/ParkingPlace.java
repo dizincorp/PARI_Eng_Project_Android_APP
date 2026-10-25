@@ -77,7 +77,7 @@ public class ParkingPlace {
         this.isOccupied = false;
         this.occupiedUntil = "";
         this.pinCode = "4829";
-        this.photoResId = R.drawable.ic_launcher_background;
+        this.photoResId = R.drawable.default_parking_spot;
         this.ownerEmail = "";
         this.imageUri = "";
         this.rating = 0.0;
@@ -216,7 +216,7 @@ public class ParkingPlace {
     }
 
     public int getPhotoResId() {
-        return photoResId != 0 ? photoResId : R.drawable.ic_launcher_background;
+        return photoResId != 0 ? photoResId : R.drawable.default_parking_spot;
     }
 
     public void setPhotoResId(int photoResId) {

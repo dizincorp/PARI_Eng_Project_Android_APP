@@ -46,6 +46,7 @@ public class AddPlaceViewModel extends AndroidViewModel {
     private final MutableLiveData<Boolean> saveSuccess = new MutableLiveData<>();
     private final MutableLiveData<Integer> errorMessageResId = new MutableLiveData<>();
     private final MutableLiveData<Resource<ParkingSpot>> createSpotStatusLiveData = new MutableLiveData<>();
+    private final MutableLiveData<String> accessTimeLiveData = new MutableLiveData<>("08:00 - 20:00");
 
     /**
      * Public constructor initializing dependencies with Android Application context.
@@ -95,6 +96,16 @@ public class AddPlaceViewModel extends AndroidViewModel {
         return createSpotStatusLiveData;
     }
 
+    public LiveData<String> getAccessTimeLiveData() {
+        return accessTimeLiveData;
+    }
+
+    public void setAccessTime(@Nullable String accessTime) {
+        if (accessTime != null && !accessTime.trim().isEmpty()) {
+            accessTimeLiveData.setValue(accessTime.trim());
+        }
+    }
+
     /**
      * Loads a place from repository for editing if ID is provided.
      *
@@ -105,6 +116,9 @@ public class AddPlaceViewModel extends AndroidViewModel {
             ParkingPlace place = appRepository.getPlaceById(placeId);
             if (place != null) {
                 editingPlaceLiveData.setValue(place);
+                if (place.getAccessTime() != null && !place.getAccessTime().trim().isEmpty()) {
+                    accessTimeLiveData.setValue(place.getAccessTime().trim());
+                }
             }
         }
     }
