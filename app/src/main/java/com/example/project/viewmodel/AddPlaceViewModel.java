@@ -12,12 +12,14 @@ import androidx.annotation.Nullable;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+import androidx.lifecycle.Observer;
 
 import com.example.project.R;
 import com.example.project.model.ParkingPlace;
 import com.example.project.network.Resource;
 import com.example.project.network.model.CreateSpotRequest;
 import com.example.project.network.model.ParkingSpot;
+import com.example.project.network.model.UpdateSpotRequest;
 import com.example.project.repository.AppRepository;
 import com.example.project.repository.SpotRepository;
 
@@ -45,6 +47,7 @@ public class AddPlaceViewModel extends AndroidViewModel {
     private final MutableLiveData<ParkingPlace> editingPlaceLiveData = new MutableLiveData<>(null);
     private final MutableLiveData<Boolean> saveSuccess = new MutableLiveData<>();
     private final MutableLiveData<Integer> errorMessageResId = new MutableLiveData<>();
+    private final MutableLiveData<String> toastMessageLiveData = new MutableLiveData<>();
     private final MutableLiveData<Resource<ParkingSpot>> createSpotStatusLiveData = new MutableLiveData<>();
     private final MutableLiveData<String> accessTimeLiveData = new MutableLiveData<>("08:00 - 20:00");
 
@@ -92,6 +95,10 @@ public class AddPlaceViewModel extends AndroidViewModel {
         return errorMessageResId;
     }
 
+    public LiveData<String> getToastMessageLiveData() {
+        return toastMessageLiveData;
+    }
+
     public LiveData<Resource<ParkingSpot>> getCreateSpotStatusLiveData() {
         return createSpotStatusLiveData;
     }
@@ -124,15 +131,126 @@ public class AddPlaceViewModel extends AndroidViewModel {
     }
 
     /**
+     * Activates a parking spot on the backend via POST /api/spots/{id}/activate and updates Room DB.
+     *
+     * @param spotId Spot ID to activate
+     */
+    public void activateSpot(@Nullable String spotId) {
+        if (spotId == null || spotId.trim().isEmpty()) {
+            toastMessageLiveData.setValue(getApplication().getString(R.string.error_spot_operation_failed, "Brak ID"));
+            return;
+        }
+
+        LiveData<Resource<ParkingSpot>> source = spotRepository.activateSpot(spotId.trim());
+        source.observeForever(new Observer<Resource<ParkingSpot>>() {
+            @Override
+            public void onChanged(Resource<ParkingSpot> resource) {
+                if (resource != null && !resource.isLoading()) {
+                    source.removeObserver(this);
+                    if (resource.isSuccess()) {
+                        toastMessageLiveData.setValue(getApplication().getString(R.string.toast_spot_activated));
+                    } else if (resource.isError()) {
+                        String msg = resource.getMessage() != null ? resource.getMessage() : "Błąd aktywacji";
+                        toastMessageLiveData.setValue(getApplication().getString(R.string.error_spot_operation_failed, msg));
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * Deactivates a parking spot on the backend via POST /api/spots/{id}/deactivate and updates Room DB.
+     *
+     * @param spotId Spot ID to deactivate
+     */
+    public void deactivateSpot(@Nullable String spotId) {
+        if (spotId == null || spotId.trim().isEmpty()) {
+            toastMessageLiveData.setValue(getApplication().getString(R.string.error_spot_operation_failed, "Brak ID"));
+            return;
+        }
+
+        LiveData<Resource<ParkingSpot>> source = spotRepository.deactivateSpot(spotId.trim());
+        source.observeForever(new Observer<Resource<ParkingSpot>>() {
+            @Override
+            public void onChanged(Resource<ParkingSpot> resource) {
+                if (resource != null && !resource.isLoading()) {
+                    source.removeObserver(this);
+                    if (resource.isSuccess()) {
+                        toastMessageLiveData.setValue(getApplication().getString(R.string.toast_spot_deactivated));
+                    } else if (resource.isError()) {
+                        String msg = resource.getMessage() != null ? resource.getMessage() : "Błąd dezaktywacji";
+                        toastMessageLiveData.setValue(getApplication().getString(R.string.error_spot_operation_failed, msg));
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * Updates an existing parking spot on backend via PUT /api/spots/{id} and updates Room DB.
+     *
+     * @param spotId  Spot ID
+     * @param request UpdateSpotRequest payload
+     */
+    public void updateSpot(@Nullable String spotId, @NonNull UpdateSpotRequest request) {
+        if (spotId == null || spotId.trim().isEmpty()) {
+            toastMessageLiveData.setValue(getApplication().getString(R.string.error_spot_operation_failed, "Brak ID"));
+            return;
+        }
+
+        LiveData<Resource<ParkingSpot>> source = spotRepository.updateSpot(spotId.trim(), request);
+        source.observeForever(new Observer<Resource<ParkingSpot>>() {
+            @Override
+            public void onChanged(Resource<ParkingSpot> resource) {
+                if (resource != null && !resource.isLoading()) {
+                    source.removeObserver(this);
+                    if (resource.isSuccess()) {
+                        toastMessageLiveData.setValue(getApplication().getString(R.string.toast_spot_updated));
+                    } else if (resource.isError()) {
+                        String msg = resource.getMessage() != null ? resource.getMessage() : "Błąd aktualizacji";
+                        toastMessageLiveData.setValue(getApplication().getString(R.string.error_spot_operation_failed, msg));
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * Deletes a parking spot from backend via DELETE /api/spots/{id} and Room DB.
+     *
+     * @param spotId Spot ID to delete
+     */
+    public void deleteSpot(@Nullable String spotId) {
+        if (spotId == null || spotId.trim().isEmpty()) {
+            toastMessageLiveData.setValue(getApplication().getString(R.string.error_spot_operation_failed, "Brak ID"));
+            return;
+        }
+
+        LiveData<Resource<Void>> source = spotRepository.deleteSpotRemote(spotId.trim());
+        source.observeForever(new Observer<Resource<Void>>() {
+            @Override
+            public void onChanged(Resource<Void> resource) {
+                if (resource != null && !resource.isLoading()) {
+                    source.removeObserver(this);
+                    if (resource.isSuccess()) {
+                        appRepository.deletePlace(spotId.trim());
+                        toastMessageLiveData.setValue(getApplication().getString(R.string.toast_spot_deleted));
+                    } else if (resource.isError()) {
+                        String msg = resource.getMessage() != null ? resource.getMessage() : "Błąd usuwania";
+                        toastMessageLiveData.setValue(getApplication().getString(R.string.error_spot_operation_failed, msg));
+                    }
+                }
+            }
+        });
+    }
+
+    /**
      * Deletes a parking place from both Room Database and local repository.
      *
      * @param placeId ID of the place to delete
      */
     public void deletePlace(@Nullable String placeId) {
-        if (placeId != null && !placeId.isEmpty()) {
-            spotRepository.deleteSpot(placeId);
-            appRepository.deletePlace(placeId);
-        }
+        deleteSpot(placeId);
     }
 
     /**
@@ -221,9 +339,7 @@ public class AddPlaceViewModel extends AndroidViewModel {
                 ? description.trim()
                 : "Miejsce parkingowe " + spotName;
 
-        final String finalInstructions = (accessInstructions != null && !accessInstructions.trim().isEmpty())
-                ? accessInstructions.trim()
-                : ((accessTime != null && !accessTime.trim().isEmpty()) ? "Godziny: " + accessTime.trim() : "Dostęp 24/7");
+        final String finalInstructions = (accessInstructions != null && !accessInstructions.trim().isEmpty()) ? accessInstructions.trim() : "";
 
         createSpotStatusLiveData.setValue(Resource.loading(null));
 
@@ -245,7 +361,7 @@ public class AddPlaceViewModel extends AndroidViewModel {
                     if (city.trim().equalsIgnoreCase("Warszawa") || city.trim().equalsIgnoreCase("Warsaw")) {
                         lat = 52.2297;
                         lng = 21.0122;
-                    } else if (city.trim().equalsIgnoreCase("Kraków") || city.trim().equalsIgnoreCase("Krakow")) {
+                    } else if (city.trim().equalsIgnoreCase("KrakÃ³w") || city.trim().equalsIgnoreCase("Krakow")) {
                         lat = 50.0647;
                         lng = 19.9450;
                     }
@@ -262,9 +378,9 @@ public class AddPlaceViewModel extends AndroidViewModel {
                     String trimmed = item.trim();
                     if ("Monitoring".equalsIgnoreCase(trimmed) || "CCTV".equalsIgnoreCase(trimmed)) {
                         backendAmenities.add("CCTV");
-                    } else if ("Oświetlenie".equalsIgnoreCase(trimmed) || "LIGHTING".equalsIgnoreCase(trimmed)) {
+                    } else if ("OÅ›wietlenie".equalsIgnoreCase(trimmed) || "LIGHTING".equalsIgnoreCase(trimmed)) {
                         backendAmenities.add("LIGHTING");
-                    } else if ("EV Charging".equalsIgnoreCase(trimmed) || "Ładowanie EV".equalsIgnoreCase(trimmed) || "EV_CHARGER".equalsIgnoreCase(trimmed)) {
+                    } else if ("EV Charging".equalsIgnoreCase(trimmed) || "Åadowanie EV".equalsIgnoreCase(trimmed) || "EV_CHARGER".equalsIgnoreCase(trimmed)) {
                         backendAmenities.add("EV_CHARGER");
                     } else if ("Podziemny".equalsIgnoreCase(trimmed) || "UNDERGROUND".equalsIgnoreCase(trimmed)) {
                         backendAmenities.add("UNDERGROUND");
@@ -307,36 +423,106 @@ public class AddPlaceViewModel extends AndroidViewModel {
 
             // Submit network request on main thread through LiveData
             mainHandler.post(() -> {
-                LiveData<Resource<ParkingSpot>> repoLiveData = spotRepository.createSpot(request, ownerEmail);
-                repoLiveData.observeForever(resource -> {
-                    if (resource == null) return;
-                    createSpotStatusLiveData.setValue(resource);
+                if (placeId != null && !placeId.trim().isEmpty()) {
+                    // Spot Update flow via PUT /api/spots/{id}
+                    UpdateSpotRequest updateRequest = new UpdateSpotRequest();
+                    updateRequest.setName(spotName);
+                    updateRequest.setDescription(spotDescription);
+                    updateRequest.setStreet(street.trim());
+                    updateRequest.setCity(city.trim());
+                    updateRequest.setPostalCode(postalCode != null ? postalCode.trim() : "");
+                    updateRequest.setCountry("PL");
+                    updateRequest.setLat(finalLat);
+                    updateRequest.setLng(finalLng);
+                    updateRequest.setLengthCm(lengthCm);
+                    updateRequest.setWidthCm(widthCm);
+                    updateRequest.setHeightCm(heightCm);
+                    updateRequest.setHourlyPrice(finalPrice);
+                    updateRequest.setAccessInstructions(finalInstructions);
+                    updateRequest.setAutoAccept(autoAccept);
+                    updateRequest.setOwnershipDeclared(ownershipDeclared);
+                    updateRequest.setRequestVerification(requestVerification);
+                    updateRequest.setAmenities(backendAmenities);
+                    updateRequest.setPhotoKeys(photoKeys);
 
-                    if (resource.status == Resource.Status.SUCCESS && resource.data != null) {
-                        String finalId = resource.data.getId() != null ? resource.data.getId() : "p_" + System.currentTimeMillis();
-                        ParkingPlace localPlace = new ParkingPlace(
-                                finalId,
-                                request.getName(),
-                                request.getStreet(),
-                                request.getCity(),
-                                request.getPostalCode(),
-                                placeNumber != null ? placeNumber.trim() : "1",
-                                floor != null ? floor.trim() : "",
-                                finalPrice,
-                                accessTime != null ? accessTime.trim() : "08:00 - 20:00",
-                                amenities,
-                                finalLat,
-                                finalLng
-                        );
-                        localPlace.setOwnerEmail(ownerEmail != null ? ownerEmail : "");
-                        localPlace.setImageUri(photoUri != null ? photoUri : "");
-                        appRepository.addPlace(localPlace);
+                    LiveData<Resource<ParkingSpot>> repoLiveData = spotRepository.updateSpot(placeId.trim(), updateRequest);
+                    repoLiveData.observeForever(new Observer<Resource<ParkingSpot>>() {
+                        @Override
+                        public void onChanged(Resource<ParkingSpot> resource) {
+                            if (resource == null) return;
+                            createSpotStatusLiveData.setValue(resource);
 
-                        saveSuccess.setValue(true);
-                    } else if (resource.status == Resource.Status.ERROR) {
-                        saveSuccess.setValue(false);
-                    }
-                });
+                            if (resource.isSuccess()) {
+                                repoLiveData.removeObserver(this);
+                                ParkingPlace localPlace = new ParkingPlace(
+                                        placeId.trim(),
+                                        updateRequest.getName(),
+                                        updateRequest.getStreet(),
+                                        updateRequest.getCity(),
+                                        updateRequest.getPostalCode(),
+                                        placeNumber != null ? placeNumber.trim() : "1",
+                                        floor != null ? floor.trim() : "",
+                                        finalPrice,
+                                        accessTime != null ? accessTime.trim() : "08:00 - 20:00",
+                                        amenities,
+                                        finalLat,
+                                        finalLng
+                                );
+                                localPlace.setDescription(spotDescription);
+                                localPlace.setAccessInstructions(finalInstructions);
+                                localPlace.setOwnerEmail(ownerEmail != null ? ownerEmail : "");
+                                localPlace.setImageUri(photoUri != null ? photoUri : "");
+                                appRepository.addPlace(localPlace);
+                                toastMessageLiveData.setValue(getApplication().getString(R.string.toast_spot_updated));
+                                saveSuccess.setValue(true);
+                            } else if (resource.isError()) {
+                                repoLiveData.removeObserver(this);
+                                String msg = resource.getMessage() != null ? resource.getMessage() : "Błąd aktualizacji";
+                                toastMessageLiveData.setValue(getApplication().getString(R.string.error_spot_operation_failed, msg));
+                                saveSuccess.setValue(false);
+                            }
+                        }
+                    });
+                } else {
+                    // Spot Creation flow via POST /api/spots
+                    LiveData<Resource<ParkingSpot>> repoLiveData = spotRepository.createSpot(request, ownerEmail);
+                    repoLiveData.observeForever(new Observer<Resource<ParkingSpot>>() {
+                        @Override
+                        public void onChanged(Resource<ParkingSpot> resource) {
+                            if (resource == null) return;
+                            createSpotStatusLiveData.setValue(resource);
+
+                            if (resource.status == Resource.Status.SUCCESS && resource.data != null) {
+                                repoLiveData.removeObserver(this);
+                                String finalId = resource.data.getId() != null ? resource.data.getId() : "p_" + System.currentTimeMillis();
+                                ParkingPlace localPlace = new ParkingPlace(
+                                        finalId,
+                                        request.getName(),
+                                        request.getStreet(),
+                                        request.getCity(),
+                                        request.getPostalCode(),
+                                        placeNumber != null ? placeNumber.trim() : "1",
+                                        floor != null ? floor.trim() : "",
+                                        finalPrice,
+                                        accessTime != null ? accessTime.trim() : "08:00 - 20:00",
+                                        amenities,
+                                        finalLat,
+                                        finalLng
+                                );
+                                localPlace.setDescription(spotDescription);
+                                localPlace.setAccessInstructions(finalInstructions);
+                                localPlace.setOwnerEmail(ownerEmail != null ? ownerEmail : "");
+                                localPlace.setImageUri(photoUri != null ? photoUri : "");
+                                appRepository.addPlace(localPlace);
+                                toastMessageLiveData.setValue(getApplication().getString(R.string.toast_spot_updated));
+                                saveSuccess.setValue(true);
+                            } else if (resource.status == Resource.Status.ERROR) {
+                                repoLiveData.removeObserver(this);
+                                saveSuccess.setValue(false);
+                            }
+                        }
+                    });
+                }
             });
         });
     }

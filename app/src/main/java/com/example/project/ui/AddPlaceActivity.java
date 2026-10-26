@@ -279,14 +279,12 @@ public class AddPlaceActivity extends BaseActivity {
             binding.btnSubmitPlace.setText(R.string.title_edit_place);
 
             if (place.getTitle() != null) binding.editSpotName.setText(place.getTitle());
+            if (place.getDescription() != null) binding.editSpotDescription.setText(place.getDescription());
+            if (place.getAccessInstructions() != null) binding.editAccessInstructions.setText(place.getAccessInstructions());
             if (place.getStreet() != null) binding.editStreet.setText(place.getStreet());
             if (place.getCity() != null) binding.editCity.setText(place.getCity());
             if (place.getPostalCode() != null) binding.editPostalCode.setText(place.getPostalCode());
             binding.editPrice.setText(String.format(Locale.US, "%.2f", place.getPrice()));
-
-            if (place.getAccessTime() != null) {
-                binding.editAccessInstructions.setText(place.getAccessTime());
-            }
 
             selectedPhotoUri = place.getImageUri();
             // Do NOT show default photo in creation/edit menu; only show if user has uploaded a custom image
@@ -338,6 +336,12 @@ public class AddPlaceActivity extends BaseActivity {
         viewModel.getErrorMessageResId().observe(this, resId -> {
             if (resId != null) {
                 Toast.makeText(this, resId, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        viewModel.getToastMessageLiveData().observe(this, msg -> {
+            if (msg != null && !msg.isEmpty()) {
+                Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
             }
         });
     }

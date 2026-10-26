@@ -13,6 +13,8 @@ public class ParkingPlace {
     private String id;
     private String ownerEmail;
     private String title;
+    private String description;
+    private String accessInstructions;
     private String street;
     private String city;
     private String postalCode;
@@ -31,16 +33,28 @@ public class ParkingPlace {
     private double rating;
     private int ratingCount;
 
+    // Spot lifecycle status: DRAFT (#0), ACTIVE (#1), INACTIVE (#2), BLOCKED (#3), ARCHIVED (#4)
+    private String status;
+
+    // Driver & Vehicle details when spot is reserved / checked-in
+    private String driverName;
+    private String driverVehicle;
+    private boolean isCheckedIn;
+
     /**
      * Default constructor for ParkingPlace.
      */
     public ParkingPlace() {
+        this.description = "";
+        this.accessInstructions = "";
         this.isOccupied = false;
         this.pinCode = "4829";
         this.rating = 0.0;
         this.ratingCount = 0;
         this.ownerEmail = "";
         this.imageUri = "";
+        this.status = "ACTIVE";
+        this.isCheckedIn = false;
     }
 
     /**
@@ -82,6 +96,8 @@ public class ParkingPlace {
         this.imageUri = "";
         this.rating = 0.0;
         this.ratingCount = 0;
+        this.status = "ACTIVE";
+        this.isCheckedIn = false;
     }
 
     public String getId() {
@@ -101,10 +117,7 @@ public class ParkingPlace {
     }
 
     public String getTitle() {
-        if (title != null && !title.isEmpty()) {
-            return title;
-        }
-        return getDisplayName();
+        return title;
     }
 
     public void setTitle(String title) {
@@ -159,8 +172,24 @@ public class ParkingPlace {
         this.price = price;
     }
 
+    public String getDescription() {
+        return description != null ? description : "";
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getAccessInstructions() {
+        return accessInstructions != null ? accessInstructions : "";
+    }
+
+    public void setAccessInstructions(String accessInstructions) {
+        this.accessInstructions = accessInstructions;
+    }
+
     public String getAccessTime() {
-        return accessTime != null && !accessTime.isEmpty() ? accessTime : "24/7";
+        return accessTime;
     }
 
     public void setAccessTime(String accessTime) {
@@ -245,6 +274,92 @@ public class ParkingPlace {
 
     public void setRatingCount(int ratingCount) {
         this.ratingCount = ratingCount;
+    }
+
+    public String getStatus() {
+        return status != null && !status.isEmpty() ? status : "ACTIVE";
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getDriverName() {
+        return driverName;
+    }
+
+    public void setDriverName(String driverName) {
+        this.driverName = driverName;
+    }
+
+    public String getDriverVehicle() {
+        return driverVehicle;
+    }
+
+    public void setDriverVehicle(String driverVehicle) {
+        this.driverVehicle = driverVehicle;
+    }
+
+    public boolean isCheckedIn() {
+        return isCheckedIn;
+    }
+
+    public void setCheckedIn(boolean checkedIn) {
+        isCheckedIn = checkedIn;
+    }
+
+    /**
+     * Checks if this spot is in ACTIVE state (slider ON).
+     *
+     * @return True if status is ACTIVE
+     */
+    public boolean isActive() {
+        return "ACTIVE".equalsIgnoreCase(getStatus());
+    }
+
+    /**
+     * Checks if this spot is in INACTIVE state (slider OFF).
+     *
+     * @return True if status is INACTIVE
+     */
+    public boolean isInactive() {
+        return "INACTIVE".equalsIgnoreCase(getStatus());
+    }
+
+    /**
+     * Checks if this spot is in DRAFT state.
+     *
+     * @return True if status is DRAFT
+     */
+    public boolean isDraft() {
+        return "DRAFT".equalsIgnoreCase(getStatus());
+    }
+
+    /**
+     * Checks if this spot is in BLOCKED state.
+     *
+     * @return True if status is BLOCKED
+     */
+    public boolean isBlocked() {
+        return "BLOCKED".equalsIgnoreCase(getStatus());
+    }
+
+    /**
+     * Checks if this spot is in ARCHIVED state.
+     *
+     * @return True if status is ARCHIVED
+     */
+    public boolean isArchived() {
+        return "ARCHIVED".equalsIgnoreCase(getStatus());
+    }
+
+    /**
+     * Checks if spot is reserved by a driver who hasn't checked in yet.
+     *
+     * @return True if reserved but not checked in
+     */
+    public boolean isReserved() {
+        return (isOccupied || (driverName != null && !driverName.isEmpty())) && !isCheckedIn;
     }
 
     /**

@@ -17,6 +17,7 @@ import com.example.project.network.Resource;
 import com.example.project.network.SpotApiService;
 import com.example.project.network.model.CreateSpotRequest;
 import com.example.project.network.model.ParkingSpot;
+import com.example.project.network.model.UpdateSpotRequest;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +30,8 @@ import retrofit2.Response;
 
 /**
  * Repository enforcing the Single Source of Truth (SSOT) pattern for parking spots.
- * Synchronizes remote spots from {@link SpotApiService} into the local Room database
+ * Synchronizes remote spots from {@link SpotApiService} into the local Room database,
+ * manages CRUD lifecycle operations (activation, deactivation, update, deletion),
  * and exposes reactive {@link LiveData} directly from {@link ParkingPlaceDao}.
  */
 public class SpotRepository {
@@ -94,6 +96,16 @@ public class SpotRepository {
     }
 
     /**
+     * Exposes owned parking places for a specific owner email.
+     *
+     * @param ownerEmail Owner's email address
+     * @return LiveData emitting cached list of ParkingPlaceEntity items
+     */
+    public LiveData<List<ParkingPlaceEntity>> getMyPlacesFromRoom(@Nullable String ownerEmail) {
+        return parkingPlaceDao.getMyPlacesLiveData(ownerEmail != null ? ownerEmail : "");
+    }
+
+    /**
      * Gets the network sync operation status (loading, success, error).
      *
      * @return LiveData of sync status Resource
@@ -134,15 +146,15 @@ public class SpotRepository {
                         errorMsg = "Niepoprawne dane formularza dodawania miejsca.";
                     }
                     Log.e(TAG, errorMsg);
-                    resultLiveData.setValue(Resource.error(errorMsg, null));
+                    resultLiveData.setValue(Resource.error(errorMsg, null, response.code()));
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<ParkingSpot> call, @NonNull Throwable t) {
-                String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd sieci";
+                String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd połączenia z serwerem";
                 Log.e(TAG, "createSpot network failure: " + errorMsg, t);
-                resultLiveData.setValue(Resource.error(errorMsg, null));
+                resultLiveData.setValue(Resource.error(errorMsg, null, 0));
             }
         });
 
@@ -150,7 +162,197 @@ public class SpotRepository {
     }
 
     /**
-     * Deletes a parking spot from Room Database.
+     * Activates a parking spot on the backend via POST /api/spots/{id}/activate and updates Room DB.
+     *
+     * @param id Unique spot identifier
+     * @return LiveData emitting Resource with updated ParkingSpot
+     */
+    public LiveData<Resource<ParkingSpot>> activateSpot(@NonNull String id) {
+        MutableLiveData<Resource<ParkingSpot>> resultLiveData = new MutableLiveData<>();
+        resultLiveData.setValue(Resource.loading(null));
+
+        if (id == null || id.trim().isEmpty()) {
+            resultLiveData.setValue(Resource.error("Nieprawidłowy identyfikator miejsca", null, 400));
+            return resultLiveData;
+        }
+
+        apiService.activateSpot(id.trim()).enqueue(new Callback<ParkingSpot>() {
+            @Override
+            public void onResponse(@NonNull Call<ParkingSpot> call, @NonNull Response<ParkingSpot> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    ParkingSpot spot = response.body();
+                    diskExecutor.execute(() -> {
+                        ParkingPlaceEntity existing = parkingPlaceDao.getPlaceById(id.trim());
+                        if (existing != null) {
+                            existing.setStatus("ACTIVE");
+                            parkingPlaceDao.insertOrUpdate(existing);
+                        } else {
+                            ParkingPlaceEntity entity = toEntity(spot);
+                            entity.setStatus("ACTIVE");
+                            parkingPlaceDao.insertOrUpdate(entity);
+                        }
+                        resultLiveData.postValue(Resource.success(spot));
+                    });
+                } else {
+                    String errorMsg = "Błąd aktywacji miejsca: HTTP " + response.code();
+                    Log.e(TAG, errorMsg);
+                    resultLiveData.setValue(Resource.error(errorMsg, null, response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ParkingSpot> call, @NonNull Throwable t) {
+                String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd sieci";
+                Log.e(TAG, "activateSpot network failure: " + errorMsg, t);
+                resultLiveData.setValue(Resource.error(errorMsg, null, 0));
+            }
+        });
+
+        return resultLiveData;
+    }
+
+    /**
+     * Deactivates a parking spot on the backend via POST /api/spots/{id}/deactivate and updates Room DB.
+     *
+     * @param id Unique spot identifier
+     * @return LiveData emitting Resource with updated ParkingSpot
+     */
+    public LiveData<Resource<ParkingSpot>> deactivateSpot(@NonNull String id) {
+        MutableLiveData<Resource<ParkingSpot>> resultLiveData = new MutableLiveData<>();
+        resultLiveData.setValue(Resource.loading(null));
+
+        if (id == null || id.trim().isEmpty()) {
+            resultLiveData.setValue(Resource.error("Nieprawidłowy identyfikator miejsca", null, 400));
+            return resultLiveData;
+        }
+
+        apiService.deactivateSpot(id.trim()).enqueue(new Callback<ParkingSpot>() {
+            @Override
+            public void onResponse(@NonNull Call<ParkingSpot> call, @NonNull Response<ParkingSpot> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    ParkingSpot spot = response.body();
+                    diskExecutor.execute(() -> {
+                        ParkingPlaceEntity existing = parkingPlaceDao.getPlaceById(id.trim());
+                        if (existing != null) {
+                            existing.setStatus("INACTIVE");
+                            parkingPlaceDao.insertOrUpdate(existing);
+                        } else {
+                            ParkingPlaceEntity entity = toEntity(spot);
+                            entity.setStatus("INACTIVE");
+                            parkingPlaceDao.insertOrUpdate(entity);
+                        }
+                        resultLiveData.postValue(Resource.success(spot));
+                    });
+                } else {
+                    String errorMsg = "Błąd dezaktywacji miejsca: HTTP " + response.code();
+                    Log.e(TAG, errorMsg);
+                    resultLiveData.setValue(Resource.error(errorMsg, null, response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ParkingSpot> call, @NonNull Throwable t) {
+                String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd sieci";
+                Log.e(TAG, "deactivateSpot network failure: " + errorMsg, t);
+                resultLiveData.setValue(Resource.error(errorMsg, null, 0));
+            }
+        });
+
+        return resultLiveData;
+    }
+
+    /**
+     * Updates an existing parking spot on the backend via PUT /api/spots/{id} and updates Room DB.
+     *
+     * @param id      Unique spot identifier
+     * @param request UpdateSpotRequest payload
+     * @return LiveData emitting Resource with updated ParkingSpot
+     */
+    public LiveData<Resource<ParkingSpot>> updateSpot(@NonNull String id, @NonNull UpdateSpotRequest request) {
+        MutableLiveData<Resource<ParkingSpot>> resultLiveData = new MutableLiveData<>();
+        resultLiveData.setValue(Resource.loading(null));
+
+        if (id == null || id.trim().isEmpty()) {
+            resultLiveData.setValue(Resource.error("Nieprawidłowy identyfikator miejsca", null, 400));
+            return resultLiveData;
+        }
+
+        apiService.updateSpot(id.trim(), request).enqueue(new Callback<ParkingSpot>() {
+            @Override
+            public void onResponse(@NonNull Call<ParkingSpot> call, @NonNull Response<ParkingSpot> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    ParkingSpot spot = response.body();
+                    diskExecutor.execute(() -> {
+                        ParkingPlaceEntity entity = toEntity(spot);
+                        ParkingPlaceEntity existing = parkingPlaceDao.getPlaceById(id.trim());
+                        if (existing != null && (entity.getOwnerEmail() == null || entity.getOwnerEmail().isEmpty())) {
+                            entity.setOwnerEmail(existing.getOwnerEmail());
+                        }
+                        parkingPlaceDao.insertOrUpdate(entity);
+                        resultLiveData.postValue(Resource.success(spot));
+                    });
+                } else {
+                    String errorMsg = "Błąd aktualizacji miejsca: HTTP " + response.code();
+                    Log.e(TAG, errorMsg);
+                    resultLiveData.setValue(Resource.error(errorMsg, null, response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ParkingSpot> call, @NonNull Throwable t) {
+                String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd sieci";
+                Log.e(TAG, "updateSpot network failure: " + errorMsg, t);
+                resultLiveData.setValue(Resource.error(errorMsg, null, 0));
+            }
+        });
+
+        return resultLiveData;
+    }
+
+    /**
+     * Deletes a parking spot from the backend via DELETE /api/spots/{id}.
+     * Upon successful HTTP response (200 / 204), deletes the spot from Room Database as required.
+     *
+     * @param id Parking spot unique identifier
+     * @return LiveData emitting Resource with void result
+     */
+    public LiveData<Resource<Void>> deleteSpotRemote(@NonNull String id) {
+        MutableLiveData<Resource<Void>> resultLiveData = new MutableLiveData<>();
+        resultLiveData.setValue(Resource.loading(null));
+
+        if (id == null || id.trim().isEmpty()) {
+            resultLiveData.setValue(Resource.error("Nieprawidłowy identyfikator miejsca", null, 400));
+            return resultLiveData;
+        }
+
+        apiService.deleteSpot(id.trim()).enqueue(new Callback<Void>() {
+            @Override
+            public void onResponse(@NonNull Call<Void> call, @NonNull Response<Void> response) {
+                if (response.isSuccessful()) {
+                    diskExecutor.execute(() -> {
+                        parkingPlaceDao.deleteById(id.trim());
+                        resultLiveData.postValue(Resource.success(null));
+                    });
+                } else {
+                    String errorMsg = "Błąd usuwania miejsca: HTTP " + response.code();
+                    Log.e(TAG, errorMsg);
+                    resultLiveData.setValue(Resource.error(errorMsg, null, response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
+                String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd połączenia z serwerem";
+                Log.e(TAG, "deleteSpotRemote network failure: " + errorMsg, t);
+                resultLiveData.setValue(Resource.error(errorMsg, null, 0));
+            }
+        });
+
+        return resultLiveData;
+    }
+
+    /**
+     * Deletes a parking spot from Room Database locally.
      *
      * @param id Parking spot ID to delete
      */
@@ -191,7 +393,7 @@ public class SpotRepository {
                 } else {
                     String errorMsg = "Błąd pobierania miejsc: HTTP " + response.code();
                     Log.e(TAG, errorMsg);
-                    syncStatusLiveData.setValue(Resource.error(errorMsg, null));
+                    syncStatusLiveData.setValue(Resource.error(errorMsg, null, response.code()));
                 }
             }
 
@@ -199,7 +401,7 @@ public class SpotRepository {
             public void onFailure(@NonNull Call<List<ParkingSpot>> call, @NonNull Throwable t) {
                 String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd sieci";
                 Log.e(TAG, "fetchAndSaveSpots network failure: " + errorMsg, t);
-                syncStatusLiveData.setValue(Resource.error(errorMsg, null));
+                syncStatusLiveData.setValue(Resource.error(errorMsg, null, 0));
             }
         });
     }
@@ -226,8 +428,18 @@ public class SpotRepository {
         entity.setOccupied(!spot.isFree());
         entity.setRating(spot.getAvgRating());
         entity.setRatingCount(spot.getReviewCount());
-        entity.setAccessTime(spot.getAccessInstructions());
+        entity.setDescription(spot.getDescription());
+        entity.setAccessInstructions(spot.getAccessInstructions());
+        entity.setAccessTime("24/7");
         entity.setOwnerEmail(spot.getOwnerId());
+        entity.setStatus(spot.getStatus() != null && !spot.getStatus().isEmpty() ? spot.getStatus() : "ACTIVE");
+
+        if (spot.getOccupancy() != null) {
+            boolean isOcc = "OCCUPIED".equalsIgnoreCase(spot.getOccupancy());
+            boolean isRes = "RESERVED".equalsIgnoreCase(spot.getOccupancy());
+            entity.setOccupied(isOcc || isRes);
+            entity.setCheckedIn(isOcc);
+        }
 
         if (spot.getAmenities() != null && !spot.getAmenities().isEmpty()) {
             StringBuilder sb = new StringBuilder();

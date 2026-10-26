@@ -25,6 +25,13 @@
     <color name="orange_dot">#F59E0B</color>
     <color name="green_dot">#10B981</color>
 
+    <!-- Spot Status Indicator Colors -->
+    <color name="status_dot_green">#10B981</color>
+    <color name="status_dot_yellow">#F59E0B</color>
+    <color name="status_dot_red">#EF4444</color>
+    <color name="status_dot_gray">#94A3B8</color>
+    <color name="inactive_card_bg">#F8FAFC</color>
+
     <color name="gray_bar">#E2E8F0</color>
     <color name="gray_border">#E2E8F0</color>
     <color name="gray_input_bg">#F1F5F9</color>

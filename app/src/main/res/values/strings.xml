@@ -1,4 +1,4 @@
-﻿<resources>
+<resources>
     <string name="app_name">ParkShare</string>
     <string name="nav_search">Szukaj</string>
     <string name="nav_reservations">Rezerwacje</string>
@@ -377,4 +377,13 @@
     <string name="toast_checkin_success">Rozpoczęto parkowanie (Check-in). Witamy na miejscu!</string>
     <string name="toast_checkin_failed">Nie udało się rozpocząć parkowania.</string>
     <string name="error_checkin_not_allowed">Nie można rozpocząć parkowania przed czasem rozpoczęcia rezerwacji.</string>
+    <!-- Spot Lifecycle & Status Strings -->
+    <string name="toast_spot_activated">Miejsce zostało pomyślnie aktywowane.</string>
+    <string name="toast_spot_deactivated">Miejsce zostało dezaktywowane.</string>
+    <string name="toast_spot_updated">Dane miejsca zostały pomyślnie zaktualizowane.</string>
+    <string name="toast_spot_deleted">Miejsce parkingowe zostało usunięte.</string>
+    <string name="error_spot_operation_failed">Wystąpił błąd operacji na miejscu: %1$s</string>
+    <string name="format_driver_vehicle_info">%1$s • %2$s</string>
+    <string name="status_spot_active">Aktywne</string>
+    <string name="status_spot_inactive">Nieaktywne</string>
 </resources>

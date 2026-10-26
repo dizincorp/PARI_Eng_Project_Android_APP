@@ -479,7 +479,9 @@ public class AppRepository {
                 e.getPlaceNumber(), e.getFloor(), e.getPrice(), e.getAccessTime(),
                 amenities, e.getLatitude(), e.getLongitude()
         );
-        p.setOwnerEmail(e.getOwnerEmail() != null ? e.getOwnerEmail() : "");
+        p.setOwnerEmail(e.getOwnerEmail() != null ? e.getOwnerEmail() : ");
+        p.setDescription(e.getDescription());
+        p.setAccessInstructions(e.getAccessInstructions());
         p.setImageUri(e.getImageUri() != null ? e.getImageUri() : "");
         p.setRating(e.getRating());
         p.setRatingCount(e.getRatingCount());
@@ -487,6 +489,10 @@ public class AppRepository {
         p.setOccupiedUntil(e.getOccupiedUntil());
         p.setPinCode(e.getPinCode());
         p.setPhotoResId(e.getPhotoResId() != 0 ? e.getPhotoResId() : R.drawable.default_parking_spot);
+        p.setStatus(e.getStatus() != null ? e.getStatus() : "ACTIVE");
+        p.setDriverName(e.getDriverName());
+        p.setDriverVehicle(e.getDriverVehicle());
+        p.setCheckedIn(e.isCheckedIn());
         return p;
     }
 
@@ -503,6 +509,8 @@ public class AppRepository {
         e.setFloor(p.getFloor());
         e.setPrice(p.getPrice());
         e.setAccessTime(p.getAccessTime());
+        e.setDescription(p.getDescription());
+        e.setAccessInstructions(p.getAccessInstructions());
         if (p.getAmenities() != null) {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < p.getAmenities().size(); i++) {
@@ -520,6 +528,10 @@ public class AppRepository {
         e.setOccupiedUntil(p.getOccupiedUntil());
         e.setPinCode(p.getPinCode());
         e.setPhotoResId(p.getPhotoResId() != 0 ? p.getPhotoResId() : R.drawable.default_parking_spot);
+        e.setStatus(p.getStatus() != null ? p.getStatus() : "ACTIVE");
+        e.setDriverName(p.getDriverName());
+        e.setDriverVehicle(p.getDriverVehicle());
+        e.setCheckedIn(p.isCheckedIn());
         return e;
     }
 

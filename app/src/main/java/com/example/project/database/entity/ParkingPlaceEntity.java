@@ -16,6 +16,8 @@ public class ParkingPlaceEntity {
     private String id;
     private String ownerEmail;
     private String title;
+    private String description;
+    private String accessInstructions;
     private String street;
     private String city;
     private String postalCode;
@@ -34,13 +36,28 @@ public class ParkingPlaceEntity {
     private double rating;
     private int ratingCount;
 
+    // Spot lifecycle status: DRAFT (#0), ACTIVE (#1), INACTIVE (#2), BLOCKED (#3), ARCHIVED (#4)
+    private String status;
+
+    // Current driver & vehicle information when spot is reserved/occupied
+    private String driverName;
+    private String driverVehicle;
+    private boolean isCheckedIn;
+
+    /**
+     * Default constructor initializing defaults.
+     */
     public ParkingPlaceEntity() {
         this.id = "p_" + System.currentTimeMillis();
+        this.description = "";
+        this.accessInstructions = "";
         this.pinCode = "4829";
         this.rating = 0.0;
         this.ratingCount = 0;
         this.ownerEmail = "";
         this.imageUri = "";
+        this.status = "ACTIVE";
+        this.isCheckedIn = false;
     }
 
     @NonNull
@@ -66,6 +83,22 @@ public class ParkingPlaceEntity {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public String getDescription() {
+        return description != null ? description : "";
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getAccessInstructions() {
+        return accessInstructions != null ? accessInstructions : "";
+    }
+
+    public void setAccessInstructions(String accessInstructions) {
+        this.accessInstructions = accessInstructions;
     }
 
     public String getStreet() {
@@ -202,5 +235,37 @@ public class ParkingPlaceEntity {
 
     public void setRatingCount(int ratingCount) {
         this.ratingCount = ratingCount;
+    }
+
+    public String getStatus() {
+        return status != null && !status.isEmpty() ? status : "ACTIVE";
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getDriverName() {
+        return driverName;
+    }
+
+    public void setDriverName(String driverName) {
+        this.driverName = driverName;
+    }
+
+    public String getDriverVehicle() {
+        return driverVehicle;
+    }
+
+    public void setDriverVehicle(String driverVehicle) {
+        this.driverVehicle = driverVehicle;
+    }
+
+    public boolean isCheckedIn() {
+        return isCheckedIn;
+    }
+
+    public void setCheckedIn(boolean checkedIn) {
+        isCheckedIn = checkedIn;
     }
 }
