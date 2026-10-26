@@ -18,6 +18,10 @@ import com.example.project.network.ApiClient;
 import com.example.project.network.ReservationApiService;
 import com.example.project.network.Resource;
 import com.example.project.network.model.CancelReservationRequest;
+import com.example.project.network.model.CheckOutResponse;
+import com.example.project.network.model.RejectReservationRequest;
+import com.example.project.network.model.QuoteRequest;
+import com.example.project.network.model.QuoteResponse;
 import com.example.project.network.model.CheckInReservationRequest;
 import com.example.project.network.model.ReservationRequest;
 import com.example.project.network.model.ReservationResponse;
@@ -103,7 +107,7 @@ public class ReservationRepository {
      * @return LiveData emitting list of ReservationEntity
      */
     public LiveData<List<ReservationEntity>> getIncomingReservationsLiveData(@Nullable String userEmail) {
-        return reservationDao.getIncomingReservationsLiveData(userEmail != null ? userEmail : "");
+        return reservationDao.getIncomingReservationsLiveData(userEmail != null ? userEmail : "", System.currentTimeMillis());
     }
 
     /**
@@ -113,7 +117,7 @@ public class ReservationRepository {
      * @return LiveData emitting list of ReservationEntity
      */
     public LiveData<List<ReservationEntity>> getHistoryReservationsLiveData(@Nullable String userEmail) {
-        return reservationDao.getHistoryReservationsListLiveData(userEmail != null ? userEmail : "");
+        return reservationDao.getHistoryReservationsListLiveData(userEmail != null ? userEmail : "", System.currentTimeMillis());
     }
 
     /**
@@ -251,7 +255,7 @@ public class ReservationRepository {
                             ReservationEntity entity = toEntity(res, userEmail, place);
                             // Incoming reservations are marked active if not finished
                             if (entity.getStatus() == null || entity.getStatus().isEmpty() || entity.getStatus().equalsIgnoreCase("PENDING_PAYMENT")) {
-                                entity.setStatus("AKTYWNA");
+                                entity.setStatus(res.getStatus() != null && !res.getStatus().isEmpty() ? res.getStatus() : "CONFIRMED");
                             }
                             reservationDao.insertOrUpdate(entity);
                         }
@@ -285,6 +289,21 @@ public class ReservationRepository {
      */
     public LiveData<Resource<ReservationResponse>> cancelReservation(@NonNull String reservationId,
                                                                      @Nullable String userEmail) {
+        return cancelReservation(reservationId, null, userEmail);
+    }
+
+    /**
+     * Cancels an existing reservation by its unique identifier via POST /api/reservations/{id}/cancel
+     * with an explanation reason and synchronizes the updated state to the local Room database cache.
+     *
+     * @param reservationId Unique identifier of the reservation to cancel
+     * @param reason        Cancellation explanation reason
+     * @param userEmail     Current user's email address for local account isolation
+     * @return LiveData emitting Resource with the updated {@link ReservationResponse}
+     */
+    public LiveData<Resource<ReservationResponse>> cancelReservation(@NonNull String reservationId,
+                                                                     @Nullable String reason,
+                                                                     @Nullable String userEmail) {
         MutableLiveData<Resource<ReservationResponse>> resultLiveData = new MutableLiveData<>();
         resultLiveData.setValue(Resource.loading(null));
 
@@ -293,7 +312,8 @@ public class ReservationRepository {
             return resultLiveData;
         }
 
-        apiService.cancelReservation(reservationId.trim()).enqueue(new Callback<ReservationResponse>() {
+        CancelReservationRequest req = new CancelReservationRequest(reason != null ? reason : "");
+        apiService.cancelReservationWithReason(reservationId.trim(), req).enqueue(new Callback<ReservationResponse>() {
             @Override
             public void onResponse(@NonNull Call<ReservationResponse> call,
                                    @NonNull Response<ReservationResponse> response) {
@@ -307,7 +327,7 @@ public class ReservationRepository {
                         }
 
                         ReservationEntity entity = toEntity(body, userEmail, place);
-                        entity.setStatus("ANULOWANA");
+                        entity.setStatus(body.getStatus() != null && !body.getStatus().isEmpty() ? body.getStatus() : "CANCELLED");
                         reservationDao.insertOrUpdate(entity);
 
                         resultLiveData.postValue(Resource.success(body));
@@ -340,6 +360,23 @@ public class ReservationRepository {
      */
     public LiveData<Resource<ReservationResponse>> checkInReservation(@NonNull String reservationId,
                                                                       @Nullable String userEmail) {
+        return checkInReservation(reservationId, null, null, userEmail);
+    }
+
+    /**
+     * Performs check-in to begin parking for the reservation via POST /api/reservations/{id}/check-in
+     * with optional validation credentials (PIN code or QR token) and synchronizes state to Room.
+     *
+     * @param reservationId Unique identifier of the reservation
+     * @param pinCode       Optional PIN code
+     * @param qrToken       Optional QR token
+     * @param userEmail     Current user's email address for local account isolation
+     * @return LiveData emitting Resource with the updated {@link ReservationResponse}
+     */
+    public LiveData<Resource<ReservationResponse>> checkInReservation(@NonNull String reservationId,
+                                                                      @Nullable String pinCode,
+                                                                      @Nullable String qrToken,
+                                                                      @Nullable String userEmail) {
         MutableLiveData<Resource<ReservationResponse>> resultLiveData = new MutableLiveData<>();
         resultLiveData.setValue(Resource.loading(null));
 
@@ -348,7 +385,14 @@ public class ReservationRepository {
             return resultLiveData;
         }
 
-        apiService.checkInReservation(reservationId.trim()).enqueue(new Callback<ReservationResponse>() {
+        Call<ReservationResponse> apiCall;
+        if ((pinCode != null && !pinCode.trim().isEmpty()) || (qrToken != null && !qrToken.trim().isEmpty())) {
+            apiCall = apiService.checkInReservationWithCredentials(reservationId.trim(),
+                    new CheckInReservationRequest(pinCode != null ? pinCode.trim() : "", qrToken != null ? qrToken.trim() : ""));
+        } else {
+            apiCall = apiService.checkInReservation(reservationId.trim());
+        }
+        apiCall.enqueue(new Callback<ReservationResponse>() {
             @Override
             public void onResponse(@NonNull Call<ReservationResponse> call,
                                    @NonNull Response<ReservationResponse> response) {
@@ -362,7 +406,7 @@ public class ReservationRepository {
                         }
 
                         ReservationEntity entity = toEntity(body, userEmail, place);
-                        entity.setStatus("AKTYWNA");
+                        entity.setStatus(body.getStatus() != null && !body.getStatus().isEmpty() ? body.getStatus() : "IN_PROGRESS");
                         reservationDao.insertOrUpdate(entity);
 
                         resultLiveData.postValue(Resource.success(body));
@@ -383,6 +427,357 @@ public class ReservationRepository {
         });
 
         return resultLiveData;
+    }
+
+    /**
+     * Fetches detailed information for a specific reservation by ID from GET /api/reservations/{id}
+     * and synchronizes the record into the Room database cache.
+     *
+     * @param reservationId Unique identifier of the reservation
+     * @param userEmail     Current user's email address for local account isolation
+     * @return LiveData emitting Resource with the updated {@link ReservationResponse}
+     */
+    public LiveData<Resource<ReservationResponse>> fetchReservationById(@NonNull String reservationId,
+                                                                        @Nullable String userEmail) {
+        MutableLiveData<Resource<ReservationResponse>> resultLiveData = new MutableLiveData<>();
+        resultLiveData.setValue(Resource.loading(null));
+
+        if (reservationId == null || reservationId.trim().isEmpty()) {
+            resultLiveData.setValue(Resource.error("Nieprawidłowy identyfikator rezerwacji", null, 400));
+            return resultLiveData;
+        }
+
+        apiService.getReservationById(reservationId.trim()).enqueue(new Callback<ReservationResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<ReservationResponse> call,
+                                   @NonNull Response<ReservationResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    ReservationResponse body = response.body();
+                    diskExecutor.execute(() -> {
+                        ParkingPlaceEntity place = parkingPlaceDao.getPlaceById(body.getSpotId());
+                        ReservationEntity entity = toEntity(body, userEmail, place);
+                        reservationDao.insertOrUpdate(entity);
+                        resultLiveData.postValue(Resource.success(body));
+                    });
+                } else {
+                    String errorMsg = parseErrorMessage(response);
+                    Log.e(TAG, "getReservationById failed with HTTP " + response.code() + ": " + errorMsg);
+                    resultLiveData.setValue(Resource.error(errorMsg, null, response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ReservationResponse> call, @NonNull Throwable t) {
+                String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd połączenia z serwerem";
+                Log.e(TAG, "getReservationById network failure: " + errorMsg, t);
+                resultLiveData.setValue(Resource.error(errorMsg, null, 0));
+            }
+        });
+
+        return resultLiveData;
+    }
+
+    /**
+     * Fetches the current active parking session for the authenticated driver via GET /api/reservations/active-session
+     * and synchronizes active parking state into Room database cache.
+     *
+     * @param userEmail Current user's email address for local account isolation
+     * @return LiveData emitting Resource with active {@link ReservationResponse} or null if no active session
+     */
+    public LiveData<Resource<ReservationResponse>> fetchActiveSession(@Nullable String userEmail) {
+        MutableLiveData<Resource<ReservationResponse>> resultLiveData = new MutableLiveData<>();
+        resultLiveData.setValue(Resource.loading(null));
+
+        apiService.postActiveSession().enqueue(new Callback<ReservationResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<ReservationResponse> call,
+                                   @NonNull Response<ReservationResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    ReservationResponse body = response.body();
+                    diskExecutor.execute(() -> {
+                        ParkingPlaceEntity place = parkingPlaceDao.getPlaceById(body.getSpotId());
+                        if (place != null) {
+                            place.setOccupied(true);
+                            place.setCheckedIn(true);
+                            parkingPlaceDao.insertOrUpdate(place);
+                        }
+                        ReservationEntity entity = toEntity(body, userEmail, place);
+                        entity.setStatus(body.getStatus() != null && !body.getStatus().isEmpty() ? body.getStatus() : "IN_PROGRESS");
+                        reservationDao.insertOrUpdate(entity);
+                        resultLiveData.postValue(Resource.success(body));
+                    });
+                } else if (response.code() == 404 || response.code() == 204) {
+                    resultLiveData.setValue(Resource.success(null));
+                } else {
+                    String errorMsg = parseErrorMessage(response);
+                    Log.e(TAG, "getActiveSession failed with HTTP " + response.code() + ": " + errorMsg);
+                    resultLiveData.setValue(Resource.error(errorMsg, null, response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ReservationResponse> call, @NonNull Throwable t) {
+                String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd połączenia z serwerem";
+                Log.e(TAG, "getActiveSession network failure: " + errorMsg, t);
+                resultLiveData.setValue(Resource.error(errorMsg, null, 0));
+            }
+        });
+
+        return resultLiveData;
+    }
+
+    /**
+     * Completes parking session and checks out from parking spot via POST /api/reservations/{id}/check-out,
+     * freeing the spot and updating status to completed in the local Room database cache.
+     *
+     * @param reservationId Unique identifier of the reservation to check out
+     * @param userEmail     Current user's email address for local account isolation
+     * @return LiveData emitting Resource with finalized {@link ReservationResponse}
+     */
+    public LiveData<Resource<CheckOutResponse>> checkOutReservation(@NonNull String reservationId,
+                                                                    @Nullable String userEmail) {
+        MutableLiveData<Resource<CheckOutResponse>> resultLiveData = new MutableLiveData<>();
+        resultLiveData.setValue(Resource.loading(null));
+
+        if (reservationId == null || reservationId.trim().isEmpty()) {
+            resultLiveData.setValue(Resource.error("Nieprawidłowy identyfikator rezerwacji", null, 400));
+            return resultLiveData;
+        }
+
+        apiService.checkOutReservation(reservationId.trim()).enqueue(new Callback<CheckOutResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<CheckOutResponse> call,
+                                   @NonNull Response<CheckOutResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    CheckOutResponse body = response.body();
+                    diskExecutor.execute(() -> {
+                        ReservationEntity entity = reservationDao.getReservationByIdSync(body.getId());
+                        if (entity != null) {
+                            entity.setStatus(body.getStatus() != null && !body.getStatus().isEmpty() ? body.getStatus() : "COMPLETED");
+                            entity.setTotalPrice(body.getTotalFinalAmount());
+                            if (body.getActualCheckoutAt() != null) {
+                                entity.setEndTimeMs(body.getActualCheckoutAt().getTime());
+                            }
+                            reservationDao.insertOrUpdate(entity);
+
+                            ParkingPlaceEntity place = parkingPlaceDao.getPlaceById(entity.getPlaceId());
+                            if (place != null) {
+                                place.setOccupied(false);
+                                place.setCheckedIn(false);
+                                parkingPlaceDao.insertOrUpdate(place);
+                            }
+                        }
+
+                        resultLiveData.postValue(Resource.success(body));
+                    });
+                } else {
+                    String errorMsg = parseCheckOutErrorMessage(response);
+                    Log.e(TAG, "checkOutReservation failed with HTTP " + response.code() + ": " + errorMsg);
+                    resultLiveData.setValue(Resource.error(errorMsg, null, response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<CheckOutResponse> call, @NonNull Throwable t) {
+                String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd połączenia z serwerem";
+                Log.e(TAG, "checkOutReservation network failure: " + errorMsg, t);
+                resultLiveData.setValue(Resource.error(errorMsg, null, 0));
+            }
+        });
+
+        return resultLiveData;
+    }
+
+    /**
+     * Accepts and confirms a pending reservation by the parking spot owner via POST /api/reservations/{id}/accept
+     * and updates the reservation status to CONFIRMED in Room database cache.
+     *
+     * @param reservationId Unique identifier of the reservation
+     * @param userEmail     Current user's email address for local account isolation
+     * @return LiveData emitting Resource with accepted {@link ReservationResponse}
+     */
+    public LiveData<Resource<ReservationResponse>> acceptReservation(@NonNull String reservationId,
+                                                                     @Nullable String userEmail) {
+        MutableLiveData<Resource<ReservationResponse>> resultLiveData = new MutableLiveData<>();
+        resultLiveData.setValue(Resource.loading(null));
+
+        if (reservationId == null || reservationId.trim().isEmpty()) {
+            resultLiveData.setValue(Resource.error("Nieprawidłowy identyfikator rezerwacji", null, 400));
+            return resultLiveData;
+        }
+
+        apiService.acceptReservation(reservationId.trim()).enqueue(new Callback<ReservationResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<ReservationResponse> call,
+                                   @NonNull Response<ReservationResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    ReservationResponse body = response.body();
+                    diskExecutor.execute(() -> {
+                        ParkingPlaceEntity place = parkingPlaceDao.getPlaceById(body.getSpotId());
+                        ReservationEntity entity = toEntity(body, userEmail, place);
+                        entity.setStatus(body.getStatus() != null && !body.getStatus().isEmpty() ? body.getStatus() : "CONFIRMED");
+                        reservationDao.insertOrUpdate(entity);
+
+                        resultLiveData.postValue(Resource.success(body));
+                    });
+                } else {
+                    String errorMsg = parseErrorMessage(response);
+                    Log.e(TAG, "acceptReservation failed with HTTP " + response.code() + ": " + errorMsg);
+                    resultLiveData.setValue(Resource.error(errorMsg, null, response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ReservationResponse> call, @NonNull Throwable t) {
+                String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd połączenia z serwerem";
+                Log.e(TAG, "acceptReservation network failure: " + errorMsg, t);
+                resultLiveData.setValue(Resource.error(errorMsg, null, 0));
+            }
+        });
+
+        return resultLiveData;
+    }
+
+    /**
+     * Rejects a pending reservation request by the parking spot owner via POST /api/reservations/{id}/reject
+     * and updates the status to REJECTED in Room database cache.
+     *
+     * @param reservationId Unique identifier of the reservation
+     * @param userEmail     Current user's email address for local account isolation
+     * @return LiveData emitting Resource with rejected {@link ReservationResponse}
+     */
+    public LiveData<Resource<ReservationResponse>> rejectReservation(@NonNull String reservationId,
+                                                                     @Nullable String userEmail) {
+        return rejectReservation(reservationId, null, userEmail);
+    }
+
+    /**
+     * Rejects a pending reservation request by the parking spot owner via POST /api/reservations/{id}/reject
+     * with an explanation reason and updates the status to REJECTED in Room database cache.
+     *
+     * @param reservationId Unique identifier of the reservation
+     * @param reason        Rejection explanation reason
+     * @param userEmail     Current user's email address for local account isolation
+     * @return LiveData emitting Resource with rejected {@link ReservationResponse}
+     */
+    public LiveData<Resource<ReservationResponse>> rejectReservation(@NonNull String reservationId,
+                                                                     @Nullable String reason,
+                                                                     @Nullable String userEmail) {
+        MutableLiveData<Resource<ReservationResponse>> resultLiveData = new MutableLiveData<>();
+        resultLiveData.setValue(Resource.loading(null));
+
+        if (reservationId == null || reservationId.trim().isEmpty()) {
+            resultLiveData.setValue(Resource.error("Nieprawidłowy identyfikator rezerwacji", null, 400));
+            return resultLiveData;
+        }
+
+        RejectReservationRequest req = new RejectReservationRequest(reason != null ? reason : "");
+        apiService.rejectReservationWithReason(reservationId.trim(), req).enqueue(new Callback<ReservationResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<ReservationResponse> call,
+                                   @NonNull Response<ReservationResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    ReservationResponse body = response.body();
+                    diskExecutor.execute(() -> {
+                        ParkingPlaceEntity place = parkingPlaceDao.getPlaceById(body.getSpotId());
+                        if (place != null) {
+                            place.setOccupied(false);
+                            parkingPlaceDao.insertOrUpdate(place);
+                        }
+
+                        ReservationEntity entity = toEntity(body, userEmail, place);
+                        entity.setStatus(body.getStatus() != null && !body.getStatus().isEmpty() ? body.getStatus() : "REJECTED");
+                        reservationDao.insertOrUpdate(entity);
+
+                        resultLiveData.postValue(Resource.success(body));
+                    });
+                } else {
+                    String errorMsg = parseErrorMessage(response);
+                    Log.e(TAG, "rejectReservation failed with HTTP " + response.code() + ": " + errorMsg);
+                    resultLiveData.setValue(Resource.error(errorMsg, null, response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ReservationResponse> call, @NonNull Throwable t) {
+                String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd połączenia z serwerem";
+                Log.e(TAG, "rejectReservation network failure: " + errorMsg, t);
+                resultLiveData.setValue(Resource.error(errorMsg, null, 0));
+            }
+        });
+
+        return resultLiveData;
+    }
+
+    /**
+     * Calculates a preliminary price quote and fee breakdown via POST /api/reservations/quote.
+     *
+     * @param request QuoteRequest payload containing spotId, startsAt, and endsAt
+     * @return LiveData emitting Resource with calculated {@link QuoteResponse}
+     */
+    public LiveData<Resource<QuoteResponse>> calculateQuote(@NonNull QuoteRequest request) {
+        MutableLiveData<Resource<QuoteResponse>> resultLiveData = new MutableLiveData<>();
+        resultLiveData.setValue(Resource.loading(null));
+
+        if (request == null || request.getSpotId() == null || request.getSpotId().trim().isEmpty()) {
+            resultLiveData.setValue(Resource.error("Nieprawidłowe dane zapytania o kalkulację ceny", null, 400));
+            return resultLiveData;
+        }
+
+        apiService.calculateQuote(request).enqueue(new Callback<QuoteResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<QuoteResponse> call,
+                                   @NonNull Response<QuoteResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    resultLiveData.setValue(Resource.success(response.body()));
+                } else {
+                    String errorMsg = parseErrorMessage(response);
+                    Log.e(TAG, "calculateQuote failed with HTTP " + response.code() + ": " + errorMsg);
+                    resultLiveData.setValue(Resource.error(errorMsg, null, response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<QuoteResponse> call, @NonNull Throwable t) {
+                String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd połączenia z serwerem";
+                Log.e(TAG, "calculateQuote network failure: " + errorMsg, t);
+                resultLiveData.setValue(Resource.error(errorMsg, null, 0));
+            }
+        });
+
+        return resultLiveData;
+    }
+
+    /**
+     * Parses backend error response for check-out requests into human-readable messages.
+     * Handles HTTP 400/409 (e.g. if check-out attempted before check-in or already completed).
+     *
+     * @param response Retrofit response
+     * @return User-facing error message
+     */
+    private String parseCheckOutErrorMessage(Response<?> response) {
+        String defaultMsg = "Nie można zakończyć parkowania (HTTP " + response.code() + ")";
+        if (response.code() == 409) {
+            defaultMsg = "Parkowanie dla tej rezerwacji zostało już zakończone.";
+        } else if (response.code() == 400) {
+            defaultMsg = "Nie można zakończyć parkowania, które nie zostało rozpoczęte (wymagany Check-in).";
+        } else if (response.code() == 404) {
+            defaultMsg = "Nie znaleziono wybranej rezerwacji.";
+        } else if (response.code() == 403) {
+            defaultMsg = "Brak uprawnień do zakończenia tej rezerwacji.";
+        }
+
+        try {
+            if (response.errorBody() != null) {
+                String errorBodyStr = response.errorBody().string();
+                JsonObject obj = JsonParser.parseString(errorBodyStr).getAsJsonObject();
+                if (obj.has("message") && !obj.get("message").isJsonNull()) {
+                    return obj.get("message").getAsString();
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return defaultMsg;
     }
 
     /**
@@ -515,7 +910,7 @@ public class ReservationRepository {
         } else {
             entity.setStreet(res.getSpotName() != null && !res.getSpotName().isEmpty() ? res.getSpotName() : "Warszawa");
             entity.setCity("Warszawa");
-            entity.setPlaceNumber("42");
+            entity.setPlaceNumber("");
             entity.setPhotoResId(R.drawable.default_parking_spot);
         }
         entity.setPinCode(res.getPinCode() != null && !res.getPinCode().isEmpty() ? res.getPinCode() : "4829");

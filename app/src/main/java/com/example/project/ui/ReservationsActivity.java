@@ -37,6 +37,7 @@ import java.util.Locale;
 /**
  * Activity for viewing user reservations pulled from the REST backend (GET /api/reservations/incoming
  * and GET /api/reservations) and displayed in an interactive RecyclerView using MVVM architecture.
+ * Manages full parking lifecycle actions including Check-in, Check-out, and Cancellation.
  */
 public class ReservationsActivity extends BaseActivity implements ReservationsAdapter.OnReservationItemClickListener {
 
@@ -219,6 +220,13 @@ public class ReservationsActivity extends BaseActivity implements ReservationsAd
                 Toast.makeText(this, errorMsg, Toast.LENGTH_SHORT).show();
             }
         });
+
+        // Observe toast feedback messages (check-in, check-out, cancel)
+        viewModel.getToastMessageLiveData().observe(this, toastMsg -> {
+            if (toastMsg != null && !toastMsg.trim().isEmpty()) {
+                Toast.makeText(this, toastMsg, Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     @Override
@@ -246,6 +254,35 @@ public class ReservationsActivity extends BaseActivity implements ReservationsAd
         }
     }
 
+    @Override
+    public void onCheckInClick(Reservation reservation) {
+        if (reservation == null || reservation.getId() == null) return;
+        if (viewModel != null) {
+            viewModel.checkIn(reservation.getId());
+        }
+    }
+
+    @Override
+    public void onCheckOutClick(Reservation reservation) {
+        if (reservation == null || reservation.getId() == null) return;
+        if (!reservation.isCheckedIn()) {
+            Toast.makeText(this, R.string.error_checkout_requires_checkin, Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.dialog_checkout_confirm_title)
+                .setMessage(R.string.dialog_checkout_confirm_msg)
+                .setPositiveButton(R.string.btn_confirm_checkout, (dialog, which) -> {
+                    if (viewModel != null) {
+                        viewModel.checkOut(reservation.getId());
+                    }
+                    showRatingDialog();
+                })
+                .setNegativeButton(R.string.btn_cancel, null)
+                .show();
+    }
+
     private void startTimer() {
         stopTimer();
         timerHandler.post(timerRunnable);
@@ -257,7 +294,7 @@ public class ReservationsActivity extends BaseActivity implements ReservationsAd
 
     /**
      * Shows detailed modal dialog for the selected reservation with entry PIN code,
-     * exact schedule, confirmation download, and cancellation options.
+     * exact schedule, confirmation download, check-in / check-out actions, and cancellation.
      *
      * @param reservation Selected Reservation instance
      */
@@ -283,6 +320,55 @@ public class ReservationsActivity extends BaseActivity implements ReservationsAd
                 .setView(dialogBinding.getRoot())
                 .create();
 
+        // Configure Check-In and Check-Out actions according to parking lifecycle state
+        boolean isCheckedIn = reservation.isCheckedIn();
+        if (isCheckedIn) {
+            dialogBinding.btnCheckIn.setEnabled(false);
+            dialogBinding.btnCheckIn.setText(R.string.btn_already_checked_in);
+            dialogBinding.btnCheckIn.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.gray_input_bg));
+            dialogBinding.btnCheckIn.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
+
+            dialogBinding.btnCheckOut.setEnabled(true);
+            dialogBinding.btnCheckOut.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.orange_dot));
+            dialogBinding.btnCancelReservation.setVisibility(View.GONE);
+        } else {
+            dialogBinding.btnCheckIn.setEnabled(true);
+            dialogBinding.btnCheckIn.setText(R.string.btn_check_in);
+            dialogBinding.btnCheckIn.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.chip_bg_selected));
+            dialogBinding.btnCheckIn.setTextColor(ContextCompat.getColor(this, R.color.white));
+
+            dialogBinding.btnCheckOut.setEnabled(false);
+            dialogBinding.btnCheckOut.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.gray_input_bg));
+            dialogBinding.btnCheckOut.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
+            dialogBinding.btnCancelReservation.setVisibility(View.VISIBLE);
+        }
+
+        dialogBinding.btnCheckIn.setOnClickListener(v -> {
+            if (reservation != null && reservation.getId() != null && viewModel != null) {
+                viewModel.checkIn(reservation.getId());
+            }
+            dialog.dismiss();
+        });
+
+        dialogBinding.btnCheckOut.setOnClickListener(v -> {
+            if (reservation == null || !reservation.isCheckedIn()) {
+                Toast.makeText(this, R.string.error_checkout_requires_checkin, Toast.LENGTH_SHORT).show();
+                return;
+            }
+            dialog.dismiss();
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.dialog_checkout_confirm_title)
+                    .setMessage(R.string.dialog_checkout_confirm_msg)
+                    .setPositiveButton(R.string.btn_confirm_checkout, (confirmDialog, which) -> {
+                        if (viewModel != null && reservation.getId() != null) {
+                            viewModel.checkOut(reservation.getId());
+                        }
+                        showRatingDialog();
+                    })
+                    .setNegativeButton(R.string.btn_cancel, null)
+                    .show();
+        });
+
         dialogBinding.btnDownloadConfirmation.setOnClickListener(v -> {
             Toast.makeText(this, R.string.toast_download_confirmation, Toast.LENGTH_SHORT).show();
             dialog.dismiss();
@@ -291,6 +377,9 @@ public class ReservationsActivity extends BaseActivity implements ReservationsAd
         dialogBinding.btnCancelReservation.setOnClickListener(v -> {
             if (reservation != null && reservation.getId() != null) {
                 AppRepository.getInstance().cancelReservationById(reservation.getId());
+                if (viewModel != null) {
+                    viewModel.cancelReservation(reservation.getId());
+                }
             } else {
                 AppRepository.getInstance().cancelActiveReservation();
             }

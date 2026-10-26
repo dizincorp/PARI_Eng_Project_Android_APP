@@ -479,7 +479,7 @@ public class AppRepository {
                 e.getPlaceNumber(), e.getFloor(), e.getPrice(), e.getAccessTime(),
                 amenities, e.getLatitude(), e.getLongitude()
         );
-        p.setOwnerEmail(e.getOwnerEmail() != null ? e.getOwnerEmail() : ");
+        p.setOwnerEmail(e.getOwnerEmail() != null ? e.getOwnerEmail() : "");
         p.setDescription(e.getDescription());
         p.setAccessInstructions(e.getAccessInstructions());
         p.setImageUri(e.getImageUri() != null ? e.getImageUri() : "");

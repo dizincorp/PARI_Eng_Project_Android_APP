@@ -370,6 +370,11 @@
     <string name="status_pending_payment">OCZEKUJE NA PŁATNOŚĆ</string>
     <string name="status_cancelled">ANULOWANA</string>
     <string name="status_completed">ZAKOŃCZONA</string>
+    <string name="status_pending_approval">OCZEKUJE NA POTWIERDZENIE</string>
+    <string name="status_confirmed">POTWIERDZONA</string>
+    <string name="status_in_progress">W TRAKCIE</string>
+    <string name="status_rejected">ODRZUCONA</string>
+    <string name="status_expired">WYGASŁA</string>
     <!-- Reservation Lifecycle Strings -->
     <string name="toast_cancel_success">Rezerwacja została pomyślnie anulowana.</string>
     <string name="toast_cancel_failed">Nie udało się anulować rezerwacji.</string>
@@ -377,6 +382,15 @@
     <string name="toast_checkin_success">Rozpoczęto parkowanie (Check-in). Witamy na miejscu!</string>
     <string name="toast_checkin_failed">Nie udało się rozpocząć parkowania.</string>
     <string name="error_checkin_not_allowed">Nie można rozpocząć parkowania przed czasem rozpoczęcia rezerwacji.</string>
+    <string name="btn_check_in">Rozpocznij parkowanie (Check-in)</string>
+    <string name="btn_check_out">Zakończ parkowanie (Check-out)</string>
+    <string name="btn_already_checked_in">✔ Zameldowano (W trakcie)</string>
+    <string name="error_checkout_requires_checkin">Check-out jest niemożliwy: musisz najpierw wykonać Check-in!</string>
+    <string name="toast_checkout_success">Pomyślnie zakończono parkowanie (Check-out). Dziękujemy!</string>
+    <string name="toast_checkout_failed">Nie udało się zakończyć parkowania.</string>
+    <string name="dialog_checkout_confirm_title">Zakończenie parkowania</string>
+    <string name="dialog_checkout_confirm_msg">Czy na pewno chcesz zakończyć parkowanie i opuścić miejsce?</string>
+    <string name="btn_confirm_checkout">Zakończ parkowanie</string>
     <!-- Spot Lifecycle & Status Strings -->
     <string name="toast_spot_activated">Miejsce zostało pomyślnie aktywowane.</string>
     <string name="toast_spot_deactivated">Miejsce zostało dezaktywowane.</string>

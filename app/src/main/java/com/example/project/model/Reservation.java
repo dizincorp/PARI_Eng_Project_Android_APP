@@ -231,6 +231,15 @@ public class Reservation {
         return photoResId != 0 ? photoResId : R.drawable.default_parking_spot;
     }
 
+    /**
+     * Checks if the reservation has been checked in (parking session currently in progress).
+     *
+     * @return True if status is IN_PROGRESS
+     */
+    public boolean isCheckedIn() {
+        return status != null && status.equalsIgnoreCase("IN_PROGRESS");
+    }
+
     public void setPhotoResId(int photoResId) {
         this.photoResId = photoResId;
     }

@@ -12,6 +12,7 @@ import androidx.lifecycle.Observer;
 import com.example.project.R;
 import com.example.project.database.entity.ReservationEntity;
 import com.example.project.network.Resource;
+import com.example.project.network.model.CheckOutResponse;
 import com.example.project.network.model.ReservationResponse;
 import com.example.project.repository.AppRepository;
 import com.example.project.repository.ReservationRepository;
@@ -186,6 +187,48 @@ public class ReservationDetailViewModel extends AndroidViewModel {
                             errorMsg = getApplication().getString(R.string.error_checkin_not_allowed);
                         } else if (errorMsg == null || errorMsg.trim().isEmpty()) {
                             errorMsg = getApplication().getString(R.string.toast_checkin_failed);
+                        }
+                        actionErrorLiveData.setValue(errorMsg);
+                        toastMessageLiveData.setValue(errorMsg);
+                    }
+                }
+            }
+        });
+    }
+
+    /**
+     * Performs check-out to complete parking session via POST /api/reservations/{id}/check-out.
+     * Enforces the business rule that check-out is impossible without check-in.
+     * On success, updates local Room cache, triggers toast confirmation, and updates UI state.
+     *
+     * @param id Unique identifier of the reservation to check out
+     */
+    public void checkOut(@Nullable String id) {
+        if (id == null || id.trim().isEmpty()) {
+            String validationMsg = getApplication().getString(R.string.toast_checkout_failed);
+            actionErrorLiveData.setValue(validationMsg);
+            toastMessageLiveData.setValue(validationMsg);
+            return;
+        }
+
+        String currentEmail = appRepository.getUserEmailLiveData().getValue();
+        actionStatusLiveData.setValue(Resource.loading(null));
+
+        LiveData<Resource<CheckOutResponse>> source = reservationRepository.checkOutReservation(id.trim(), currentEmail);
+        source.observeForever(new Observer<Resource<CheckOutResponse>>() {
+            @Override
+            public void onChanged(Resource<CheckOutResponse> resource) {
+                if (resource != null && !resource.isLoading()) {
+                    source.removeObserver(this);
+
+                    if (resource.isSuccess() && resource.getData() != null) {
+                        toastMessageLiveData.setValue(getApplication().getString(R.string.toast_checkout_success));
+                    } else if (resource.isError()) {
+                        String errorMsg = resource.getMessage();
+                        if (resource.getCode() == 400) {
+                            errorMsg = getApplication().getString(R.string.error_checkout_requires_checkin);
+                        } else if (errorMsg == null || errorMsg.trim().isEmpty()) {
+                            errorMsg = getApplication().getString(R.string.toast_checkout_failed);
                         }
                         actionErrorLiveData.setValue(errorMsg);
                         toastMessageLiveData.setValue(errorMsg);

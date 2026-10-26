@@ -26,6 +26,18 @@ ParkShare is a modern Android application written in **Java** following the **MV
   * Seamlessly fetches incoming / active reservations and full user history from backend endpoints via `ReservationRepository`.
   * Synchronizes responses into the local Room Database cache (`ReservationDao`) acting as Single Source of Truth.
   * Real-time refresh button (`btn_refresh_reservations`) and auto-refresh on activity start/resume.
+* **Full Parking Lifecycle Management (Check-in & Check-out)**:
+  * **Strict Check-out Business Rule**: Check-out is strictly prohibited before a valid Check-in has occurred.
+  * **Interactive Action Controls**:
+    * Dynamic state transitions: When confirmed (`CONFIRMED`), displays **Zamelduj się (Check-in)**. Once checked in (`IN_PROGRESS`), toggles to **Wymelduj się (Check-out)**.
+    * Modal Details Dialog (`DialogActiveReservationDetailsBinding`) disables the Check-out button and warns the user if Check-in has not yet been performed.
+    * On successful check-out (`POST /api/reservations/{id}/check-out`), returns `CheckOutResponse` with penalty/overstay breakdown and opens rating prompt.
+* **Extended Reservation Endpoints**:
+  * `GET /api/reservations/{id}`: Detailed reservation view by ID.
+  * `GET /api/reservations/active-session` / `POST /api/reservations/active-session`: Driver active parking session retrieval.
+  * `POST /api/reservations/{id}/accept`: Owner acceptance of reservation.
+  * `POST /api/reservations/{id}/reject`: Owner rejection with `RejectReservationRequest` (reason).
+  * `POST /api/reservations/quote`: Cost pre-calculation via `QuoteRequest` and `QuoteResponse`.
 * **Modern `RecyclerView` List Display (`ReservationsAdapter` / `item_reservation.xml`)**:
   * **Active Tab (`Aktywne`)**:
     * Displays incoming and active bookings with color-coded status badges (**AKTYWNA TERAZ**, **OCZEKUJE NA PŁATNOŚĆ**), exact schedule, vehicle info, and entry PIN codes.
@@ -121,13 +133,17 @@ com.example.project/
 │   └── Vehicle.java
 ├── network/
 │   ├── model/
+│   │   ├── CheckOutResponse.java
 │   │   ├── CreateSpotRequest.java
 │   │   ├── CreateVehicleRequest.java
 │   │   ├── LoginRequest.java
 │   │   ├── LoginResponse.java
 │   │   ├── ParkingSpot.java
+│   │   ├── QuoteRequest.java
+│   │   ├── QuoteResponse.java
 │   │   ├── RegisterRequest.java
 │   │   ├── RegisterResponse.java
+│   │   ├── RejectReservationRequest.java
 │   │   ├── ReservationRequest.java
 │   │   ├── ReservationResponse.java
 │   │   ├── UserProfileResponse.java

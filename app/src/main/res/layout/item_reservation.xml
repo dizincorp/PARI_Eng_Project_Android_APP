@@ -70,6 +70,7 @@
 
             <TextView
                 android:id="@+id/text_spot_number_pill"
+                android:visibility="gone"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="8dp"
@@ -253,6 +254,23 @@
                 android:textAllCaps="false"
                 android:textColor="@color/text_secondary"
                 android:textSize="13sp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_item_check_in_out"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:layout_marginStart="8dp"
+                android:backgroundTint="@color/chip_bg_selected"
+                android:paddingHorizontal="12dp"
+                android:text="@string/btn_check_in"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                app:cornerRadius="8dp"
+                app:icon="@drawable/ic_ob_driver"
+                app:iconSize="14dp"
+                app:iconTint="@color/white" />
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_item_navigate"

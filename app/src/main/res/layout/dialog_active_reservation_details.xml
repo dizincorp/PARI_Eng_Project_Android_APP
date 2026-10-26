@@ -135,12 +135,47 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Buttons -->
+    <!-- Parking Lifecycle Actions (Check-In & Check-Out) -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_check_in"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="20dp"
+        android:backgroundTint="@color/chip_bg_selected"
+        android:text="@string/btn_check_in"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        app:cornerRadius="12dp"
+        app:icon="@drawable/ic_ob_driver"
+        app:iconGravity="textStart"
+        app:iconSize="18dp"
+        app:iconTint="@color/white" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_check_out"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="8dp"
+        android:backgroundTint="@color/chip_bg_selected"
+        android:text="@string/btn_check_out"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        android:textSize="15sp"
+        android:textStyle="bold"
+        app:cornerRadius="12dp"
+        app:icon="@drawable/ic_arrow_up"
+        app:iconGravity="textStart"
+        app:iconSize="18dp"
+        app:iconTint="@color/white" />
+
+    <!-- Secondary Actions -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_download_confirmation"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="8dp"
         android:backgroundTint="@color/blue_badge_bg"
         android:text="@string/btn_download_confirmation"
         android:textAllCaps="false"
