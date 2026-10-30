@@ -168,7 +168,7 @@ public class ProfileViewModel extends AndroidViewModel {
             remoteProfileLiveData.setValue(resource);
             if (resource.status == Resource.Status.SUCCESS) {
                 if (resource.data != null) {
-                    appRepository.loginUser(resource.data.getEmail(), resource.data.getFullName());
+                    appRepository.loginUser(resource.data.getEmail(), resource.data.getFullName(), resource.data.getId());
                 }
                 remoteProfileLiveData.removeSource(source);
             } else if (resource.status == Resource.Status.ERROR) {

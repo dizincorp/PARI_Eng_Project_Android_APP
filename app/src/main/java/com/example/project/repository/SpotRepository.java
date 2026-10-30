@@ -379,10 +379,21 @@ public class SpotRepository {
                 if (response.isSuccessful() && response.body() != null) {
                     List<ParkingSpot> remoteSpots = response.body();
                     diskExecutor.execute(() -> {
+                        String currentUserId = com.example.project.utils.SessionManager.getInstance() != null
+                                ? com.example.project.utils.SessionManager.getInstance().getUserId() : "";
+                        String currentEmail = com.example.project.utils.SessionManager.getInstance() != null
+                                ? com.example.project.utils.SessionManager.getInstance().getUserEmail() : "";
+
                         List<ParkingPlaceEntity> entities = new ArrayList<>();
                         for (ParkingSpot spot : remoteSpots) {
                             if (spot != null) {
-                                entities.add(toEntity(spot));
+                                ParkingPlaceEntity entity = toEntity(spot);
+                                if (currentUserId != null && !currentUserId.isEmpty() && currentUserId.equals(spot.getOwnerId())) {
+                                    if (currentEmail != null && !currentEmail.isEmpty()) {
+                                        entity.setOwnerEmail(currentEmail);
+                                    }
+                                }
+                                entities.add(entity);
                             }
                         }
                         if (!entities.isEmpty()) {
@@ -404,6 +415,60 @@ public class SpotRepository {
                 syncStatusLiveData.setValue(Resource.error(errorMsg, null, 0));
             }
         });
+    }
+
+    /**
+     * Fetches all spots owned by the authenticated user via GET /api/spots/mine
+     * and synchronizes them into local Room database cache.
+     *
+     * @return LiveData emitting Resource with the list of owned ParkingSpot objects
+     */
+    public LiveData<Resource<List<ParkingSpot>>> fetchMySpots() {
+        MutableLiveData<Resource<List<ParkingSpot>>> resultLiveData = new MutableLiveData<>();
+        resultLiveData.setValue(Resource.loading(null));
+
+        apiService.getMySpots().enqueue(new Callback<List<ParkingSpot>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<ParkingSpot>> call,
+                                   @NonNull Response<List<ParkingSpot>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<ParkingSpot> spots = response.body();
+                    diskExecutor.execute(() -> {
+                        String currentEmail = com.example.project.utils.SessionManager.getInstance() != null
+                                ? com.example.project.utils.SessionManager.getInstance().getUserEmail() : "";
+                        String currentUserId = com.example.project.utils.SessionManager.getInstance() != null
+                                ? com.example.project.utils.SessionManager.getInstance().getUserId() : "";
+
+                        List<ParkingPlaceEntity> entities = new ArrayList<>();
+                        for (ParkingSpot s : spots) {
+                            if (s == null) continue;
+                            ParkingPlaceEntity entity = toEntity(s);
+                            if (currentEmail != null && !currentEmail.isEmpty()) {
+                                entity.setOwnerEmail(currentEmail);
+                            }
+                            entities.add(entity);
+                        }
+                        if (!entities.isEmpty()) {
+                            parkingPlaceDao.insertOrUpdateAll(entities);
+                        }
+                        resultLiveData.postValue(Resource.success(spots));
+                    });
+                } else {
+                    String errorMsg = "BÅ‚Ä…d pobierania moich miejsc: HTTP " + response.code();
+                    Log.e(TAG, errorMsg);
+                    resultLiveData.setValue(Resource.error(errorMsg, null, response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<ParkingSpot>> call, @NonNull Throwable t) {
+                String errorMsg = t.getMessage() != null ? t.getMessage() : "BÅ‚Ä…d sieci";
+                Log.e(TAG, "fetchMySpots network failure: " + errorMsg, t);
+                resultLiveData.setValue(Resource.error(errorMsg, null, 0));
+            }
+        });
+
+        return resultLiveData;
     }
 
     /**

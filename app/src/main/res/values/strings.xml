@@ -301,6 +301,7 @@
     <string name="label_select_role">Rola w aplikacji</string>
     <string name="role_driver">Kierowca</string>
     <string name="role_owner">Właściciel miejsc</string>
+    <string name="role_both">Kierowca i Właściciel</string>
     <string name="msg_geocoding_in_progress">Wyszukiwanie współrzędnych adresu&#8230;</string>
     <string name="error_spot_creation_failed">Błąd podczas tworzenia miejsca: %1$s</string>
     <string name="menu_my_vehicles">Moje Pojazdy</string>
@@ -347,6 +348,7 @@
     <string name="hint_plate_number">np. LU 12345</string>
     <string name="msg_vehicle_deleted">Pojazd został usunięty!</string>
     <string name="msg_no_vehicles">Brak dodanych pojazdów. Dodaj swój pierwszy pojazd!</string>
+    <string name="msg_no_places">Brak dodanych miejsc. Kliknij \'Dodaj Miejsce\', aby dodać swoje pierwsze miejsce!</string>
     <string name="dialog_delete_vehicle_title">Usunięcie pojazdu</string>
     <string name="dialog_delete_vehicle_confirm">Czy na pewno chcesz usunąć ten pojazd?</string>
     <string name="error_vehicle_validation">Podaj poprawny model i numer rejestracyjny (2-15 znaków)!</string>

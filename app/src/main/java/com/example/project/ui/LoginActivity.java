@@ -41,7 +41,7 @@ public class LoginActivity extends AppCompatActivity {
 
         // Auto-login check: if user session exists, navigate directly to MainActivity
         if (sessionManager.isLoggedIn()) {
-            AppRepository.getInstance().loginUser(sessionManager.getUserEmail(), sessionManager.getUserName());
+            AppRepository.getInstance().loginUser(sessionManager.getUserEmail(), sessionManager.getUserName(), sessionManager.getUserId());
             Intent intent = new Intent(LoginActivity.this, MainActivity.class);
             startActivity(intent);
             finish();
@@ -109,7 +109,7 @@ public class LoginActivity extends AppCompatActivity {
                         String role = (user != null && user.getRole() != null) ? user.getRole() : "DRIVER";
 
                         sessionManager.createLoginSession(token, userId, email, name, role);
-                        AppRepository.getInstance().loginUser(email, name);
+                        AppRepository.getInstance().loginUser(email, name, userId);
 
                         Toast.makeText(this, R.string.msg_login_success, Toast.LENGTH_SHORT).show();
                         Intent intent = new Intent(LoginActivity.this, MainActivity.class);

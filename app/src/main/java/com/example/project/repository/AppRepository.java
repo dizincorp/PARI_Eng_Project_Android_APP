@@ -41,6 +41,7 @@ public class AppRepository {
 
     private final MutableLiveData<String> userNameLiveData = new MutableLiveData<>("Jan Kowalski");
     private final MutableLiveData<String> userEmailLiveData = new MutableLiveData<>("jan_kowalski@gmail.com");
+    private final MutableLiveData<String> userIdLiveData = new MutableLiveData<>("");
     private final MutableLiveData<UserProfile> userProfileLiveData = new MutableLiveData<>(new UserProfile());
 
     private AppRepository() {
@@ -54,6 +55,17 @@ public class AppRepository {
     public void init(Context context) {
         if (database == null && context != null) {
             database = AppDatabase.getInstance(context);
+        }
+        if (context != null) {
+            com.example.project.utils.SessionManager sessionManager = new com.example.project.utils.SessionManager(context);
+            if (sessionManager.isLoggedIn()) {
+                String email = sessionManager.getUserEmail();
+                String name = sessionManager.getUserName();
+                String uid = sessionManager.getUserId();
+                userEmailLiveData.setValue(email != null && !email.isEmpty() ? email : "jan_kowalski@gmail.com");
+                userNameLiveData.setValue(name != null && !name.isEmpty() ? name : "Jan Kowalski");
+                userIdLiveData.setValue(uid != null ? uid : "");
+            }
         }
     }
 
@@ -81,12 +93,22 @@ public class AppRepository {
         return userProfileLiveData;
     }
 
+    public LiveData<String> getUserIdLiveData() {
+        return userIdLiveData;
+    }
+
     public void loginUser(String email, String name) {
+        loginUser(email, name, "");
+    }
+
+    public void loginUser(String email, String name, String userId) {
         String finalEmail = (email != null && !email.trim().isEmpty()) ? email.trim() : "jan_kowalski@gmail.com";
         String finalName = (name != null && !name.trim().isEmpty()) ? name.trim() : "Jan Kowalski";
+        String finalUserId = (userId != null && !userId.trim().isEmpty()) ? userId.trim() : "";
 
         userEmailLiveData.setValue(finalEmail);
         userNameLiveData.setValue(finalName);
+        userIdLiveData.setValue(finalUserId);
 
         UserProfile profile = new UserProfile();
         profile.setEmail(finalEmail);
@@ -231,17 +253,23 @@ public class AppRepository {
         if (database == null) {
             return new MutableLiveData<>(new ArrayList<>());
         }
-        return Transformations.switchMap(userEmailLiveData, email ->
-                Transformations.map(database.parkingPlaceDao().getMyPlacesLiveData(email != null ? email : ""), entities -> {
-                    List<ParkingPlace> list = new ArrayList<>();
-                    if (entities != null) {
-                        for (ParkingPlaceEntity e : entities) {
-                            list.add(toParkingPlace(e));
-                        }
+        return Transformations.switchMap(userEmailLiveData, email -> {
+            String userId = userIdLiveData.getValue() != null ? userIdLiveData.getValue() : "";
+            if (userId.isEmpty() && com.example.project.utils.SessionManager.getInstance() != null) {
+                userId = com.example.project.utils.SessionManager.getInstance().getUserId();
+            }
+            final String finalUserId = userId != null ? userId : "";
+            final String finalEmail = email != null ? email : "";
+            return Transformations.map(database.parkingPlaceDao().getMyPlacesLiveData(finalEmail, finalUserId), entities -> {
+                List<ParkingPlace> list = new ArrayList<>();
+                if (entities != null) {
+                    for (ParkingPlaceEntity e : entities) {
+                        list.add(toParkingPlace(e));
                     }
-                    return list;
-                })
-        );
+                }
+                return list;
+            });
+        });
     }
 
     // Driver's vehicles ("Moje Pojazdy")

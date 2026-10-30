@@ -51,6 +51,17 @@ public class PlacesActivity extends BaseActivity {
 
         setupClickListeners();
         observeViewModel();
+
+        // Refresh owner spots from REST backend (GET /api/spots/mine)
+        viewModel.refreshPlaces();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (viewModel != null) {
+            viewModel.refreshPlaces();
+        }
     }
 
     private void setupClickListeners() {
@@ -89,9 +100,20 @@ public class PlacesActivity extends BaseActivity {
 
         // Observe owner's parking spots with dynamic slider and 4-state indicator
         viewModel.getMyPlacesLiveData().observe(this, places -> {
-            if (binding == null || places == null) return;
+            if (binding == null) return;
 
             binding.containerMyPlaces.removeAllViews();
+
+            if (places == null || places.isEmpty()) {
+                android.widget.TextView emptyView = new android.widget.TextView(this);
+                emptyView.setText(R.string.msg_no_places);
+                emptyView.setTextSize(14);
+                emptyView.setTextColor(androidx.core.content.ContextCompat.getColor(this, R.color.text_secondary));
+                emptyView.setPadding(16, 24, 16, 24);
+                binding.containerMyPlaces.addView(emptyView);
+                return;
+            }
+
             for (ParkingPlace p : places) {
                 if (p == null) continue;
 
@@ -174,6 +196,13 @@ public class PlacesActivity extends BaseActivity {
         viewModel.getToastMessageLiveData().observe(this, msg -> {
             if (msg != null && !msg.trim().isEmpty()) {
                 Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        // Observe network errors
+        viewModel.getErrorMessageLiveData().observe(this, errorMsg -> {
+            if (errorMsg != null && !errorMsg.trim().isEmpty()) {
+                Toast.makeText(this, errorMsg, Toast.LENGTH_SHORT).show();
             }
         });
     }

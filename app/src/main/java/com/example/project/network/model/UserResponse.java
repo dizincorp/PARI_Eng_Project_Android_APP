@@ -22,6 +22,9 @@ public class UserResponse {
     @SerializedName("role")
     private String role;
 
+    @SerializedName("roles")
+    private java.util.List<String> roles;
+
     @SerializedName("loyaltyPoints")
     private Integer loyaltyPoints;
 
@@ -158,6 +161,24 @@ public class UserResponse {
      */
     public void setRole(String role) {
         this.role = role;
+    }
+
+    /**
+     * Gets the list of user roles if present.
+     *
+     * @return List of role strings
+     */
+    public java.util.List<String> getRoles() {
+        return roles;
+    }
+
+    /**
+     * Sets the list of user roles.
+     *
+     * @param roles List of role strings
+     */
+    public void setRoles(java.util.List<String> roles) {
+        this.roles = roles;
     }
 
     /**

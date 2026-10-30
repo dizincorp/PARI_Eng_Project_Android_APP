@@ -118,8 +118,10 @@ public class ProfileDetailsActivity extends BaseActivity {
 
         if ("OWNER".equalsIgnoreCase(profile.getRole())) {
             binding.textRoleValue.setText(R.string.role_owner);
+        } else if ("DRIVER".equalsIgnoreCase(profile.getRole())) {
+            binding.textRoleValue.setText(R.string.role_both);
         } else {
-            binding.textRoleValue.setText(R.string.role_driver);
+            binding.textRoleValue.setText(R.string.role_both);
         }
 
         binding.textRatingValue.setText(String.format(Locale.getDefault(), "★ %.1f", profile.getRating()));

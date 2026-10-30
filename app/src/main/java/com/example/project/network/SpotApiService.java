@@ -63,6 +63,15 @@ public interface SpotApiService {
     Call<List<ParkingSpot>> getSpots();
 
     /**
+     * Retrieves all parking spots owned by the authenticated user via GET /api/spots/mine.
+     * Uses automatic JWT Bearer token injection from AuthInterceptor.
+     *
+     * @return Retrofit Call delivering a list of {@link ParkingSpot} items owned by the current user
+     */
+    @GET("api/spots/mine")
+    Call<List<ParkingSpot>> getMySpots();
+
+    /**
      * Activates a parking spot via POST /api/spots/{id}/activate with an empty request body.
      *
      * @param id Parking spot unique identifier

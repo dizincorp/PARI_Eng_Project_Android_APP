@@ -36,6 +36,8 @@ public class PlacesViewModel extends AndroidViewModel {
     private final MutableLiveData<String> subtitleLiveData = new MutableLiveData<>();
     private final MutableLiveData<String> toastMessageLiveData = new MutableLiveData<>(null);
     private final MutableLiveData<Resource<ParkingSpot>> spotOperationStatusLiveData = new MutableLiveData<>();
+    private final MutableLiveData<Boolean> isLoadingLiveData = new MutableLiveData<>(false);
+    private final MutableLiveData<String> errorMessageLiveData = new MutableLiveData<>(null);
 
     /**
      * Default constructor for PlacesViewModel initializing repositories from application context.
@@ -98,6 +100,36 @@ public class PlacesViewModel extends AndroidViewModel {
 
     public LiveData<Resource<ParkingSpot>> getSpotOperationStatusLiveData() {
         return spotOperationStatusLiveData;
+    }
+
+    public LiveData<Boolean> getIsLoadingLiveData() {
+        return isLoadingLiveData;
+    }
+
+    public LiveData<String> getErrorMessageLiveData() {
+        return errorMessageLiveData;
+    }
+
+    /**
+     * Refreshes owner parking spots from REST API (GET /api/spots/mine)
+     * and synchronizes them into local Room Database Single Source of Truth.
+     */
+    public void refreshPlaces() {
+        isLoadingLiveData.setValue(true);
+        LiveData<Resource<List<ParkingSpot>>> source = spotRepository.fetchMySpots();
+        source.observeForever(new Observer<Resource<List<ParkingSpot>>>() {
+            @Override
+            public void onChanged(Resource<List<ParkingSpot>> resource) {
+                if (resource != null && !resource.isLoading()) {
+                    source.removeObserver(this);
+                    isLoadingLiveData.setValue(false);
+                    if (resource.isError()) {
+                        String msg = resource.getMessage() != null ? resource.getMessage() : "BÅ‚Ä…d pobierania miejsc";
+                        errorMessageLiveData.setValue(msg);
+                    }
+                }
+            }
+        });
     }
 
     /**

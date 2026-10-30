@@ -56,6 +56,7 @@ ParkShare is a modern Android application written in **Java** following the **MV
 
 ### 5. 🅿️ Owner Dashboard & Spot Management (`PlacesActivity` & `AddPlaceActivity`)
 * **Dashboard Subtitle**: Displays dynamic user greeting and current month/year (`Dashboard • [Aktualny Miesiąc i Rok]`).
+* **Owner Spots Synchronization (`GET /api/spots/mine`)**: Automatically synchronizes all spots owned by the authenticated owner from REST API via `SpotRepository.fetchMySpots()` into Room DB cache on `PlacesActivity` start and resume.
 * **Moje Miejsca**: Lists owned parking spots with status badges (**Wolne** / **Zajęte**).
 * **Separate Spot Availability Fragment**: Standalone `SpotAvailabilityFragment` managing availability time ranges.
 * **Geocoding via Google Maps**: Coordinates (`lat`, `lng`) are obtained dynamically using Android Google Geocoding API (`Geocoder`) in background thread from street, postal code, and city.
@@ -198,6 +199,41 @@ com.example.project/
 ---
 
 ## ⚙️ Build & Setup Instructions
+
+### 1. 🖥️ Backend Server Setup & Launch (Windows)
+
+Prerequisites: Ensure **Docker Desktop** is installed and running on Windows, and **Java (JDK 17+)** is configured.
+
+1. **Navigate to the backend project directory** in your Windows terminal:
+   ```cmd
+   cd path\to\backend
+   ```
+2. **Start Docker containers** (PostgreSQL / Redis / infrastructure services):
+   ```cmd
+   docker compose up -d
+   ```
+3. **Set required environment variables**:
+   * **Command Prompt (CMD)**:
+     ```cmd
+     set PARI_DATA_KEY=dGVzdGtleXRlc3RrZXl0ZXN0a2V5dGVzdGtleXRlc3Q=
+     set PARI_JWT_SECRET=dGVzdGtleXRlc3RrZXl0ZXN0a2V5dGVzdGtleXRlc3Q=
+     ```
+   * **PowerShell**:
+     ```powershell
+     $env:PARI_DATA_KEY="dGVzdGtleXRlc3RrZXl0ZXN0a2V5dGVzdGtleXRlc3Q="
+     $env:PARI_JWT_SECRET="dGVzdGtleXRlc3RrZXl0ZXN0a2V5dGVzdGtleXRlc3Q="
+     ```
+4. **Launch the Spring Boot backend server**:
+   ```cmd
+   gradlew.bat bootRun
+   ```
+
+> [!NOTE]
+> The backend server starts on port `8080`. When running the Android app in the Android Studio Emulator, the app connects automatically to `http://10.0.2.2:8080/`. For physical devices on the same local Wi-Fi network, update the host IP in `ApiClient.java`.
+
+---
+
+### 2. 📱 Android Application Setup & Build
 
 1. **Clone the repository**:
    ```bash

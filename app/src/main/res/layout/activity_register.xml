@@ -150,42 +150,7 @@
                 android:textColor="@color/text_primary"
                 android:textSize="14sp" />
 
-            <!-- Rola w aplikacji -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="@string/label_select_role"
-                android:textColor="@color/text_primary"
-                android:textSize="13sp"
-                android:textStyle="bold" />
 
-            <RadioGroup
-                android:id="@+id/radio_group_role"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:orientation="horizontal">
-
-                <RadioButton
-                    android:id="@+id/radio_role_driver"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:checked="true"
-                    android:text="@string/role_driver"
-                    android:textColor="@color/text_primary"
-                    android:textSize="14sp" />
-
-                <RadioButton
-                    android:id="@+id/radio_role_owner"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="@string/role_owner"
-                    android:textColor="@color/text_primary"
-                    android:textSize="14sp" />
-            </RadioGroup>
 
             <!-- Hasło -->
             <TextView

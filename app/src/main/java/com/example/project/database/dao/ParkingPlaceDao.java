@@ -20,6 +20,9 @@ public interface ParkingPlaceDao {
     @Query("SELECT * FROM parking_places")
     LiveData<List<ParkingPlaceEntity>> getAllPlacesLiveData();
 
+    @Query("SELECT * FROM parking_places WHERE (:ownerEmail != '' AND ownerEmail = :ownerEmail) OR (:ownerId != '' AND ownerEmail = :ownerId)")
+    LiveData<List<ParkingPlaceEntity>> getMyPlacesLiveData(String ownerEmail, String ownerId);
+
     @Query("SELECT * FROM parking_places WHERE ownerEmail = :ownerEmail")
     LiveData<List<ParkingPlaceEntity>> getMyPlacesLiveData(String ownerEmail);
 

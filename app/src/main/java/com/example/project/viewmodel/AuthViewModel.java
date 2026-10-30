@@ -15,6 +15,9 @@ import com.example.project.network.model.UserResponse;
 import com.example.project.repository.AppRepository;
 import com.example.project.repository.AuthRepository;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * ViewModel managing user authentication, registration, and profile retrieval workflows
  * backed by {@link AuthRepository} and {@link AppRepository}.
@@ -156,8 +159,34 @@ public class AuthViewModel extends ViewModel {
      * @param phoneNumber     Contact phone number
      * @param role            Chosen role ("DRIVER" or "OWNER")
      */
+    /**
+     * Registers a new user account with automatic DRIVER and OWNER dual status.
+     *
+     * @param firstName       User's first name
+     * @param lastName        User's last name
+     * @param email           User email
+     * @param password        Account password
+     * @param confirmPassword Confirmed password matching check
+     * @param phoneNumber     Contact phone number
+     */
     public void register(String firstName, String lastName, String email, String password,
-                         String confirmPassword, String phoneNumber, String role) {
+                         String confirmPassword, String phoneNumber) {
+        register(firstName, lastName, email, password, confirmPassword, phoneNumber, Arrays.asList("DRIVER", "OWNER"));
+    }
+
+    /**
+     * Registers a new user account with specified statuses list.
+     *
+     * @param firstName       User's first name
+     * @param lastName        User's last name
+     * @param email           User email
+     * @param password        Account password
+     * @param confirmPassword Confirmed password matching check
+     * @param phoneNumber     Contact phone number
+     * @param statuses        List of user statuses/roles (e.g. ["DRIVER", "OWNER"])
+     */
+    public void register(String firstName, String lastName, String email, String password,
+                         String confirmPassword, String phoneNumber, List<String> statuses) {
         if (firstName == null || firstName.trim().isEmpty()
                 || lastName == null || lastName.trim().isEmpty()
                 || email == null || email.trim().isEmpty()
@@ -176,7 +205,8 @@ public class AuthViewModel extends ViewModel {
         }
 
         String phone = (phoneNumber != null && !phoneNumber.trim().isEmpty()) ? phoneNumber.trim() : "6832380753";
-        String userRole = (role != null && !role.trim().isEmpty()) ? role.trim() : "DRIVER";
+        List<String> userStatuses = (statuses != null && !statuses.isEmpty())
+                ? statuses : Arrays.asList("DRIVER", "OWNER");
 
         RegisterRequest request = new RegisterRequest(
                 email.trim(),
@@ -184,7 +214,7 @@ public class AuthViewModel extends ViewModel {
                 firstName.trim(),
                 lastName.trim(),
                 phone,
-                userRole
+                userStatuses
         );
 
         registerResultLiveData.setValue(Resource.loading(null));
@@ -203,25 +233,33 @@ public class AuthViewModel extends ViewModel {
             }
         });
     }
-    public void register(String name, String email, String password, String confirmPassword,
-                         String phoneNumber, String role) {
-        if (name == null || name.trim().isEmpty()
-                || email == null || email.trim().isEmpty()
-                || password == null || password.trim().isEmpty()) {
-            String validationError = "Proszę wypełnić wszystkie pola";
-            errorMessageLiveData.setValue(validationError);
-            registerResultLiveData.setValue(Resource.error(validationError, null));
-            return;
-        }
 
-        if (!password.equals(confirmPassword)) {
-            String mismatchError = "Hasła nie są identyczne";
-            errorMessageLiveData.setValue(mismatchError);
-            registerResultLiveData.setValue(Resource.error(mismatchError, null));
-            return;
-        }
+    /**
+     * Legacy registration method supporting single role parameter.
+     *
+     * @param firstName       User's first name
+     * @param lastName        User's last name
+     * @param email           User email
+     * @param password        Account password
+     * @param confirmPassword Confirmed password matching check
+     * @param phoneNumber     Contact phone number
+     * @param role            Chosen role ("DRIVER" or "OWNER")
+     */
+    public void register(String firstName, String lastName, String email, String password,
+                         String confirmPassword, String phoneNumber, String role) {
+        register(firstName, lastName, email, password, confirmPassword, phoneNumber, Arrays.asList("DRIVER", "OWNER"));
+    }
 
-        String trimmedName = name.trim();
+    /**
+     * Convenience registration overload defaulting role to dual DRIVER and OWNER status.
+     *
+     * @param name            Full name
+     * @param email           User email
+     * @param password        Password
+     * @param confirmPassword Confirmed password
+     */
+    public void register(String name, String email, String password, String confirmPassword) {
+        String trimmedName = name != null ? name.trim() : "";
         String firstName = trimmedName;
         String lastName = "-";
         int spaceIndex = trimmedName.indexOf(' ');
@@ -232,46 +270,7 @@ public class AuthViewModel extends ViewModel {
         if (lastName.isEmpty()) {
             lastName = "-";
         }
-
-        String phone = (phoneNumber != null && !phoneNumber.trim().isEmpty()) ? phoneNumber.trim() : "6832380753";
-        String userRole = (role != null && !role.trim().isEmpty()) ? role.trim() : "DRIVER";
-
-        RegisterRequest request = new RegisterRequest(
-                email.trim(),
-                password,
-                firstName,
-                lastName,
-                phone,
-                userRole
-        );
-
-        registerResultLiveData.setValue(Resource.loading(null));
-        LiveData<Resource<RegisterResponse>> source = authRepository.register(request);
-        registerResultLiveData.addSource(source, resource -> {
-            registerResultLiveData.setValue(resource);
-            if (resource.status == Resource.Status.SUCCESS) {
-                if (resource.data != null) {
-                    appRepository.updateUserName(resource.data.getFullName());
-                }
-                registerSuccessLiveData.setValue(true);
-                registerResultLiveData.removeSource(source);
-            } else if (resource.status == Resource.Status.ERROR) {
-                errorMessageLiveData.setValue(resource.message);
-                registerResultLiveData.removeSource(source);
-            }
-        });
-    }
-
-    /**
-     * Convenience registration overload defaulting role to DRIVER.
-     *
-     * @param name            Full name
-     * @param email           User email
-     * @param password        Password
-     * @param confirmPassword Confirmed password
-     */
-    public void register(String name, String email, String password, String confirmPassword) {
-        register(name, email, password, confirmPassword, null, "DRIVER");
+        register(firstName, lastName, email, password, confirmPassword, null);
     }
 
     /**

@@ -2,8 +2,14 @@ package com.example.project.network.model;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Data Transfer Object (DTO) for user account registration payload to /api/auth/register.
+ * Dispatches an array of statuses / roles containing both "DRIVER" and "OWNER",
+ * removing the need for the user to pick only one role during registration.
  */
 public class RegisterRequest {
 
@@ -22,18 +28,70 @@ public class RegisterRequest {
     @SerializedName("phoneNumber")
     private String phoneNumber;
 
+    @SerializedName("status")
+    private List<String> status;
+
+    @SerializedName("roles")
+    private List<String> roles;
+
     @SerializedName("role")
     private String role;
 
     /**
      * Default no-argument constructor for Gson serialization.
+     * Initializes status and roles with both DRIVER and OWNER.
      */
     public RegisterRequest() {
+        this.status = new ArrayList<>(Arrays.asList("DRIVER", "OWNER"));
+        this.roles = new ArrayList<>(Arrays.asList("DRIVER", "OWNER"));
         this.role = "DRIVER";
     }
 
     /**
-     * Parameterized constructor for RegisterRequest.
+     * Parameterized constructor for RegisterRequest with automatic dual status (DRIVER and OWNER).
+     *
+     * @param email       User email address
+     * @param password    User plain text password (8-72 characters)
+     * @param firstName   User first name
+     * @param lastName    User last name
+     * @param phoneNumber User phone number
+     */
+    public RegisterRequest(String email, String password, String firstName,
+                           String lastName, String phoneNumber) {
+        this.email = email;
+        this.password = password;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.phoneNumber = phoneNumber;
+        this.status = new ArrayList<>(Arrays.asList("DRIVER", "OWNER"));
+        this.roles = new ArrayList<>(Arrays.asList("DRIVER", "OWNER"));
+        this.role = "DRIVER";
+    }
+
+    /**
+     * Parameterized constructor accepting custom statuses list.
+     *
+     * @param email       User email address
+     * @param password    User plain text password (8-72 characters)
+     * @param firstName   User first name
+     * @param lastName    User last name
+     * @param phoneNumber User phone number
+     * @param status      List of user statuses/roles (e.g. ["DRIVER", "OWNER"])
+     */
+    public RegisterRequest(String email, String password, String firstName,
+                           String lastName, String phoneNumber, List<String> status) {
+        this.email = email;
+        this.password = password;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.phoneNumber = phoneNumber;
+        this.status = status != null ? new ArrayList<>(status) : new ArrayList<>(Arrays.asList("DRIVER", "OWNER"));
+        this.roles = new ArrayList<>(this.status);
+        this.role = (!this.status.isEmpty()) ? this.status.get(0) : "DRIVER";
+    }
+
+    /**
+     * Parameterized constructor for backward compatibility with a single role.
      *
      * @param email       User email address
      * @param password    User plain text password (8-72 characters)
@@ -50,6 +108,8 @@ public class RegisterRequest {
         this.lastName = lastName;
         this.phoneNumber = phoneNumber;
         this.role = role != null ? role : "DRIVER";
+        this.status = new ArrayList<>(Arrays.asList("DRIVER", "OWNER"));
+        this.roles = new ArrayList<>(Arrays.asList("DRIVER", "OWNER"));
     }
 
     /**
@@ -143,7 +203,52 @@ public class RegisterRequest {
     }
 
     /**
-     * Gets the chosen user role.
+     * Gets the user status array containing assigned statuses.
+     *
+     * @return List of status strings
+     */
+    public List<String> getStatus() {
+        if (status == null) {
+            status = new ArrayList<>(Arrays.asList("DRIVER", "OWNER"));
+        }
+        return status;
+    }
+
+    /**
+     * Sets the user status array.
+     *
+     * @param status List of status strings
+     */
+    public void setStatus(List<String> status) {
+        this.status = status;
+        if (status != null) {
+            this.roles = new ArrayList<>(status);
+        }
+    }
+
+    /**
+     * Gets the user roles array.
+     *
+     * @return List of role strings
+     */
+    public List<String> getRoles() {
+        if (roles == null) {
+            roles = new ArrayList<>(Arrays.asList("DRIVER", "OWNER"));
+        }
+        return roles;
+    }
+
+    /**
+     * Sets the user roles array.
+     *
+     * @param roles List of role strings
+     */
+    public void setRoles(List<String> roles) {
+        this.roles = roles;
+    }
+
+    /**
+     * Gets the primary user role.
      *
      * @return Role string (e.g. "DRIVER", "OWNER")
      */
@@ -152,7 +257,7 @@ public class RegisterRequest {
     }
 
     /**
-     * Sets the chosen user role.
+     * Sets the primary user role.
      *
      * @param role Role string
      */

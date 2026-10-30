@@ -24,6 +24,7 @@ import com.example.project.viewmodel.AuthViewModel;
 /**
  * Register Activity for new user account creation backed by REST API,
  * automatic JWT session initialization, and {@link SessionManager}.
+ * Assigns both DRIVER and OWNER statuses automatically without manual role choice.
  */
 public class RegisterActivity extends AppCompatActivity {
 
@@ -66,8 +67,8 @@ public class RegisterActivity extends AppCompatActivity {
             String password = binding.editRegPassword.getText() != null ? binding.editRegPassword.getText().toString() : "";
             String confirmPassword = binding.editRegConfirmPassword.getText() != null ? binding.editRegConfirmPassword.getText().toString() : "";
 
-            String selectedRole = (binding.radioRoleOwner != null && binding.radioRoleOwner.isChecked()) ? "OWNER" : "DRIVER";
-            viewModel.register(firstName, lastName, email, password, confirmPassword, phone, selectedRole);
+            // Registers user with automatic DRIVER and OWNER dual status
+            viewModel.register(firstName, lastName, email, password, confirmPassword, phone);
         });
 
         binding.btnGoogleRegister.setOnClickListener(v -> viewModel.loginWithGoogle());
@@ -97,8 +98,9 @@ public class RegisterActivity extends AppCompatActivity {
                             viewModel.login(user.getEmail(), password);
                         } else {
                             // Fallback if password missing: store base session and navigate
-                            sessionManager.createLoginSession("", user.getId(), user.getEmail(), user.getFullName(), user.getRole());
-                            AppRepository.getInstance().loginUser(user.getEmail(), user.getFullName());
+                            String role = (user.getRole() != null && !user.getRole().isEmpty()) ? user.getRole() : "DRIVER";
+                            sessionManager.createLoginSession("", user.getId(), user.getEmail(), user.getFullName(), role);
+                            AppRepository.getInstance().loginUser(user.getEmail(), user.getFullName(), user.getId());
                             Toast.makeText(this, R.string.msg_registration_success, Toast.LENGTH_SHORT).show();
                             Intent intent = new Intent(RegisterActivity.this, OnboardingActivity.class);
                             startActivity(intent);
@@ -129,7 +131,7 @@ public class RegisterActivity extends AppCompatActivity {
                 String role = (user != null && user.getRole() != null) ? user.getRole() : "DRIVER";
 
                 sessionManager.createLoginSession(token, userId, email, name, role);
-                AppRepository.getInstance().loginUser(email, name);
+                AppRepository.getInstance().loginUser(email, name, userId);
 
                 Toast.makeText(this, R.string.msg_registration_success, Toast.LENGTH_SHORT).show();
                 Intent intent = new Intent(RegisterActivity.this, OnboardingActivity.class);
