@@ -258,7 +258,7 @@ public class ReservationsActivity extends BaseActivity implements ReservationsAd
     public void onCheckInClick(Reservation reservation) {
         if (reservation == null || reservation.getId() == null) return;
         if (viewModel != null) {
-            viewModel.checkIn(reservation.getId());
+            viewModel.checkIn(reservation.getId(), reservation.getPinCode());
         }
     }
 
@@ -345,7 +345,7 @@ public class ReservationsActivity extends BaseActivity implements ReservationsAd
 
         dialogBinding.btnCheckIn.setOnClickListener(v -> {
             if (reservation != null && reservation.getId() != null && viewModel != null) {
-                viewModel.checkIn(reservation.getId());
+                viewModel.checkIn(reservation.getId(), reservation.getPinCode());
             }
             dialog.dismiss();
         });

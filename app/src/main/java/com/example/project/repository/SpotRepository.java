@@ -11,6 +11,8 @@ import androidx.lifecycle.MutableLiveData;
 import com.example.project.R;
 import com.example.project.database.AppDatabase;
 import com.example.project.database.dao.ParkingPlaceDao;
+import com.example.project.database.dao.ReservationDao;
+import com.example.project.database.entity.ReservationEntity;
 import com.example.project.database.entity.ParkingPlaceEntity;
 import com.example.project.network.ApiClient;
 import com.example.project.network.Resource;
@@ -41,6 +43,7 @@ public class SpotRepository {
 
     private final SpotApiService apiService;
     private final ParkingPlaceDao parkingPlaceDao;
+    private final ReservationDao reservationDao;
     private final ExecutorService diskExecutor;
 
     private final MutableLiveData<Resource<Void>> syncStatusLiveData = new MutableLiveData<>();
@@ -54,6 +57,7 @@ public class SpotRepository {
         this(
                 ApiClient.getSpotApiService(),
                 AppDatabase.getInstance(context).parkingPlaceDao(),
+                AppDatabase.getInstance(context).reservationDao(),
                 Executors.newSingleThreadExecutor()
         );
     }
@@ -63,14 +67,23 @@ public class SpotRepository {
      *
      * @param apiService      Retrofit SpotApiService instance
      * @param parkingPlaceDao Room database ParkingPlaceDao instance
+     * @param reservationDao  Room database ReservationDao instance
      * @param diskExecutor    Executor for asynchronous Room database writes
      */
     public SpotRepository(@NonNull SpotApiService apiService,
                           @NonNull ParkingPlaceDao parkingPlaceDao,
+                          @NonNull ReservationDao reservationDao,
                           @NonNull ExecutorService diskExecutor) {
         this.apiService = apiService;
         this.parkingPlaceDao = parkingPlaceDao;
+        this.reservationDao = reservationDao;
         this.diskExecutor = diskExecutor;
+    }
+
+    public SpotRepository(@NonNull SpotApiService apiService,
+                          @NonNull ParkingPlaceDao parkingPlaceDao,
+                          @NonNull ExecutorService diskExecutor) {
+        this(apiService, parkingPlaceDao, null, diskExecutor);
     }
 
     /**
@@ -393,6 +406,47 @@ public class SpotRepository {
                                         entity.setOwnerEmail(currentEmail);
                                     }
                                 }
+                                if (reservationDao != null) {
+                                    ReservationEntity activeRes = reservationDao.getActiveReservationForSpotSync(entity.getId());
+                                    if (spot.isFree() || (spot.getOccupancy() != null && "FREE".equalsIgnoreCase(spot.getOccupancy()))) {
+                                        // Spot is free on backend: clear any occupied/reserved state
+                                        entity.setOccupied(false);
+                                        entity.setCheckedIn(false);
+                                        entity.setDriverName("");
+                                        entity.setDriverVehicle("");
+                                        if (activeRes != null && "IN_PROGRESS".equalsIgnoreCase(activeRes.getStatus())) {
+                                            activeRes.setStatus("COMPLETED");
+                                            reservationDao.insertOrUpdate(activeRes);
+                                        }
+                                    } else if (activeRes != null) {
+                                        if ("IN_PROGRESS".equalsIgnoreCase(activeRes.getStatus())) {
+                                            entity.setCheckedIn(true);
+                                            entity.setOccupied(true);
+                                        } else if ("CONFIRMED".equalsIgnoreCase(activeRes.getStatus())
+                                                || "PENDING_APPROVAL".equalsIgnoreCase(activeRes.getStatus())
+                                                || "PENDING_PAYMENT".equalsIgnoreCase(activeRes.getStatus())
+                                                || "AKTYWNA".equalsIgnoreCase(activeRes.getStatus())) {
+                                            entity.setCheckedIn(false);
+                                            entity.setOccupied(true);
+                                        }
+                                        if (activeRes.getCarPlate() != null && !activeRes.getCarPlate().isEmpty()) {
+                                            entity.setDriverVehicle(activeRes.getCarPlate());
+                                        }
+                                        if (activeRes.getUserName() != null && !activeRes.getUserName().isEmpty()) {
+                                            entity.setDriverName(activeRes.getUserName());
+                                        }
+                                        if (activeRes.getPinCode() != null && !activeRes.getPinCode().isEmpty()) {
+                                            entity.setPinCode(activeRes.getPinCode());
+                                        }
+                                    } else {
+                                        // Spot is not free on backend, preserve existing driver info if present
+                                        ParkingPlaceEntity existing = parkingPlaceDao.getPlaceById(entity.getId());
+                                        if (existing != null) {
+                                            entity.setDriverVehicle(existing.getDriverVehicle());
+                                            entity.setDriverName(existing.getDriverName());
+                                        }
+                                    }
+                                }
                                 entities.add(entity);
                             }
                         }
@@ -440,11 +494,52 @@ public class SpotRepository {
                                 ? com.example.project.utils.SessionManager.getInstance().getUserId() : "";
 
                         List<ParkingPlaceEntity> entities = new ArrayList<>();
-                        for (ParkingSpot s : spots) {
-                            if (s == null) continue;
-                            ParkingPlaceEntity entity = toEntity(s);
+                        for (ParkingSpot spot : spots) {
+                            if (spot == null) continue;
+                            ParkingPlaceEntity entity = toEntity(spot);
                             if (currentEmail != null && !currentEmail.isEmpty()) {
                                 entity.setOwnerEmail(currentEmail);
+                            }
+                            if (reservationDao != null) {
+                                ReservationEntity activeRes = reservationDao.getActiveReservationForSpotSync(entity.getId());
+                                if (spot.isFree() || (spot.getOccupancy() != null && "FREE".equalsIgnoreCase(spot.getOccupancy()))) {
+                                    // Spot is free on backend: clear any occupied/reserved state
+                                    entity.setOccupied(false);
+                                    entity.setCheckedIn(false);
+                                    entity.setDriverName("");
+                                    entity.setDriverVehicle("");
+                                    if (activeRes != null && "IN_PROGRESS".equalsIgnoreCase(activeRes.getStatus())) {
+                                        activeRes.setStatus("COMPLETED");
+                                        reservationDao.insertOrUpdate(activeRes);
+                                    }
+                                } else if (activeRes != null) {
+                                    if ("IN_PROGRESS".equalsIgnoreCase(activeRes.getStatus())) {
+                                        entity.setCheckedIn(true);
+                                        entity.setOccupied(true);
+                                    } else if ("CONFIRMED".equalsIgnoreCase(activeRes.getStatus())
+                                            || "PENDING_APPROVAL".equalsIgnoreCase(activeRes.getStatus())
+                                            || "PENDING_PAYMENT".equalsIgnoreCase(activeRes.getStatus())
+                                            || "AKTYWNA".equalsIgnoreCase(activeRes.getStatus())) {
+                                        entity.setCheckedIn(false);
+                                        entity.setOccupied(true);
+                                    }
+                                    if (activeRes.getCarPlate() != null && !activeRes.getCarPlate().isEmpty()) {
+                                        entity.setDriverVehicle(activeRes.getCarPlate());
+                                    }
+                                    if (activeRes.getUserName() != null && !activeRes.getUserName().isEmpty()) {
+                                        entity.setDriverName(activeRes.getUserName());
+                                    }
+                                    if (activeRes.getPinCode() != null && !activeRes.getPinCode().isEmpty()) {
+                                        entity.setPinCode(activeRes.getPinCode());
+                                    }
+                                } else {
+                                    // Spot is not free on backend, preserve existing driver info if present
+                                    ParkingPlaceEntity existing = parkingPlaceDao.getPlaceById(entity.getId());
+                                    if (existing != null) {
+                                        entity.setDriverVehicle(existing.getDriverVehicle());
+                                        entity.setDriverName(existing.getDriverName());
+                                    }
+                                }
                             }
                             entities.add(entity);
                         }

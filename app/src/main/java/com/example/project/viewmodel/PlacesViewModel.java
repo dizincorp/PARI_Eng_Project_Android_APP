@@ -16,6 +16,7 @@ import com.example.project.network.Resource;
 import com.example.project.network.model.ParkingSpot;
 import com.example.project.network.model.UpdateSpotRequest;
 import com.example.project.repository.AppRepository;
+import com.example.project.repository.ReservationRepository;
 import com.example.project.repository.SpotRepository;
 
 import java.text.SimpleDateFormat;
@@ -31,6 +32,7 @@ public class PlacesViewModel extends AndroidViewModel {
 
     private final AppRepository appRepository;
     private final SpotRepository spotRepository;
+    private final ReservationRepository reservationRepository;
 
     private final MutableLiveData<String> greetingLiveData = new MutableLiveData<>();
     private final MutableLiveData<String> subtitleLiveData = new MutableLiveData<>();
@@ -45,7 +47,7 @@ public class PlacesViewModel extends AndroidViewModel {
      * @param application Application instance
      */
     public PlacesViewModel(@NonNull Application application) {
-        this(application, AppRepository.getInstance(), SpotRepository.getInstance(application));
+        this(application, AppRepository.getInstance(), SpotRepository.getInstance(application), ReservationRepository.getInstance(application));
     }
 
     /**
@@ -58,9 +60,25 @@ public class PlacesViewModel extends AndroidViewModel {
     public PlacesViewModel(@NonNull Application application,
                            @NonNull AppRepository appRepository,
                            @NonNull SpotRepository spotRepository) {
+        this(application, appRepository, spotRepository, ReservationRepository.getInstance(application));
+    }
+
+    /**
+     * Parameterized constructor with ReservationRepository injection.
+     *
+     * @param application           Application instance
+     * @param appRepository         AppRepository instance
+     * @param spotRepository        SpotRepository instance
+     * @param reservationRepository ReservationRepository instance
+     */
+    public PlacesViewModel(@NonNull Application application,
+                           @NonNull AppRepository appRepository,
+                           @NonNull SpotRepository spotRepository,
+                           @NonNull ReservationRepository reservationRepository) {
         super(application);
         this.appRepository = appRepository;
         this.spotRepository = spotRepository;
+        this.reservationRepository = reservationRepository;
         initData();
     }
 
@@ -116,6 +134,19 @@ public class PlacesViewModel extends AndroidViewModel {
      */
     public void refreshPlaces() {
         isLoadingLiveData.setValue(true);
+        String currentEmail = appRepository.getUserEmailLiveData().getValue();
+        if (currentEmail == null || currentEmail.isEmpty()) {
+            if (com.example.project.utils.SessionManager.getInstance() != null) {
+                currentEmail = com.example.project.utils.SessionManager.getInstance().getUserEmail();
+            }
+        }
+        final String finalEmail = currentEmail != null ? currentEmail : "";
+
+        // Synchronize incoming reservations for the owner to clear completed sessions
+        if (reservationRepository != null) {
+            reservationRepository.fetchIncomingReservations(finalEmail);
+        }
+
         LiveData<Resource<List<ParkingSpot>>> source = spotRepository.fetchMySpots();
         source.observeForever(new Observer<Resource<List<ParkingSpot>>>() {
             @Override
@@ -124,7 +155,7 @@ public class PlacesViewModel extends AndroidViewModel {
                     source.removeObserver(this);
                     isLoadingLiveData.setValue(false);
                     if (resource.isError()) {
-                        String msg = resource.getMessage() != null ? resource.getMessage() : "BÅ‚Ä…d pobierania miejsc";
+                        String msg = resource.getMessage() != null ? resource.getMessage() : "Błąd pobierania miejsc";
                         errorMessageLiveData.setValue(msg);
                     }
                 }

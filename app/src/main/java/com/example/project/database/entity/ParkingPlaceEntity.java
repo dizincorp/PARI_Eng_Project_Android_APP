@@ -268,4 +268,13 @@ public class ParkingPlaceEntity {
     public void setCheckedIn(boolean checkedIn) {
         isCheckedIn = checkedIn;
     }
+
+    /**
+     * Determines whether the spot is currently reserved (booked by a driver, but check-in has not occurred yet).
+     *
+     * @return True if reserved, false otherwise
+     */
+    public boolean isReserved() {
+        return (isOccupied || (driverName != null && !driverName.isEmpty())) && !isCheckedIn;
+    }
 }

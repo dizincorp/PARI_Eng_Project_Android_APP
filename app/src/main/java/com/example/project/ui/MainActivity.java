@@ -160,17 +160,23 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
             if (spot == null) continue;
 
             float markerColor;
-            if (spot.isOccupied()) {
-                markerColor = BitmapDescriptorFactory.HUE_RED;   // Red: occupied spot
+            String snippetText;
+            if (spot.isCheckedIn()) {
+                markerColor = BitmapDescriptorFactory.HUE_RED;    // Red: occupied (checked in / parking in progress)
+                snippetText = getString(R.string.status_occupied);
+            } else if (spot.isReserved() || spot.isOccupied()) {
+                markerColor = BitmapDescriptorFactory.HUE_YELLOW; // Yellow: reserved (booked, awaiting driver check-in)
+                snippetText = getString(R.string.status_reserved);
             } else {
-                markerColor = BitmapDescriptorFactory.HUE_GREEN; // Green: available spot to reserve
+                markerColor = BitmapDescriptorFactory.HUE_GREEN;  // Green: free / available to reserve
+                snippetText = String.format(Locale.getDefault(), "%.2f zł/h", spot.getPrice());
             }
 
             LatLng pos = new LatLng(spot.getLatitude(), spot.getLongitude());
             Marker marker = googleMap.addMarker(new MarkerOptions()
                     .position(pos)
                     .title(spot.getTitle())
-                    .snippet(String.format(Locale.getDefault(), "%.2f zł/h", spot.getPrice()))
+                    .snippet(snippetText)
                     .icon(BitmapDescriptorFactory.defaultMarker(markerColor)));
 
             if (marker != null) {

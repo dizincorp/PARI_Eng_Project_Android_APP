@@ -163,6 +163,13 @@ public class ReservationRepository {
                         ParkingPlaceEntity place = parkingPlaceDao.getPlaceById(body.getSpotId());
                         if (place != null) {
                             place.setOccupied(true);
+                            place.setCheckedIn(false);
+                            if (body.getVehiclePlate() != null && !body.getVehiclePlate().isEmpty()) {
+                                place.setDriverVehicle(body.getVehiclePlate());
+                            }
+                            if (body.getPinCode() != null && !body.getPinCode().isEmpty()) {
+                                place.setPinCode(body.getPinCode());
+                            }
                             parkingPlaceDao.insertOrUpdate(place);
                         }
 
@@ -253,11 +260,53 @@ public class ReservationRepository {
                             if (res == null) continue;
                             ParkingPlaceEntity place = parkingPlaceDao.getPlaceById(res.getSpotId());
                             ReservationEntity entity = toEntity(res, userEmail, place);
-                            // Incoming reservations are marked active if not finished
-                            if (entity.getStatus() == null || entity.getStatus().isEmpty() || entity.getStatus().equalsIgnoreCase("PENDING_PAYMENT")) {
-                                entity.setStatus(res.getStatus() != null && !res.getStatus().isEmpty() ? res.getStatus() : "CONFIRMED");
+                            if (res.getStatus() != null && !res.getStatus().isEmpty()) {
+                                entity.setStatus(res.getStatus());
+                            } else if (entity.getStatus() == null || entity.getStatus().isEmpty() || entity.getStatus().equalsIgnoreCase("PENDING_PAYMENT")) {
+                                entity.setStatus("CONFIRMED");
                             }
                             reservationDao.insertOrUpdate(entity);
+
+                            // Synchronize place state with incoming reservation
+                            if (place != null) {
+                                String status = entity.getStatus();
+                                if ("COMPLETED".equalsIgnoreCase(status)
+                                        || "CANCELLED".equalsIgnoreCase(status)
+                                        || "REJECTED".equalsIgnoreCase(status)
+                                        || "EXPIRED".equalsIgnoreCase(status)) {
+                                    ReservationEntity activeOther = reservationDao.getActiveReservationForSpotSync(place.getId());
+                                    if (activeOther == null) {
+                                        place.setOccupied(false);
+                                        place.setCheckedIn(false);
+                                        place.setDriverName("");
+                                        place.setDriverVehicle("");
+                                        parkingPlaceDao.insertOrUpdate(place);
+                                    }
+                                } else if ("IN_PROGRESS".equalsIgnoreCase(status)) {
+                                    place.setOccupied(true);
+                                    place.setCheckedIn(true);
+                                    if (res.getVehiclePlate() != null && !res.getVehiclePlate().isEmpty()) {
+                                        place.setDriverVehicle(res.getVehiclePlate());
+                                    }
+                                    if (res.getDriverId() != null && !res.getDriverId().isEmpty()) {
+                                        place.setDriverName(res.getDriverId());
+                                    }
+                                    parkingPlaceDao.insertOrUpdate(place);
+                                } else if ("CONFIRMED".equalsIgnoreCase(status)
+                                        || "PENDING_APPROVAL".equalsIgnoreCase(status)
+                                        || "PENDING_PAYMENT".equalsIgnoreCase(status)
+                                        || "AKTYWNA".equalsIgnoreCase(status)) {
+                                    place.setOccupied(true);
+                                    place.setCheckedIn(false);
+                                    if (res.getVehiclePlate() != null && !res.getVehiclePlate().isEmpty()) {
+                                        place.setDriverVehicle(res.getVehiclePlate());
+                                    }
+                                    if (res.getDriverId() != null && !res.getDriverId().isEmpty()) {
+                                        place.setDriverName(res.getDriverId());
+                                    }
+                                    parkingPlaceDao.insertOrUpdate(place);
+                                }
+                            }
                         }
                         resultLiveData.postValue(Resource.success(body));
                     });
@@ -323,6 +372,10 @@ public class ReservationRepository {
                         ParkingPlaceEntity place = parkingPlaceDao.getPlaceById(body.getSpotId());
                         if (place != null) {
                             place.setOccupied(false);
+                            place.setCheckedIn(false);
+                            place.setDriverName("");
+                            place.setDriverVehicle("");
+                            place.setPinCode("");
                             parkingPlaceDao.insertOrUpdate(place);
                         }
 
@@ -385,45 +438,56 @@ public class ReservationRepository {
             return resultLiveData;
         }
 
-        Call<ReservationResponse> apiCall;
-        if ((pinCode != null && !pinCode.trim().isEmpty()) || (qrToken != null && !qrToken.trim().isEmpty())) {
-            apiCall = apiService.checkInReservationWithCredentials(reservationId.trim(),
-                    new CheckInReservationRequest(pinCode != null ? pinCode.trim() : "", qrToken != null ? qrToken.trim() : ""));
-        } else {
-            apiCall = apiService.checkInReservation(reservationId.trim());
-        }
-        apiCall.enqueue(new Callback<ReservationResponse>() {
-            @Override
-            public void onResponse(@NonNull Call<ReservationResponse> call,
-                                   @NonNull Response<ReservationResponse> response) {
-                if (response.isSuccessful() && response.body() != null) {
-                    ReservationResponse body = response.body();
-                    diskExecutor.execute(() -> {
-                        ParkingPlaceEntity place = parkingPlaceDao.getPlaceById(body.getSpotId());
-                        if (place != null) {
-                            place.setOccupied(true);
-                            parkingPlaceDao.insertOrUpdate(place);
-                        }
-
-                        ReservationEntity entity = toEntity(body, userEmail, place);
-                        entity.setStatus(body.getStatus() != null && !body.getStatus().isEmpty() ? body.getStatus() : "IN_PROGRESS");
-                        reservationDao.insertOrUpdate(entity);
-
-                        resultLiveData.postValue(Resource.success(body));
-                    });
-                } else {
-                    String errorMsg = parseCheckInErrorMessage(response);
-                    Log.e(TAG, "checkInReservation failed with HTTP " + response.code() + ": " + errorMsg);
-                    resultLiveData.setValue(Resource.error(errorMsg, null, response.code()));
+        diskExecutor.execute(() -> {
+            String resolvedPin = pinCode;
+            String resolvedQr = qrToken;
+            if ((resolvedPin == null || resolvedPin.trim().isEmpty()) && (resolvedQr == null || resolvedQr.trim().isEmpty())) {
+                ReservationEntity localEntity = reservationDao.getReservationByIdSync(reservationId.trim());
+                if (localEntity != null && localEntity.getPinCode() != null && !localEntity.getPinCode().trim().isEmpty()) {
+                    resolvedPin = localEntity.getPinCode().trim();
                 }
             }
 
-            @Override
-            public void onFailure(@NonNull Call<ReservationResponse> call, @NonNull Throwable t) {
-                String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd połączenia z serwerem";
-                Log.e(TAG, "checkInReservation network failure: " + errorMsg, t);
-                resultLiveData.setValue(Resource.error(errorMsg, null, 0));
-            }
+            CheckInReservationRequest requestPayload = new CheckInReservationRequest(
+                    resolvedPin != null ? resolvedPin.trim() : "",
+                    resolvedQr != null ? resolvedQr.trim() : ""
+            );
+
+            Call<ReservationResponse> apiCall = apiService.checkInReservationWithCredentials(reservationId.trim(), requestPayload);
+            apiCall.enqueue(new Callback<ReservationResponse>() {
+                @Override
+                public void onResponse(@NonNull Call<ReservationResponse> call,
+                                       @NonNull Response<ReservationResponse> response) {
+                    if (response.isSuccessful() && response.body() != null) {
+                        ReservationResponse body = response.body();
+                        diskExecutor.execute(() -> {
+                            ParkingPlaceEntity place = parkingPlaceDao.getPlaceById(body.getSpotId());
+                            if (place != null) {
+                                place.setOccupied(true);
+                                place.setCheckedIn(true);
+                                parkingPlaceDao.insertOrUpdate(place);
+                            }
+
+                            ReservationEntity entity = toEntity(body, userEmail, place);
+                            entity.setStatus(body.getStatus() != null && !body.getStatus().isEmpty() ? body.getStatus() : "IN_PROGRESS");
+                            reservationDao.insertOrUpdate(entity);
+
+                            resultLiveData.postValue(Resource.success(body));
+                        });
+                    } else {
+                        String errorMsg = parseCheckInErrorMessage(response);
+                        Log.e(TAG, "checkInReservation failed with HTTP " + response.code() + ": " + errorMsg);
+                        resultLiveData.postValue(Resource.error(errorMsg, null, response.code()));
+                    }
+                }
+
+                @Override
+                public void onFailure(@NonNull Call<ReservationResponse> call, @NonNull Throwable t) {
+                    String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd połączenia z serwerem";
+                    Log.e(TAG, "checkInReservation network failure: " + errorMsg, t);
+                    resultLiveData.postValue(Resource.error(errorMsg, null, 0));
+                }
+            });
         });
 
         return resultLiveData;
@@ -551,7 +615,12 @@ public class ReservationRepository {
                 if (response.isSuccessful() && response.body() != null) {
                     CheckOutResponse body = response.body();
                     diskExecutor.execute(() -> {
-                        ReservationEntity entity = reservationDao.getReservationByIdSync(body.getId());
+                        ReservationEntity entity = reservationDao.getReservationByIdSync(reservationId.trim());
+                        if (entity == null && body.getId() != null) {
+                            entity = reservationDao.getReservationByIdSync(body.getId());
+                        }
+                        String spotId = (entity != null && entity.getPlaceId() != null) ? entity.getPlaceId() : "";
+
                         if (entity != null) {
                             entity.setStatus(body.getStatus() != null && !body.getStatus().isEmpty() ? body.getStatus() : "COMPLETED");
                             entity.setTotalPrice(body.getTotalFinalAmount());
@@ -559,12 +628,20 @@ public class ReservationRepository {
                                 entity.setEndTimeMs(body.getActualCheckoutAt().getTime());
                             }
                             reservationDao.insertOrUpdate(entity);
+                        }
 
-                            ParkingPlaceEntity place = parkingPlaceDao.getPlaceById(entity.getPlaceId());
+                        if (!spotId.isEmpty()) {
+                            ParkingPlaceEntity place = parkingPlaceDao.getPlaceById(spotId);
                             if (place != null) {
-                                place.setOccupied(false);
-                                place.setCheckedIn(false);
-                                parkingPlaceDao.insertOrUpdate(place);
+                                ReservationEntity activeOther = reservationDao.getActiveReservationForSpotSync(spotId);
+                                if (activeOther == null) {
+                                    place.setOccupied(false);
+                                    place.setCheckedIn(false);
+                                    place.setDriverName("");
+                                    place.setDriverVehicle("");
+                                    place.setPinCode("");
+                                    parkingPlaceDao.insertOrUpdate(place);
+                                }
                             }
                         }
 
@@ -918,6 +995,9 @@ public class ReservationRepository {
         entity.setTotalPrice(res.getTotal());
         entity.setCarPlate(res.getVehiclePlate());
         entity.setVehicleInfo(res.getVehiclePlate());
+        if (res.getDriverId() != null && !res.getDriverId().isEmpty()) {
+            entity.setUserName(res.getDriverId());
+        }
 
         // Accurately map timestamps from backend response
         long startMs = res.getStartsAtMillis() > 0 ? res.getStartsAtMillis() : System.currentTimeMillis();

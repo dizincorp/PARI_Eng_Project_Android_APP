@@ -95,6 +95,7 @@
 
     <string name="status_free">Wolne</string>
     <string name="status_occupied">Zajęte</string>
+    <string name="status_reserved">Zarezerwowane</string>
     <string name="format_occupied_until">Zajęte do: %1$s</string>
 
     <!-- Add / Edit Place Strings -->

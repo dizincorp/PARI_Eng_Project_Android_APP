@@ -56,6 +56,15 @@ public interface ReservationDao {
     @Query("SELECT * FROM reservations WHERE dateString = :dateStr")
     List<ReservationEntity> getReservationsForDate(String dateStr);
 
+    /**
+     * Gets the latest active reservation for a specific parking spot by spot ID.
+     *
+     * @param spotId Unique spot identifier
+     * @return Active ReservationEntity or null if none
+     */
+    @Query("SELECT * FROM reservations WHERE placeId = :spotId AND status IN ('PENDING_PAYMENT', 'PENDING_APPROVAL', 'CONFIRMED', 'IN_PROGRESS', 'AKTYWNA', 'ACTIVE') ORDER BY startTimeMs DESC LIMIT 1")
+    ReservationEntity getActiveReservationForSpotSync(String spotId);
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertOrUpdate(ReservationEntity reservation);
 

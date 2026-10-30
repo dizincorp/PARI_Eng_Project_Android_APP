@@ -159,6 +159,17 @@ public class ReservationDetailViewModel extends AndroidViewModel {
      * @param id Unique identifier of the reservation to check in
      */
     public void checkIn(@Nullable String id) {
+        checkIn(id, null);
+    }
+
+    /**
+     * Performs check-in to begin parking session via POST /api/reservations/{id}/check-in
+     * providing the reservation PIN code.
+     *
+     * @param id      Unique identifier of the reservation to check in
+     * @param pinCode Entry PIN code for access validation
+     */
+    public void checkIn(@Nullable String id, @Nullable String pinCode) {
         if (id == null || id.trim().isEmpty()) {
             String validationMsg = getApplication().getString(R.string.toast_checkin_failed);
             actionErrorLiveData.setValue(validationMsg);
@@ -169,7 +180,7 @@ public class ReservationDetailViewModel extends AndroidViewModel {
         String currentEmail = appRepository.getUserEmailLiveData().getValue();
         actionStatusLiveData.setValue(Resource.loading(null));
 
-        LiveData<Resource<ReservationResponse>> source = reservationRepository.checkInReservation(id.trim(), currentEmail);
+        LiveData<Resource<ReservationResponse>> source = reservationRepository.checkInReservation(id.trim(), pinCode, null, currentEmail);
         source.observeForever(new Observer<Resource<ReservationResponse>>() {
             @Override
             public void onChanged(Resource<ReservationResponse> resource) {
