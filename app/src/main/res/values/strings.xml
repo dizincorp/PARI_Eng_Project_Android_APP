@@ -403,4 +403,5 @@
     <string name="format_driver_vehicle_info">%1$s • %2$s</string>
     <string name="status_spot_active">Aktywne</string>
     <string name="status_spot_inactive">Nieaktywne</string>
+    <string name="error_spot_inactive">To miejsce jest obecnie nieaktywne!</string>
 </resources>

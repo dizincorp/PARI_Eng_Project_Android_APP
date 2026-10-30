@@ -22,7 +22,10 @@ import com.example.project.network.model.ParkingSpot;
 import com.example.project.network.model.UpdateSpotRequest;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -100,12 +103,12 @@ public class SpotRepository {
     }
 
     /**
-     * Exposes all parking places directly from Room Database as the Single Source of Truth.
+     * Exposes all active parking places directly from Room Database as the Single Source of Truth.
      *
-     * @return LiveData emitting cached list of ParkingPlaceEntity items
+     * @return LiveData emitting cached list of active ParkingPlaceEntity items
      */
     public LiveData<List<ParkingPlaceEntity>> getSpotsFromRoom() {
-        return parkingPlaceDao.getAllPlacesLiveData();
+        return parkingPlaceDao.getActivePlacesLiveData();
     }
 
     /**
@@ -377,6 +380,8 @@ public class SpotRepository {
 
     /**
      * Downloads parking spots from backend REST API and saves them into Room Database in background.
+     * Reconciles Room DB cache: any spot located within the searched radius that is omitted by backend
+     * search (due to deactivation or removal) is marked INACTIVE locally.
      *
      * @param lat          Latitude coordinate
      * @param lng          Longitude coordinate
@@ -397,10 +402,40 @@ public class SpotRepository {
                         String currentEmail = com.example.project.utils.SessionManager.getInstance() != null
                                 ? com.example.project.utils.SessionManager.getInstance().getUserEmail() : "";
 
+                        // 1. Collect all spot IDs returned by active search query
+                        Set<String> activeRemoteIds = new HashSet<>();
+                        for (ParkingSpot s : remoteSpots) {
+                            if (s != null && s.getId() != null) {
+                                activeRemoteIds.add(s.getId().trim());
+                            }
+                        }
+
+                        // 2. Reconcile local Room cache: any cached spot within the queried search radius
+                        // that is NOT returned in active remote spots must be deactivated in Room DB!
+                        List<ParkingPlaceEntity> allCached = parkingPlaceDao.getAllPlacesSync();
+                        double searchRadius = (radiusMeters != null && radiusMeters > 0) ? radiusMeters : 5000.0;
+                        if (allCached != null) {
+                            for (ParkingPlaceEntity cached : allCached) {
+                                if (cached != null && cached.getId() != null && !activeRemoteIds.contains(cached.getId().trim())) {
+                                    float[] distanceResults = new float[1];
+                                    android.location.Location.distanceBetween(
+                                            lat, lng, cached.getLatitude(), cached.getLongitude(), distanceResults);
+                                    if (distanceResults[0] <= searchRadius) {
+                                        // Spot was previously in cache in this area, but backend search omitted it
+                                        // (e.g. deactivated by owner or removed) -> mark INACTIVE in Room cache
+                                        cached.setStatus("INACTIVE");
+                                        parkingPlaceDao.insertOrUpdate(cached);
+                                    }
+                                }
+                            }
+                        }
+
+                        // 3. Process active spots returned by backend
                         List<ParkingPlaceEntity> entities = new ArrayList<>();
                         for (ParkingSpot spot : remoteSpots) {
                             if (spot != null) {
                                 ParkingPlaceEntity entity = toEntity(spot);
+                                entity.setStatus("ACTIVE");
                                 if (currentUserId != null && !currentUserId.isEmpty() && currentUserId.equals(spot.getOwnerId())) {
                                     if (currentEmail != null && !currentEmail.isEmpty()) {
                                         entity.setOwnerEmail(currentEmail);
@@ -549,7 +584,7 @@ public class SpotRepository {
                         resultLiveData.postValue(Resource.success(spots));
                     });
                 } else {
-                    String errorMsg = "BÅ‚Ä…d pobierania moich miejsc: HTTP " + response.code();
+                    String errorMsg = "Błąd pobierania moich miejsc: HTTP " + response.code();
                     Log.e(TAG, errorMsg);
                     resultLiveData.setValue(Resource.error(errorMsg, null, response.code()));
                 }
@@ -557,7 +592,7 @@ public class SpotRepository {
 
             @Override
             public void onFailure(@NonNull Call<List<ParkingSpot>> call, @NonNull Throwable t) {
-                String errorMsg = t.getMessage() != null ? t.getMessage() : "BÅ‚Ä…d sieci";
+                String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd sieci";
                 Log.e(TAG, "fetchMySpots network failure: " + errorMsg, t);
                 resultLiveData.setValue(Resource.error(errorMsg, null, 0));
             }
@@ -592,7 +627,7 @@ public class SpotRepository {
         entity.setAccessInstructions(spot.getAccessInstructions());
         entity.setAccessTime("24/7");
         entity.setOwnerEmail(spot.getOwnerId());
-        entity.setStatus(spot.getStatus() != null && !spot.getStatus().isEmpty() ? spot.getStatus() : "ACTIVE");
+        entity.setStatus(spot.getStatus() != null && !spot.getStatus().isEmpty() ? spot.getStatus().toUpperCase(Locale.ROOT) : "ACTIVE");
 
         if (spot.getOccupancy() != null) {
             boolean isOcc = "OCCUPIED".equalsIgnoreCase(spot.getOccupancy());

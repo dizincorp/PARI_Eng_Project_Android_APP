@@ -237,7 +237,7 @@ public class AppRepository {
         if (database == null) {
             return new MutableLiveData<>(new ArrayList<>());
         }
-        return Transformations.map(database.parkingPlaceDao().getAllPlacesLiveData(), entities -> {
+        return Transformations.map(database.parkingPlaceDao().getActivePlacesLiveData(), entities -> {
             List<ParkingPlace> list = new ArrayList<>();
             if (entities != null) {
                 for (ParkingPlaceEntity e : entities) {

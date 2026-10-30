@@ -49,6 +49,16 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
     private ParkingPlaceEntity selectedSpotForBooking = null;
 
     @Override
+    protected void onResume() {
+        super.onResume();
+        if (googleMap != null) {
+            LatLng center = googleMap.getCameraPosition().target;
+            if (center != null && (center.latitude != 0.0 || center.longitude != 0.0)) {
+                viewModel.loadNearbySpots(center.latitude, center.longitude, 5000.0);
+            }
+        }
+    }
+
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
@@ -82,6 +92,10 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
 
         binding.btnReserveNow.setOnClickListener(v -> {
             if (selectedSpotForBooking != null) {
+                if (!selectedSpotForBooking.isActive()) {
+                    Toast.makeText(this, R.string.error_spot_inactive, Toast.LENGTH_SHORT).show();
+                    return;
+                }
                 if (selectedSpotForBooking.isOccupied()) {
                     Toast.makeText(this, "To miejsce jest obecnie zajęte!", Toast.LENGTH_SHORT).show();
                     return;
@@ -156,8 +170,15 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
         googleMap.clear();
         markerSpotMap.clear();
 
+        if (selectedSpotForBooking != null && !selectedSpotForBooking.isActive()) {
+            if (binding != null && binding.cardPlacePreview != null) {
+                binding.cardPlacePreview.setVisibility(View.GONE);
+            }
+            selectedSpotForBooking = null;
+        }
+
         for (ParkingPlaceEntity spot : spots) {
-            if (spot == null) continue;
+            if (spot == null || !spot.isActive()) continue;
 
             float markerColor;
             String snippetText;

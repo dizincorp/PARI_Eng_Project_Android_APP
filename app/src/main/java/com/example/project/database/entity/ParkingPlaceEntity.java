@@ -237,6 +237,15 @@ public class ParkingPlaceEntity {
         this.ratingCount = ratingCount;
     }
 
+    /**
+     * Checks if this parking spot is active and available for public display and booking.
+     *
+     * @return True if status is ACTIVE
+     */
+    public boolean isActive() {
+        return "ACTIVE".equalsIgnoreCase(getStatus());
+    }
+
     public String getStatus() {
         return status != null && !status.isEmpty() ? status : "ACTIVE";
     }

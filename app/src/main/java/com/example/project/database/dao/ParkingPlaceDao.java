@@ -20,6 +20,12 @@ public interface ParkingPlaceDao {
     @Query("SELECT * FROM parking_places")
     LiveData<List<ParkingPlaceEntity>> getAllPlacesLiveData();
 
+    @Query("SELECT * FROM parking_places")
+    List<ParkingPlaceEntity> getAllPlacesSync();
+
+    @Query("SELECT * FROM parking_places WHERE (UPPER(status) = 'ACTIVE' OR status IS NULL OR status = '') AND (status IS NULL OR UPPER(status) != 'INACTIVE')")
+    LiveData<List<ParkingPlaceEntity>> getActivePlacesLiveData();
+
     @Query("SELECT * FROM parking_places WHERE (:ownerEmail != '' AND ownerEmail = :ownerEmail) OR (:ownerId != '' AND ownerEmail = :ownerId)")
     LiveData<List<ParkingPlaceEntity>> getMyPlacesLiveData(String ownerEmail, String ownerId);
 
