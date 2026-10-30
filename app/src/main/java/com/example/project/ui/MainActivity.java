@@ -3,20 +3,28 @@ package com.example.project.ui;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SearchView;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
+import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.project.R;
+import com.example.project.adapter.ReviewAdapter;
 import com.example.project.database.entity.ParkingPlaceEntity;
 import com.example.project.databinding.ActivityMainBinding;
+import com.example.project.databinding.DialogSpotReviewsBinding;
+import com.example.project.network.Resource;
+import com.example.project.repository.ReviewRepository;
 import com.example.project.viewmodel.SearchViewModel;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -59,6 +67,7 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
         }
     }
 
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
@@ -238,6 +247,7 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
             if (binding != null && binding.cardPlacePreview != null) {
                 binding.cardPlacePreview.setVisibility(View.GONE);
             }
+            selectedSpotForBooking = null;
         });
     }
 
@@ -271,6 +281,13 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
         }
         binding.textPreviewPriceValue.setText(String.format(Locale.getDefault(), "%.0f", spot.getPrice()));
 
+        // Make rating clickable to inspect spot reviews
+        binding.textPreviewRating.setOnClickListener(v -> {
+            if (spot.getId() != null) {
+                showSpotReviewsDialog(spot.getId(), spot.getTitle(), spot.getRating(), spot.getRatingCount());
+            }
+        });
+
         binding.chipGroupPreviewAmenities.removeAllViews();
         if (spot.getAmenitiesCsv() != null && !spot.getAmenitiesCsv().isEmpty()) {
             String[] amenities = spot.getAmenitiesCsv().split(",");
@@ -286,6 +303,65 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
         }
 
         binding.cardPlacePreview.setVisibility(View.VISIBLE);
+    }
+
+    /**
+     * Displays a modal dialog with user reviews for the selected parking spot.
+     * Loads cached reviews from Room and fetches the latest page from REST backend.
+     *
+     * @param spotId      Unique spot identifier
+     * @param spotTitle   Display title of the spot
+     * @param rating      Current average rating
+     * @param ratingCount Total count of reviews
+     */
+    private void showSpotReviewsDialog(@NonNull String spotId, @Nullable String spotTitle, double rating, int ratingCount) {
+        DialogSpotReviewsBinding dialogBinding = DialogSpotReviewsBinding.inflate(LayoutInflater.from(this));
+
+        if (spotTitle != null && !spotTitle.trim().isEmpty()) {
+            dialogBinding.textDialogSpotTitle.setText(spotTitle);
+        } else {
+            dialogBinding.textDialogSpotTitle.setText(R.string.title_spot_reviews);
+        }
+
+        dialogBinding.textDialogSpotRating.setText(
+                String.format(Locale.getDefault(), "★ %.1f (%d opinii)", rating, ratingCount)
+        );
+
+        ReviewAdapter reviewAdapter = new ReviewAdapter();
+        dialogBinding.recyclerSpotReviews.setLayoutManager(new LinearLayoutManager(this));
+        dialogBinding.recyclerSpotReviews.setAdapter(reviewAdapter);
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogBinding.getRoot())
+                .create();
+
+        dialogBinding.btnCloseReviews.setOnClickListener(v -> dialog.dismiss());
+        dialogBinding.btnDismissDialog.setOnClickListener(v -> dialog.dismiss());
+
+        // Show progress while fetching from network
+        dialogBinding.progressReviews.setVisibility(View.VISIBLE);
+
+        // SSOT: Observe local Room cache via ReviewRepository
+        ReviewRepository reviewRepo = ReviewRepository.getInstance(this);
+        reviewRepo.getReviewsFromRoom(spotId).observe(this, cachedReviews -> {
+            if (cachedReviews != null && !cachedReviews.isEmpty()) {
+                reviewAdapter.setReviews(cachedReviews);
+                dialogBinding.textNoReviews.setVisibility(View.GONE);
+                dialogBinding.recyclerSpotReviews.setVisibility(View.VISIBLE);
+            } else {
+                dialogBinding.textNoReviews.setVisibility(View.VISIBLE);
+                dialogBinding.recyclerSpotReviews.setVisibility(View.GONE);
+            }
+        });
+
+        // Trigger remote sync via GET /api/spots/{spotId}/reviews
+        reviewRepo.fetchSpotReviews(spotId, 0, 20).observe(this, resource -> {
+            if (resource != null && resource.status != Resource.Status.LOADING) {
+                dialogBinding.progressReviews.setVisibility(View.GONE);
+            }
+        });
+
+        dialog.show();
     }
 
     @Override

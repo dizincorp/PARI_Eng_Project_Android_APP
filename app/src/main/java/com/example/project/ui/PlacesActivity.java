@@ -16,6 +16,7 @@ import com.example.project.databinding.ActivityPlacesBinding;
 import com.example.project.databinding.ItemMyPlaceBinding;
 import com.example.project.model.ParkingPlace;
 import com.example.project.model.Transaction;
+import com.example.project.repository.OwnerAnalyticsRepository;
 import com.example.project.viewmodel.PlacesViewModel;
 
 import java.util.List;
@@ -54,6 +55,7 @@ public class PlacesActivity extends BaseActivity {
 
         // Refresh owner spots from REST backend (GET /api/spots/mine)
         viewModel.refreshPlaces();
+        OwnerAnalyticsRepository.getInstance(this).fetchOwnerAnalytics();
     }
 
     @Override
@@ -62,6 +64,7 @@ public class PlacesActivity extends BaseActivity {
         if (viewModel != null) {
             viewModel.refreshPlaces();
         }
+        OwnerAnalyticsRepository.getInstance(this).fetchOwnerAnalytics();
     }
 
     private void setupClickListeners() {
@@ -97,6 +100,15 @@ public class PlacesActivity extends BaseActivity {
         });
 
         viewModel.getTransactionsLiveData().observe(this, this::updateEarningsUI);
+
+        // Observe owner analytics to show real-time monthly earnings
+        OwnerAnalyticsRepository.getInstance(this).getCachedAnalytics()
+                .observe(this, analytics -> {
+                    if (binding != null && analytics != null && analytics.getTotalEarnings() > 0) {
+                        String cur = analytics.getCurrency() != null ? analytics.getCurrency() : "PLN";
+                        binding.textEarningsValue.setText(String.format(Locale.getDefault(), "%.2f %s", analytics.getTotalEarnings(), cur));
+                    }
+                });
 
         // Observe owner's parking spots with dynamic slider and 4-state indicator
         viewModel.getMyPlacesLiveData().observe(this, places -> {

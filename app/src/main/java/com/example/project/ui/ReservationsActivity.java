@@ -10,6 +10,8 @@ import android.view.View;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
@@ -24,7 +26,9 @@ import com.example.project.databinding.ActivityReservationsBinding;
 import com.example.project.databinding.DialogActiveReservationDetailsBinding;
 import com.example.project.databinding.DialogRatingBinding;
 import com.example.project.model.Reservation;
+import com.example.project.network.Resource;
 import com.example.project.repository.AppRepository;
+import com.example.project.repository.ReviewRepository;
 import com.example.project.utils.NotificationHelper;
 import com.example.project.viewmodel.ReservationsViewModel;
 
@@ -37,7 +41,7 @@ import java.util.Locale;
 /**
  * Activity for viewing user reservations pulled from the REST backend (GET /api/reservations/incoming
  * and GET /api/reservations) and displayed in an interactive RecyclerView using MVVM architecture.
- * Manages full parking lifecycle actions including Check-in, Check-out, and Cancellation.
+ * Manages full parking lifecycle actions including Check-in, Check-out, Cancellation, and Reviews.
  */
 public class ReservationsActivity extends BaseActivity implements ReservationsAdapter.OnReservationItemClickListener {
 
@@ -277,10 +281,17 @@ public class ReservationsActivity extends BaseActivity implements ReservationsAd
                     if (viewModel != null) {
                         viewModel.checkOut(reservation.getId());
                     }
-                    showRatingDialog();
+                    showRatingDialog(reservation.getId(), reservation.getSpotId());
                 })
                 .setNegativeButton(R.string.btn_cancel, null)
                 .show();
+    }
+
+    @Override
+    public void onRateSpotClick(Reservation reservation) {
+        if (reservation != null && reservation.getId() != null) {
+            showRatingDialog(reservation.getId(), reservation.getSpotId());
+        }
     }
 
     private void startTimer() {
@@ -363,7 +374,7 @@ public class ReservationsActivity extends BaseActivity implements ReservationsAd
                         if (viewModel != null && reservation.getId() != null) {
                             viewModel.checkOut(reservation.getId());
                         }
-                        showRatingDialog();
+                        showRatingDialog(reservation.getId(), reservation.getSpotId());
                     })
                     .setNegativeButton(R.string.btn_cancel, null)
                     .show();
@@ -386,7 +397,6 @@ public class ReservationsActivity extends BaseActivity implements ReservationsAd
             NotificationHelper.showNotification(this, "ParkShare", getString(R.string.toast_reservation_cancelled));
             Toast.makeText(this, R.string.toast_reservation_cancelled, Toast.LENGTH_SHORT).show();
             dialog.dismiss();
-            showRatingDialog();
 
             // Refresh from REST backend
             if (viewModel != null) {
@@ -397,15 +407,38 @@ public class ReservationsActivity extends BaseActivity implements ReservationsAd
         dialog.show();
     }
 
-    private void showRatingDialog() {
+    /**
+     * Opens rating and feedback dialog for a completed reservation.
+     * Submits rating to POST /api/reservations/{id}/reviews and updates Room cache via ReviewRepository.
+     *
+     * @param reservationId Unique reservation identifier
+     * @param spotId        Associated spot identifier
+     */
+    private void showRatingDialog(@NonNull String reservationId, @Nullable String spotId) {
         DialogRatingBinding ratingBinding = DialogRatingBinding.inflate(LayoutInflater.from(this));
 
         new AlertDialog.Builder(this)
                 .setView(ratingBinding.getRoot())
-                .setPositiveButton(R.string.btn_save, (dialog, which) -> {
-                    float rating = ratingBinding.ratingBar.getRating();
-                    AppRepository.getInstance().rateUser(rating);
-                    Toast.makeText(this, R.string.toast_rating_submitted, Toast.LENGTH_SHORT).show();
+                .setPositiveButton(R.string.btn_submit_review, (dialog, which) -> {
+                    int rating = Math.round(ratingBinding.ratingBar.getRating());
+                    if (rating < 1) {
+                        Toast.makeText(this, R.string.error_rating_required, Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    String comment = ratingBinding.editReviewComment.getText() != null
+                            ? ratingBinding.editReviewComment.getText().toString().trim() : null;
+
+                    ReviewRepository.getInstance(this).createReview(reservationId, spotId, rating, comment)
+                            .observe(this, resource -> {
+                                if (resource != null) {
+                                    if (resource.status == Resource.Status.SUCCESS) {
+                                        Toast.makeText(this, R.string.toast_review_submitted, Toast.LENGTH_SHORT).show();
+                                    } else if (resource.status == Resource.Status.ERROR) {
+                                        String err = resource.message != null ? resource.message : getString(R.string.error_spot_operation_failed, "");
+                                        Toast.makeText(this, err, Toast.LENGTH_LONG).show();
+                                    }
+                                }
+                            });
                 })
                 .setNegativeButton(R.string.btn_cancel, null)
                 .show();

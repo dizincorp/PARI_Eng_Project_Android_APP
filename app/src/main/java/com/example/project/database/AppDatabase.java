@@ -7,13 +7,17 @@ import androidx.room.Room;
 import androidx.room.RoomDatabase;
 import androidx.room.TypeConverters;
 
+import com.example.project.database.dao.OwnerAnalyticsDao;
 import com.example.project.database.dao.ParkingPlaceDao;
 import com.example.project.database.dao.ReservationDao;
+import com.example.project.database.dao.ReviewDao;
 import com.example.project.database.dao.TransactionDao;
 import com.example.project.database.dao.UserDao;
 import com.example.project.database.dao.VehicleDao;
+import com.example.project.database.entity.OwnerAnalyticsEntity;
 import com.example.project.database.entity.ParkingPlaceEntity;
 import com.example.project.database.entity.ReservationEntity;
+import com.example.project.database.entity.ReviewEntity;
 import com.example.project.database.entity.TransactionEntity;
 import com.example.project.database.entity.UserEntity;
 import com.example.project.database.entity.VehicleEntity;
@@ -27,9 +31,11 @@ import com.example.project.database.entity.VehicleEntity;
                 ReservationEntity.class,
                 VehicleEntity.class,
                 UserEntity.class,
-                TransactionEntity.class
+                TransactionEntity.class,
+                ReviewEntity.class,
+                OwnerAnalyticsEntity.class
         },
-        version = 5,
+        version = 7,
         exportSchema = false
 )
 @TypeConverters({Converters.class})
@@ -43,6 +49,8 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract VehicleDao vehicleDao();
     public abstract UserDao userDao();
     public abstract TransactionDao transactionDao();
+    public abstract ReviewDao reviewDao();
+    public abstract OwnerAnalyticsDao ownerAnalyticsDao();
 
     /**
      * Gets the singleton instance of AppDatabase.

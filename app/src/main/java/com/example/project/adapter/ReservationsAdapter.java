@@ -16,6 +16,7 @@ import com.example.project.model.Reservation;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+
 /**
  * RecyclerView Adapter displaying reservation items for active and historical reservations.
  * Binds parking spot details, schedules, vehicle plate, PIN codes, price, and dynamic countdown timers.
@@ -30,6 +31,8 @@ public class ReservationsAdapter extends RecyclerView.Adapter<ReservationsAdapte
         void onCheckInClick(Reservation reservation);
 
         void onCheckOutClick(Reservation reservation);
+
+        void onRateSpotClick(Reservation reservation);
     }
 
     private final List<Reservation> reservations = new ArrayList<>();
@@ -62,6 +65,7 @@ public class ReservationsAdapter extends RecyclerView.Adapter<ReservationsAdapte
         this.isHistoryTab = isHistory;
         notifyDataSetChanged();
     }
+
     /**
      * Refreshes dynamic countdown timers on visible active items without rebinding the whole view.
      */
@@ -98,12 +102,12 @@ public class ReservationsAdapter extends RecyclerView.Adapter<ReservationsAdapte
 
         private final ItemReservationBinding binding;
 
-        ReservationViewHolder(ItemReservationBinding binding) {
+        public ReservationViewHolder(@NonNull ItemReservationBinding binding) {
             super(binding.getRoot());
             this.binding = binding;
         }
 
-        void bind(Reservation res, boolean isHistory, OnReservationItemClickListener listener) {
+        public void bind(Reservation res, boolean isHistory, OnReservationItemClickListener listener) {
             if (res == null) return;
             Context context = itemView.getContext();
 
@@ -123,8 +127,6 @@ public class ReservationsAdapter extends RecyclerView.Adapter<ReservationsAdapte
             } else {
                 binding.textSpotNumberPill.setVisibility(View.GONE);
             }
-
-
 
             // Price
             binding.textReservationPrice.setText(String.format(Locale.getDefault(), "%.2f PLN", res.getTotalPrice()));
@@ -186,6 +188,7 @@ public class ReservationsAdapter extends RecyclerView.Adapter<ReservationsAdapte
                 binding.badgeStatus.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.gray_input_bg));
                 binding.badgeStatus.setTextColor(ContextCompat.getColor(context, R.color.text_secondary));
             }
+
             // Countdown banner & Navigation button
             boolean isInactiveOrFinished = isHistory
                     || status.contains("CANCEL")
@@ -193,6 +196,7 @@ public class ReservationsAdapter extends RecyclerView.Adapter<ReservationsAdapte
                     || status.contains("EXPIRE")
                     || status.contains("COMPLET")
                     || status.contains("ZAKOŃ");
+
             if (isInactiveOrFinished) {
                 binding.cardCountdownBanner.setVisibility(View.GONE);
                 binding.btnItemNavigate.setVisibility(View.GONE);
@@ -230,9 +234,20 @@ public class ReservationsAdapter extends RecyclerView.Adapter<ReservationsAdapte
                 if (listener != null) listener.onReservationClick(res);
             });
 
-            // Check-In / Check-Out Action Button logic
+            // Check-In / Check-Out / Rate Action Button logic
             if (isInactiveOrFinished) {
-                binding.btnItemCheckInOut.setVisibility(View.GONE);
+                if (res.getStatus() != null &&
+                        (res.getStatus().equalsIgnoreCase("ZAKOŃCZONA") || res.getStatus().equalsIgnoreCase("COMPLETED"))) {
+                    binding.btnItemCheckInOut.setVisibility(View.VISIBLE);
+                    binding.btnItemCheckInOut.setText(R.string.btn_rate_spot);
+                    binding.btnItemCheckInOut.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.blue_accent));
+                    binding.btnItemCheckInOut.setIcon(ContextCompat.getDrawable(context, R.drawable.ic_star));
+                    binding.btnItemCheckInOut.setOnClickListener(v -> {
+                        if (listener != null) listener.onRateSpotClick(res);
+                    });
+                } else {
+                    binding.btnItemCheckInOut.setVisibility(View.GONE);
+                }
             } else if (res.isCheckedIn()) {
                 // Checked in -> can Check-Out
                 binding.btnItemCheckInOut.setVisibility(View.VISIBLE);

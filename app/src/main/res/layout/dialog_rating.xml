@@ -7,18 +7,20 @@
     android:padding="20dp">
 
     <TextView
+        android:id="@+id/text_rating_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Oceń miejsce i właściciela"
+        android:text="@string/dialog_review_title"
         android:textColor="@color/text_primary"
         android:textSize="18sp"
         android:textStyle="bold" />
 
     <TextView
+        android:id="@+id/text_rating_subtitle"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="4dp"
-        android:text="Jak oceniasz swoje doświadczenie z postojem?"
+        android:text="@string/dialog_review_subtitle"
         android:textColor="@color/text_secondary"
         android:textSize="13sp" />
 
@@ -40,7 +42,7 @@
         android:background="@drawable/bg_dashed_border"
         android:backgroundTint="@color/gray_input_bg"
         android:gravity="top|start"
-        android:hint="Napisz krótкий komentarz (opcjonalnie)..."
+        android:hint="@string/hint_review_comment"
         android:inputType="textMultiLine"
         android:padding="12dp"
         android:textColor="@color/text_primary"

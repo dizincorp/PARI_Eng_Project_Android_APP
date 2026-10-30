@@ -33,6 +33,8 @@ public class ApiClient {
     private static SpotApiService spotApiService;
     private static ReservationApiService reservationApiService;
     private static VehicleApiService vehicleApiService;
+    private static ReviewApiService reviewApiService;
+    private static OwnerApiService ownerApiService;
     private static OkHttpClient okHttpClient;
     private static Gson gsonInstance;
 
@@ -143,6 +145,30 @@ public class ApiClient {
     }
 
     /**
+     * Gets the configured singleton instance of ReviewApiService (Reviews and ratings).
+     *
+     * @return Retrofit ReviewApiService instance
+     */
+    public static synchronized ReviewApiService getReviewApiService() {
+        if (reviewApiService == null) {
+            reviewApiService = getRetrofit().create(ReviewApiService.class);
+        }
+        return reviewApiService;
+    }
+
+    /**
+     * Gets the configured singleton instance of OwnerApiService (Owner analytics and earnings).
+     *
+     * @return Retrofit OwnerApiService instance
+     */
+    public static synchronized OwnerApiService getOwnerApiService() {
+        if (ownerApiService == null) {
+            ownerApiService = getRetrofit().create(OwnerApiService.class);
+        }
+        return ownerApiService;
+    }
+
+    /**
      * Sets a custom base URL (useful for physical test devices or staging environments).
      *
      * @param newBaseUrl New base URL ending with a trailing slash
@@ -155,6 +181,8 @@ public class ApiClient {
             spotApiService = null;
             reservationApiService = null;
             vehicleApiService = null;
+            reviewApiService = null;
+            ownerApiService = null;
             gsonInstance = null;
         }
     }

@@ -107,6 +107,24 @@ public class Reservation {
         this.placeId = placeId;
     }
 
+    /**
+     * Gets the spot identifier associated with this reservation (alias for placeId).
+     *
+     * @return Unique parking spot ID
+     */
+    public String getSpotId() {
+        return placeId != null ? placeId : "";
+    }
+
+    /**
+     * Sets the spot identifier associated with this reservation.
+     *
+     * @param spotId Unique parking spot ID
+     */
+    public void setSpotId(String spotId) {
+        this.placeId = spotId;
+    }
+
     public String getPlaceName() {
         return placeName;
     }

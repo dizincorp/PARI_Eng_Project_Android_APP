@@ -404,4 +404,32 @@
     <string name="status_spot_active">Aktywne</string>
     <string name="status_spot_inactive">Nieaktywne</string>
     <string name="error_spot_inactive">To miejsce jest obecnie nieaktywne!</string>
+
+    <!-- Review and Rating Strings -->
+    <string name="dialog_review_title">Oceń miejsce i postój</string>
+    <string name="dialog_review_subtitle">Jak oceniasz swoje doświadczenie z postojem?</string>
+    <string name="btn_submit_review">Wyślij opinię</string>
+    <string name="btn_rate_spot">Oceń postój</string>
+    <string name="btn_view_reviews">Zobacz opinie</string>
+    <string name="btn_close">Zamknij</string>
+    <string name="reviews_loading">Ładowanie opinii…</string>
+    <string name="error_rating_required">Wybierz ocenę (od 1 do 5 gwiazdek).</string>
+    <string name="toast_review_submitted">Dziękujemy! Twoja opinia została pomyślnie wysłana.</string>
+    <string name="error_review_already_exists">Ta rezerwacja została już oceniona.</string>
+    <string name="error_review_not_completed">Możesz ocenić tylko zakończoną rezerwację.</string>
+    <string name="title_spot_reviews">Opinie użytkowników</string>
+    <string name="msg_no_reviews_yet">Brak opinii dla tego miejsca. Bądź pierwszy!</string>
+    <string name="format_review_rating">★ %1$d/5</string>
+    <string name="format_spot_reviews_header">★ %1$.1f (%2$d opinii)</string>
+
+    <!-- Owner Analytics Strings -->
+    <string name="label_gross_earnings">Przychód brutto: %1$s</string>
+    <string name="label_occupancy_rate">Zapełnienie</string>
+    <string name="label_active_spots_ratio">Miejsca aktywne</string>
+    <string name="label_average_rate">Średnia stawka</string>
+    <string name="format_percent">%1$.1f%%</string>
+    <string name="format_hourly_rate">%1$.2f %2$s/h</string>
+    <string name="format_spots_ratio">%1$d z %2$d</string>
+    <string name="title_daily_breakdown">Dzienny rozkład przychodów</string>
+    <string name="msg_no_daily_data">Brak danych dziennych do wyświetlenia.</string>
 </resources>
