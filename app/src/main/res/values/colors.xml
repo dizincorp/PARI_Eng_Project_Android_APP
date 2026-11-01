@@ -55,4 +55,6 @@
     <!-- Action / Delete Colors -->
     <color name="delete_btn_bg">#FEE2E2</color>
     <color name="delete_btn_text">#DC2626</color>
+    <color name="status_cancelled_bg">#FEE2E2</color>
+    <color name="status_cancelled_text">#DC2626</color>
 </resources>

@@ -441,6 +441,22 @@ public class SpotRepository {
                                         entity.setOwnerEmail(currentEmail);
                                     }
                                 }
+
+                                ParkingPlaceEntity existing = parkingPlaceDao.getPlaceById(entity.getId());
+                                if (existing != null) {
+                                    if ((entity.getDescription() == null || entity.getDescription().trim().isEmpty())
+                                            && existing.getDescription() != null && !existing.getDescription().trim().isEmpty()) {
+                                        entity.setDescription(existing.getDescription());
+                                    }
+                                    if ((entity.getAmenitiesCsv() == null || entity.getAmenitiesCsv().trim().isEmpty())
+                                            && existing.getAmenitiesCsv() != null && !existing.getAmenitiesCsv().trim().isEmpty()) {
+                                        entity.setAmenitiesCsv(existing.getAmenitiesCsv());
+                                    }
+                                    if ((entity.getImageUri() == null || entity.getImageUri().trim().isEmpty())
+                                            && existing.getImageUri() != null && !existing.getImageUri().trim().isEmpty()) {
+                                        entity.setImageUri(existing.getImageUri());
+                                    }
+                                }
                                 if (reservationDao != null) {
                                     ReservationEntity activeRes = reservationDao.getActiveReservationForSpotSync(entity.getId());
                                     if (spot.isFree() || (spot.getOccupancy() != null && "FREE".equalsIgnoreCase(spot.getOccupancy()))) {
@@ -475,7 +491,6 @@ public class SpotRepository {
                                         }
                                     } else {
                                         // Spot is not free on backend, preserve existing driver info if present
-                                        ParkingPlaceEntity existing = parkingPlaceDao.getPlaceById(entity.getId());
                                         if (existing != null) {
                                             entity.setDriverVehicle(existing.getDriverVehicle());
                                             entity.setDriverName(existing.getDriverName());
@@ -623,7 +638,11 @@ public class SpotRepository {
         entity.setOccupied(!spot.isFree());
         entity.setRating(spot.getAvgRating());
         entity.setRatingCount(spot.getReviewCount());
-        entity.setDescription(spot.getDescription());
+                String desc = spot.getDescription();
+        if ((desc == null || desc.trim().isEmpty()) && spot.getAccessInstructions() != null && !spot.getAccessInstructions().trim().isEmpty()) {
+            desc = spot.getAccessInstructions();
+        }
+        entity.setDescription(desc != null ? desc.trim() : "");
         entity.setAccessInstructions(spot.getAccessInstructions());
         entity.setAccessTime("24/7");
         entity.setOwnerEmail(spot.getOwnerId());

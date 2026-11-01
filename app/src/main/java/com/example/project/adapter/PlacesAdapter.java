@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.project.R;
 import com.example.project.databinding.ItemMyPlaceBinding;
+import com.google.android.material.chip.Chip;
 import com.example.project.model.ParkingPlace;
 
 import java.util.ArrayList;
@@ -113,6 +114,38 @@ public class PlacesAdapter extends RecyclerView.Adapter<PlacesAdapter.PlaceViewH
                     + " • " + priceStr
                     + " • Czas: " + (place.getAccessTime() != null ? place.getAccessTime() : "24/7");
             binding.textPlaceSub.setText(subInfo);
+
+            // Amenities under title (if present)
+            binding.chipGroupItemAmenities.removeAllViews();
+            boolean hasAmenities = false;
+            List<String> amenities = place.getAmenities();
+            if (amenities != null && !amenities.isEmpty()) {
+                for (String amenity : amenities) {
+                    String label = com.example.project.utils.AmenityUtils.formatAmenity(amenity);
+                    if (!label.isEmpty()) {
+                        Chip chip = new Chip(context);
+                        chip.setText(label);
+                        chip.setTextSize(11f);
+                        chip.setClickable(false);
+                        chip.setCheckable(false);
+                        binding.chipGroupItemAmenities.addView(chip);
+                        hasAmenities = true;
+                    }
+                }
+            }
+            binding.chipGroupItemAmenities.setVisibility(hasAmenities ? View.VISIBLE : View.GONE);
+
+            // Description under amenities (if present)
+            String description = place.getDescription();
+            if ((description == null || description.trim().isEmpty()) && place.getAccessInstructions() != null && !place.getAccessInstructions().trim().isEmpty()) {
+                description = place.getAccessInstructions();
+            }
+            if (description != null && !description.trim().isEmpty()) {
+                binding.textPlaceDescription.setText(description.trim());
+                binding.textPlaceDescription.setVisibility(View.VISIBLE);
+            } else {
+                binding.textPlaceDescription.setVisibility(View.GONE);
+            }
 
             // 2. Slider (MaterialSwitch) configuration
             binding.switchSpotActive.setOnCheckedChangeListener(null);

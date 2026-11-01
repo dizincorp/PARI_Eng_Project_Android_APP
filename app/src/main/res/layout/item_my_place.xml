@@ -60,6 +60,28 @@
                 android:textColor="@color/text_secondary"
                 android:textSize="13sp" />
 
+            <!-- Amenities under title/sub -->
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chip_group_item_amenities"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:visibility="gone"
+                app:chipSpacingHorizontal="6dp"
+                app:chipSpacingVertical="4dp" />
+
+            <!-- Description under amenities -->
+            <TextView
+                android:id="@+id/text_place_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:visibility="gone" />
+
             <!-- Driver and vehicle reservation info row (visible when reserved/occupied) -->
             <TextView
                 android:id="@+id/text_driver_info"

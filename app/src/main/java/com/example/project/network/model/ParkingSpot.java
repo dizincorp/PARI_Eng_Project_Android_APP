@@ -199,8 +199,17 @@ public class ParkingSpot {
     }
 
     public String getDescription() {
-        if (description != null) return description;
-        return spot != null ? spot.getDescription() : "";
+        if (description != null && !description.trim().isEmpty()) return description.trim();
+        if (spot != null && spot.getDescription() != null && !spot.getDescription().trim().isEmpty()) {
+            return spot.getDescription().trim();
+        }
+        if (accessInstructions != null && !accessInstructions.trim().isEmpty()) {
+            return accessInstructions.trim();
+        }
+        if (spot != null && spot.getAccessInstructions() != null && !spot.getAccessInstructions().trim().isEmpty()) {
+            return spot.getAccessInstructions().trim();
+        }
+        return "";
     }
 
     public void setDescription(String description) {
@@ -403,8 +412,11 @@ public class ParkingSpot {
     }
 
     public List<String> getAmenities() {
-        if (amenities != null) return amenities;
-        return spot != null ? spot.getAmenities() : Collections.emptyList();
+        if (amenities != null && !amenities.isEmpty()) return amenities;
+        if (spot != null && spot.getAmenities() != null && !spot.getAmenities().isEmpty()) {
+            return spot.getAmenities();
+        }
+        return Collections.emptyList();
     }
 
     public void setAmenities(List<String> amenities) {
@@ -413,8 +425,11 @@ public class ParkingSpot {
     }
 
     public List<String> getPhotoKeys() {
-        if (photoKeys != null) return photoKeys;
-        return spot != null ? spot.getPhotoKeys() : Collections.emptyList();
+        if (photoKeys != null && !photoKeys.isEmpty()) return photoKeys;
+        if (spot != null && spot.getPhotoKeys() != null && !spot.getPhotoKeys().isEmpty()) {
+            return spot.getPhotoKeys();
+        }
+        return Collections.emptyList();
     }
 
     public void setPhotoKeys(List<String> photoKeys) {

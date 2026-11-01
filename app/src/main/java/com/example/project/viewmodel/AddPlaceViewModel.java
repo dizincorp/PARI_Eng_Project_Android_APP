@@ -17,11 +17,14 @@ import androidx.lifecycle.Observer;
 import com.example.project.R;
 import com.example.project.model.ParkingPlace;
 import com.example.project.network.Resource;
+import com.example.project.network.model.AvailabilityRuleRequest;
 import com.example.project.network.model.CreateSpotRequest;
 import com.example.project.network.model.ParkingSpot;
 import com.example.project.network.model.UpdateSpotRequest;
 import com.example.project.repository.AppRepository;
+import com.example.project.repository.AvailabilityRepository;
 import com.example.project.repository.SpotRepository;
+import com.example.project.utils.AccessTimeParser;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -41,6 +44,7 @@ public class AddPlaceViewModel extends AndroidViewModel {
 
     private final SpotRepository spotRepository;
     private final AppRepository appRepository;
+    private final AvailabilityRepository availabilityRepository;
     private final ExecutorService executorService;
     private final Handler mainHandler;
 
@@ -60,6 +64,7 @@ public class AddPlaceViewModel extends AndroidViewModel {
         super(application);
         this.spotRepository = SpotRepository.getInstance(application);
         this.appRepository = AppRepository.getInstance();
+        this.availabilityRepository = AvailabilityRepository.getInstance(application);
         this.executorService = Executors.newSingleThreadExecutor();
         this.mainHandler = new Handler(Looper.getMainLooper());
     }
@@ -79,6 +84,7 @@ public class AddPlaceViewModel extends AndroidViewModel {
         super(application);
         this.spotRepository = spotRepository;
         this.appRepository = appRepository;
+        this.availabilityRepository = AvailabilityRepository.getInstance(application);
         this.executorService = executorService;
         this.mainHandler = new Handler(Looper.getMainLooper());
     }
@@ -361,7 +367,7 @@ public class AddPlaceViewModel extends AndroidViewModel {
                     if (city.trim().equalsIgnoreCase("Warszawa") || city.trim().equalsIgnoreCase("Warsaw")) {
                         lat = 52.2297;
                         lng = 21.0122;
-                    } else if (city.trim().equalsIgnoreCase("KrakÃ³w") || city.trim().equalsIgnoreCase("Krakow")) {
+                    } else if (city.trim().equalsIgnoreCase("Kraków") || city.trim().equalsIgnoreCase("Krakow")) {
                         lat = 50.0647;
                         lng = 19.9450;
                     }
@@ -378,9 +384,9 @@ public class AddPlaceViewModel extends AndroidViewModel {
                     String trimmed = item.trim();
                     if ("Monitoring".equalsIgnoreCase(trimmed) || "CCTV".equalsIgnoreCase(trimmed)) {
                         backendAmenities.add("CCTV");
-                    } else if ("OÅ›wietlenie".equalsIgnoreCase(trimmed) || "LIGHTING".equalsIgnoreCase(trimmed)) {
+                    } else if ("Oświetlenie".equalsIgnoreCase(trimmed) || "LIGHTING".equalsIgnoreCase(trimmed)) {
                         backendAmenities.add("LIGHTING");
-                    } else if ("EV Charging".equalsIgnoreCase(trimmed) || "Åadowanie EV".equalsIgnoreCase(trimmed) || "EV_CHARGER".equalsIgnoreCase(trimmed)) {
+                    } else if ("EV Charging".equalsIgnoreCase(trimmed) || "Ładowanie EV".equalsIgnoreCase(trimmed) || "EV_CHARGER".equalsIgnoreCase(trimmed)) {
                         backendAmenities.add("EV_CHARGER");
                     } else if ("Podziemny".equalsIgnoreCase(trimmed) || "UNDERGROUND".equalsIgnoreCase(trimmed)) {
                         backendAmenities.add("UNDERGROUND");
@@ -473,6 +479,9 @@ public class AddPlaceViewModel extends AndroidViewModel {
                                 localPlace.setOwnerEmail(ownerEmail != null ? ownerEmail : "");
                                 localPlace.setImageUri(photoUri != null ? photoUri : "");
                                 appRepository.addPlace(localPlace);
+
+                                syncAvailabilityRules(placeId.trim(), accessTime);
+
                                 toastMessageLiveData.setValue(getApplication().getString(R.string.toast_spot_updated));
                                 saveSuccess.setValue(true);
                             } else if (resource.isError()) {
@@ -514,6 +523,9 @@ public class AddPlaceViewModel extends AndroidViewModel {
                                 localPlace.setOwnerEmail(ownerEmail != null ? ownerEmail : "");
                                 localPlace.setImageUri(photoUri != null ? photoUri : "");
                                 appRepository.addPlace(localPlace);
+
+                                syncAvailabilityRules(finalId, accessTime);
+
                                 toastMessageLiveData.setValue(getApplication().getString(R.string.toast_spot_updated));
                                 saveSuccess.setValue(true);
                             } else if (resource.status == Resource.Status.ERROR) {
@@ -525,6 +537,27 @@ public class AddPlaceViewModel extends AndroidViewModel {
                 }
             });
         });
+    }
+
+    /**
+     * Synchronizes weekly availability rules with the backend via PUT /api/spots/{spotId}/availability-rules.
+     *
+     * @param spotId     Target parking spot identifier
+     * @param accessTime String access time (e.g. "08:00 - 20:00" or "24/7")
+     */
+    private void syncAvailabilityRules(@NonNull String spotId, @Nullable String accessTime) {
+        if (spotId.trim().isEmpty()) {
+            return;
+        }
+        List<AvailabilityRuleRequest> rules = new ArrayList<>();
+        if (accessTime != null && !accessTime.contains("24/7") && !accessTime.equalsIgnoreCase("Dostęp 24/7")) {
+            String startTime = AccessTimeParser.getStartFormatted(accessTime);
+            String endTime = AccessTimeParser.getEndFormatted(accessTime);
+            for (int day = 1; day <= 7; day++) {
+                rules.add(new AvailabilityRuleRequest(day, startTime, endTime, null, null));
+            }
+        }
+        availabilityRepository.replaceAvailabilityRules(spotId.trim(), rules);
     }
 
     @Override

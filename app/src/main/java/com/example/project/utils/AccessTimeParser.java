@@ -1,5 +1,7 @@
 package com.example.project.utils;
 
+import java.util.Locale;
+
 /**
  * Utility class for parsing owner access time range strings (e.g. "12:00 - 14:00").
  */
@@ -77,5 +79,25 @@ public class AccessTimeParser {
         } catch (Exception ignored) {
         }
         return 59;
+    }
+
+    /**
+     * Formats start time as HH:mm.
+     *
+     * @param accessTime Access time string
+     * @return Formatted start time string
+     */
+    public static String getStartFormatted(String accessTime) {
+        return String.format(Locale.getDefault(), "%02d:%02d", getStartHour(accessTime), getStartMinute(accessTime));
+    }
+
+    /**
+     * Formats end time as HH:mm.
+     *
+     * @param accessTime Access time string
+     * @return Formatted end time string
+     */
+    public static String getEndFormatted(String accessTime) {
+        return String.format(Locale.getDefault(), "%02d:%02d", getEndHour(accessTime), getEndMinute(accessTime));
     }
 }

@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.NumberPicker;
 import android.widget.Toast;
@@ -18,6 +19,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.project.R;
 import com.example.project.databinding.ActivityReservePlaceBinding;
+import com.google.android.material.chip.Chip;
 import com.example.project.databinding.DialogAddVehicleBinding;
 import com.example.project.databinding.DialogDateTimePickerBinding;
 import com.example.project.model.ParkingPlace;
@@ -133,8 +135,49 @@ public class ReservePlaceActivity extends BaseActivity {
         } else {
             binding.imgPlacePhoto.setImageResource(currentPlace.getPhotoResId());
         }
-        binding.textPlaceStreet.setText(currentPlace.getStreet() != null ? currentPlace.getStreet() : currentPlace.getTitle());
-        binding.textPlaceCity.setText(currentPlace.getCity() != null ? currentPlace.getCity() : "Warszawa");
+        if (currentPlace.getTitle() != null && !currentPlace.getTitle().isEmpty()) {
+            binding.textPlaceStreet.setText(currentPlace.getTitle());
+            String address = String.format("%s, %s",
+                    currentPlace.getCity() != null ? currentPlace.getCity() : "",
+                    currentPlace.getStreet() != null ? currentPlace.getStreet() : "").trim();
+            if (address.startsWith(",")) address = address.substring(1).trim();
+            if (address.endsWith(",")) address = address.substring(0, address.length() - 1).trim();
+            binding.textPlaceCity.setText(!address.isEmpty() ? address : "Warszawa");
+        } else {
+            binding.textPlaceStreet.setText(currentPlace.getStreet() != null ? currentPlace.getStreet() : "Miejsce parkingowe");
+            binding.textPlaceCity.setText(currentPlace.getCity() != null ? currentPlace.getCity() : "Warszawa");
+        }
+
+        // Amenities under title (if present)
+        binding.chipGroupPlaceAmenities.removeAllViews();
+        boolean hasAmenities = false;
+        List<String> amenities = currentPlace.getAmenities();
+        if (amenities != null && !amenities.isEmpty()) {
+            for (String amenity : amenities) {
+                String label = com.example.project.utils.AmenityUtils.formatAmenity(amenity);
+                if (!label.isEmpty()) {
+                    Chip chip = new Chip(this);
+                    chip.setText(label);
+                    chip.setClickable(false);
+                    chip.setCheckable(false);
+                    binding.chipGroupPlaceAmenities.addView(chip);
+                    hasAmenities = true;
+                }
+            }
+        }
+        binding.chipGroupPlaceAmenities.setVisibility(hasAmenities ? View.VISIBLE : View.GONE);
+
+        // Description under amenities (if present)
+        String description = currentPlace.getDescription();
+        if ((description == null || description.trim().isEmpty()) && currentPlace.getAccessInstructions() != null && !currentPlace.getAccessInstructions().trim().isEmpty()) {
+            description = currentPlace.getAccessInstructions();
+        }
+        if (description != null && !description.trim().isEmpty()) {
+            binding.textPlaceDescription.setText(description.trim());
+            binding.textPlaceDescription.setVisibility(View.VISIBLE);
+        } else {
+            binding.textPlaceDescription.setVisibility(View.GONE);
+        }
 
         updatePriceSummary();
     }

@@ -35,6 +35,7 @@ public class ApiClient {
     private static VehicleApiService vehicleApiService;
     private static ReviewApiService reviewApiService;
     private static OwnerApiService ownerApiService;
+    private static AvailabilityApiService availabilityApiService;
     private static OkHttpClient okHttpClient;
     private static Gson gsonInstance;
 
@@ -169,6 +170,18 @@ public class ApiClient {
     }
 
     /**
+     * Gets the configured singleton instance of AvailabilityApiService (Availability rules and calendar blocks).
+     *
+     * @return Retrofit AvailabilityApiService instance
+     */
+    public static synchronized AvailabilityApiService getAvailabilityApiService() {
+        if (availabilityApiService == null) {
+            availabilityApiService = getRetrofit().create(AvailabilityApiService.class);
+        }
+        return availabilityApiService;
+    }
+
+    /**
      * Sets a custom base URL (useful for physical test devices or staging environments).
      *
      * @param newBaseUrl New base URL ending with a trailing slash
@@ -183,6 +196,7 @@ public class ApiClient {
             vehicleApiService = null;
             reviewApiService = null;
             ownerApiService = null;
+            availabilityApiService = null;
             gsonInstance = null;
         }
     }

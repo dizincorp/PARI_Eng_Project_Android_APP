@@ -168,6 +168,25 @@
     <string name="hint_time_from">12:00</string>
     <string name="hint_time_to">18:00</string>
     <string name="format_reservations_for_date">Dostępność w dniu %1$s</string>
+    <string name="btn_unblock">Odblokuj</string>
+    <string name="msg_slot_unblocked">Termin został pomyślnie odblokowany</string>
+    <string name="label_block_reason">Powód blokady (opcjonalnie)</string>
+    <string name="hint_block_reason">np. Remont nawierzchni, wyjazd</string>
+    <string name="section_blocked_periods">Zablokowane terminy</string>
+    <string name="no_blocked_periods">Brak zablokowanych terminów</string>
+    <string name="section_weekly_rules">Harmonogram tygodniowy</string>
+    <string name="rule_day_monday">Poniedziałek</string>
+    <string name="rule_day_tuesday">Wtorek</string>
+    <string name="rule_day_wednesday">Środa</string>
+    <string name="rule_day_thursday">Czwartek</string>
+    <string name="rule_day_friday">Piątek</string>
+    <string name="rule_day_saturday">Sobota</string>
+    <string name="rule_day_sunday">Niedziela</string>
+    <string name="availability_open_24_7">Dostępne całodobowo (24/7)</string>
+    <string name="confirm_unblock_title">Odblokowanie terminu</string>
+    <string name="confirm_unblock_message">Czy na pewno chcesz usunąć tę blokadę terminu?</string>
+    <string name="btn_save_rules">Zapisz harmonogram</string>
+    <string name="msg_rules_saved">Harmonogram został zaktualizowany</string>
 
     <!-- Reserve Process Strings -->
     <string name="title_reservation_details">Szczegóły rezerwacji</string>

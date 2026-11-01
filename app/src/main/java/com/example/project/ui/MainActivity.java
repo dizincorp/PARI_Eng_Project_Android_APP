@@ -289,17 +289,33 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
         });
 
         binding.chipGroupPreviewAmenities.removeAllViews();
-        if (spot.getAmenitiesCsv() != null && !spot.getAmenitiesCsv().isEmpty()) {
+        boolean hasAmenities = false;
+        if (spot.getAmenitiesCsv() != null && !spot.getAmenitiesCsv().trim().isEmpty()) {
             String[] amenities = spot.getAmenitiesCsv().split(",");
             for (String amenity : amenities) {
-                if (!amenity.trim().isEmpty()) {
+                String label = com.example.project.utils.AmenityUtils.formatAmenity(amenity);
+                if (!label.isEmpty()) {
                     Chip chip = new Chip(this);
-                    chip.setText(amenity.trim());
+                    chip.setText(label);
                     chip.setClickable(false);
                     chip.setCheckable(false);
                     binding.chipGroupPreviewAmenities.addView(chip);
+                    hasAmenities = true;
                 }
             }
+        }
+        binding.chipGroupPreviewAmenities.setVisibility(hasAmenities ? View.VISIBLE : View.GONE);
+
+        // Description under amenities (if present)
+        String description = spot.getDescription();
+        if ((description == null || description.trim().isEmpty()) && spot.getAccessInstructions() != null && !spot.getAccessInstructions().trim().isEmpty()) {
+            description = spot.getAccessInstructions();
+        }
+        if (description != null && !description.trim().isEmpty()) {
+            binding.textPreviewDescription.setText(description.trim());
+            binding.textPreviewDescription.setVisibility(View.VISIBLE);
+        } else {
+            binding.textPreviewDescription.setVisibility(View.GONE);
         }
 
         binding.cardPlacePreview.setVisibility(View.VISIBLE);

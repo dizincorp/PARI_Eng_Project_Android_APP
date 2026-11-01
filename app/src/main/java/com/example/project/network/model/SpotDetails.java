@@ -199,7 +199,13 @@ public class SpotDetails {
     }
 
     public String getDescription() {
-        return description != null ? description : "";
+        if (description != null && !description.trim().isEmpty()) {
+            return description.trim();
+        }
+        if (accessInstructions != null && !accessInstructions.trim().isEmpty()) {
+            return accessInstructions.trim();
+        }
+        return "";
     }
 
     public void setDescription(String description) {
