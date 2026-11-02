@@ -1000,11 +1000,13 @@ public class ReservationRepository {
             entity.setCity(place.getCity());
             entity.setPlaceNumber(place.getPlaceNumber());
             entity.setPhotoResId(place.getPhotoResId() != 0 ? place.getPhotoResId() : R.drawable.default_parking_spot);
+            entity.setImageUri(place.getImageUri() != null ? place.getImageUri() : "");
         } else {
             entity.setStreet(res.getSpotName() != null && !res.getSpotName().isEmpty() ? res.getSpotName() : "Warszawa");
             entity.setCity("Warszawa");
             entity.setPlaceNumber("");
             entity.setPhotoResId(R.drawable.default_parking_spot);
+            entity.setImageUri("");
         }
         entity.setPinCode(res.getPinCode() != null && !res.getPinCode().isEmpty() ? res.getPinCode() : "4829");
         entity.setStatus(res.getStatus() != null && !res.getStatus().isEmpty() ? res.getStatus() : "AKTYWNA");

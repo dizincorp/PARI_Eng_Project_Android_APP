@@ -117,15 +117,11 @@ public class ProfileActivity extends BaseActivity {
             binding.textUserRating.setText(String.format(Locale.getDefault(), "★ %.1f Rating", profile.getRating()));
 
             // Display avatar image (URI if selected, else default drawable)
-            if (profile.getAvatarUri() != null && !profile.getAvatarUri().isEmpty()) {
-                try {
-                    binding.imgProfileAvatar.setImageURI(Uri.parse(profile.getAvatarUri()));
-                } catch (Exception e) {
-                    binding.imgProfileAvatar.setImageResource(profile.getAvatarResId());
-                }
-            } else {
-                binding.imgProfileAvatar.setImageResource(profile.getAvatarResId());
-            }
+            com.example.project.utils.ImageLoader.getInstance(this).loadImage(
+                    binding.imgProfileAvatar,
+                    profile.getAvatarUri(),
+                    profile.getAvatarResId() != 0 ? profile.getAvatarResId() : R.drawable.ic_profile
+            );
         });
 
         viewModel.getRemoteProfileLiveData().observe(this, resource -> {
@@ -134,6 +130,15 @@ public class ProfileActivity extends BaseActivity {
             if (resource.status == Resource.Status.SUCCESS && resource.data != null) {
                 UserProfileResponse data = resource.data;
                 binding.textUserName.setText(data.getFullName());
+                if (data.getAvatarUrl() != null && !data.getAvatarUrl().trim().isEmpty()) {
+                    sessionManager.updateAvatarUri(data.getAvatarUrl().trim());
+                    viewModel.updateUserAvatarUri(data.getAvatarUrl().trim());
+                    com.example.project.utils.ImageLoader.getInstance(this).loadImage(
+                            binding.imgProfileAvatar,
+                            data.getAvatarUrl().trim(),
+                            R.drawable.ic_profile
+                    );
+                }
             }
         });
     }

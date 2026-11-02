@@ -96,6 +96,21 @@ ParkShare is a modern Android application written in **Java** following the **MV
 * **Monthly Summary**: Displays overall earnings summary card.
 * **Transaction History**: Itemized list of earnings per reservation with vehicle, duration, date, and price.
 
+### 9. 📸 Media & Photo Management (`MediaRepository` & `ImageLoader`)
+* **REST Media Endpoints**:
+  * `POST /api/media/upload`: Multipart file upload returning `storageKey`, `url`, `mimeType`, and `sizeBytes`.
+  * `POST /api/users/me/avatar`: Updates the current user's profile avatar.
+  * `POST /api/spots/{id}/photos`: Attaches uploaded photo metadata to a parking spot (`storageKey`, `url`, `position`).
+  * `DELETE /api/spots/{id}/photos/{photoId}`: Deletes a parking spot photo.
+* **Persistent User Avatar**:
+  * User profile avatar persists reliably across app restarts, configuration changes, and login sessions via `SessionManager` and Room `UserDao`.
+  * Dynamic, thread-safe image loading across all profile screens with cache fallback via `ImageLoader`.
+* **Reservation & Spot Photo Integration**:
+  * Spot photos are displayed on reservation cards in `ReservationsActivity` (`item_reservation.xml`), in the active reservation modal (`dialog_active_reservation_details.xml`), and dynamically updated in `ReservePlaceActivity`.
+  * Room database schema migrated to version 10 adding `imageUri` to `ReservationEntity` as Single Source of Truth.
+* **Real Spot Photo Keys**:
+  * Elimination of placeholder keys; spot creation and repository mappings prioritize valid uploaded photos (`spots/...`).
+
 ---
 
 ## 🛠️ Tech Stack & Architecture

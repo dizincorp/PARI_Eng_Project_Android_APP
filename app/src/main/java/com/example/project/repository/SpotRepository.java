@@ -683,7 +683,25 @@ public class SpotRepository {
         }
 
         if (spot.getPhotoKeys() != null && !spot.getPhotoKeys().isEmpty()) {
-            entity.setImageUri(spot.getPhotoKeys().get(0));
+            String selectedKey = null;
+            // Prefer real uploaded media key (e.g. "spots/...") over legacy dummy placeholders
+            for (String k : spot.getPhotoKeys()) {
+                if (k != null && (k.startsWith("spots/") || k.startsWith("http://") || k.startsWith("https://") || k.startsWith("/media/"))) {
+                    selectedKey = k;
+                    break;
+                }
+            }
+            if (selectedKey == null) {
+                selectedKey = spot.getPhotoKeys().get(0);
+            }
+            if (selectedKey != null && !selectedKey.trim().isEmpty()) {
+                String fullUrl = selectedKey.startsWith("http://") || selectedKey.startsWith("https://")
+                        ? selectedKey : ("http://10.0.2.2:8080/media/" + selectedKey);
+                entity.setImageUri(fullUrl);
+            } else {
+                entity.setImageUri("");
+                entity.setPhotoResId(R.drawable.default_parking_spot);
+            }
         } else {
             entity.setImageUri("");
             entity.setPhotoResId(R.drawable.default_parking_spot);

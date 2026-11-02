@@ -151,19 +151,11 @@ public class ReservePlaceActivity extends BaseActivity {
     private void setupUI() {
         if (binding == null || currentPlace == null) return;
 
-        if (currentPlace.getImageUri() != null && !currentPlace.getImageUri().trim().isEmpty()) {
-            try {
-                Uri uri = Uri.parse(currentPlace.getImageUri().trim());
-                binding.imgPlacePhoto.setImageURI(uri);
-                if (binding.imgPlacePhoto.getDrawable() == null) {
-                    binding.imgPlacePhoto.setImageResource(currentPlace.getPhotoResId());
-                }
-            } catch (Exception e) {
-                binding.imgPlacePhoto.setImageResource(currentPlace.getPhotoResId());
-            }
-        } else {
-            binding.imgPlacePhoto.setImageResource(currentPlace.getPhotoResId());
-        }
+        com.example.project.utils.ImageLoader.getInstance(this).loadImage(
+                binding.imgPlacePhoto,
+                currentPlace.getImageUri(),
+                currentPlace.getPhotoResId() != 0 ? currentPlace.getPhotoResId() : R.drawable.default_parking_spot
+        );
 
         if (currentPlace.getTitle() != null && !currentPlace.getTitle().isEmpty()) {
             binding.textPlaceStreet.setText(currentPlace.getTitle());
@@ -416,6 +408,28 @@ public class ReservePlaceActivity extends BaseActivity {
     }
 
     private void observeViewModel() {
+        // Reactively observe parking place updates to dynamically update image and details
+        if (currentPlace != null && currentPlace.getId() != null) {
+            String targetId = currentPlace.getId();
+            com.example.project.repository.AppRepository.getInstance().getPlacesLiveData().observe(this, places -> {
+                if (places != null) {
+                    for (com.example.project.model.ParkingPlace p : places) {
+                        if (p != null && targetId.equals(p.getId())) {
+                            currentPlace = p;
+                            if (binding != null) {
+                                com.example.project.utils.ImageLoader.getInstance(this).loadImage(
+                                        binding.imgPlacePhoto,
+                                        p.getImageUri(),
+                                        p.getPhotoResId() != 0 ? p.getPhotoResId() : R.drawable.default_parking_spot
+                                );
+                            }
+                            break;
+                        }
+                    }
+                }
+            });
+        }
+
         // Observe user vehicles for spinner dropdown
         viewModel.getVehiclesLiveData().observe(this, vehicles -> {
             if (binding == null || vehicles == null) return;

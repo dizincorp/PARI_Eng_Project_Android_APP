@@ -36,6 +36,7 @@ public class ApiClient {
     private static ReviewApiService reviewApiService;
     private static OwnerApiService ownerApiService;
     private static AvailabilityApiService availabilityApiService;
+    private static MediaApiService mediaApiService;
     private static OkHttpClient okHttpClient;
     private static Gson gsonInstance;
 
@@ -182,6 +183,18 @@ public class ApiClient {
     }
 
     /**
+     * Gets the configured singleton instance of MediaApiService (Media upload and user avatar).
+     *
+     * @return Retrofit MediaApiService instance
+     */
+    public static synchronized MediaApiService getMediaApiService() {
+        if (mediaApiService == null) {
+            mediaApiService = getRetrofit().create(MediaApiService.class);
+        }
+        return mediaApiService;
+    }
+
+    /**
      * Sets a custom base URL (useful for physical test devices or staging environments).
      *
      * @param newBaseUrl New base URL ending with a trailing slash
@@ -197,6 +210,7 @@ public class ApiClient {
             reviewApiService = null;
             ownerApiService = null;
             availabilityApiService = null;
+            mediaApiService = null;
             gsonInstance = null;
         }
     }

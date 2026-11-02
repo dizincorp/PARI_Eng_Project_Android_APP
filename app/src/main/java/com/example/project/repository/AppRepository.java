@@ -62,9 +62,18 @@ public class AppRepository {
                 String email = sessionManager.getUserEmail();
                 String name = sessionManager.getUserName();
                 String uid = sessionManager.getUserId();
+                String avatar = sessionManager.getAvatarUri();
                 userEmailLiveData.setValue(email != null && !email.isEmpty() ? email : "jan_kowalski@gmail.com");
                 userNameLiveData.setValue(name != null && !name.isEmpty() ? name : "Jan Kowalski");
                 userIdLiveData.setValue(uid != null ? uid : "");
+
+                UserProfile profile = new UserProfile();
+                profile.setEmail(email != null && !email.isEmpty() ? email : "jan_kowalski@gmail.com");
+                profile.setName(name != null && !name.isEmpty() ? name : "Jan Kowalski");
+                if (avatar != null && !avatar.isEmpty()) {
+                    profile.setAvatarUri(avatar);
+                }
+                userProfileLiveData.setValue(profile);
             }
         }
     }
@@ -113,6 +122,11 @@ public class AppRepository {
         UserProfile profile = new UserProfile();
         profile.setEmail(finalEmail);
         profile.setName(finalName);
+
+        com.example.project.utils.SessionManager sm = com.example.project.utils.SessionManager.getInstance();
+        if (sm != null && sm.getAvatarUri() != null && !sm.getAvatarUri().isEmpty()) {
+            profile.setAvatarUri(sm.getAvatarUri());
+        }
         userProfileLiveData.setValue(profile);
 
         if (database != null) {
@@ -122,10 +136,21 @@ public class AppRepository {
                     entity = new UserEntity();
                     entity.setEmail(finalEmail);
                     entity.setName(finalName);
+                    if (sm != null && sm.getAvatarUri() != null && !sm.getAvatarUri().isEmpty()) {
+                        entity.setAvatarUri(sm.getAvatarUri());
+                    }
                     entity.setPremium(true);
                     entity.setRating(4.9);
                     entity.setRatingCount(12);
                     database.userDao().insertOrUpdate(entity);
+                } else {
+                    if (entity.getAvatarUri() != null && !entity.getAvatarUri().isEmpty()) {
+                        profile.setAvatarUri(entity.getAvatarUri());
+                        userProfileLiveData.postValue(profile);
+                    } else if (sm != null && sm.getAvatarUri() != null && !sm.getAvatarUri().isEmpty()) {
+                        entity.setAvatarUri(sm.getAvatarUri());
+                        database.userDao().insertOrUpdate(entity);
+                    }
                 }
             });
         }
@@ -590,6 +615,7 @@ public class AppRepository {
                 e.getPinCode(), e.getPhotoResId() != 0 ? e.getPhotoResId() : R.drawable.default_parking_spot
         );
         r.setUserEmail(e.getUserEmail() != null ? e.getUserEmail() : "");
+        r.setImageUri(e.getImageUri() != null ? e.getImageUri() : "");
         return r;
     }
 
@@ -615,6 +641,7 @@ public class AppRepository {
         e.setTotalPrice(r.getTotalPrice());
         e.setPinCode(r.getPinCode());
         e.setPhotoResId(r.getPhotoResId() != 0 ? r.getPhotoResId() : R.drawable.default_parking_spot);
+        e.setImageUri(r.getImageUri() != null ? r.getImageUri() : "");
         return e;
     }
 

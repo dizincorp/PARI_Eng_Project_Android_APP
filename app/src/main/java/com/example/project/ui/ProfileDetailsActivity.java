@@ -63,8 +63,16 @@ public class ProfileDetailsActivity extends BaseActivity {
                         String uriString = imageUri.toString();
                         viewModel.updateUserAvatarUri(uriString);
                         sessionManager.updateAvatarUri(uriString);
-                        binding.imgProfileDetailsAvatar.setImageURI(imageUri);
-                        Toast.makeText(this, R.string.msg_photo_updated, Toast.LENGTH_SHORT).show();
+                        com.example.project.utils.ImageLoader.getInstance(this).loadImage(
+                                binding.imgProfileDetailsAvatar, uriString, R.drawable.ic_profile);
+
+                        com.example.project.repository.MediaRepository.getInstance(this)
+                                .uploadAvatar(imageUri)
+                                .observe(this, res -> {
+                                    if (res != null && res.isSuccess()) {
+                                        Toast.makeText(this, R.string.msg_photo_updated, Toast.LENGTH_SHORT).show();
+                                    }
+                                });
                     }
                 }
             });
@@ -126,15 +134,13 @@ public class ProfileDetailsActivity extends BaseActivity {
 
         binding.textRatingValue.setText(String.format(Locale.getDefault(), "★ %.1f", profile.getRating()));
 
-        if (profile.getAvatarUri() != null && !profile.getAvatarUri().isEmpty()) {
-            try {
-                binding.imgProfileDetailsAvatar.setImageURI(Uri.parse(profile.getAvatarUri()));
-            } catch (Exception e) {
-                binding.imgProfileDetailsAvatar.setImageResource(profile.getAvatarResId());
-            }
-        } else {
-            binding.imgProfileDetailsAvatar.setImageResource(profile.getAvatarResId());
-        }
+        String avatarUri = (profile.getAvatarUri() != null && !profile.getAvatarUri().isEmpty())
+                ? profile.getAvatarUri() : sessionManager.getAvatarUri();
+        com.example.project.utils.ImageLoader.getInstance(this).loadImage(
+                binding.imgProfileDetailsAvatar,
+                avatarUri,
+                profile.getAvatarResId() != 0 ? profile.getAvatarResId() : R.drawable.ic_profile
+        );
     }
 
     /**

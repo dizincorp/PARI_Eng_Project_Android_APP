@@ -6,6 +6,24 @@
     android:orientation="vertical"
     android:padding="20dp">
 
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="140dp"
+        android:layout_marginBottom="12dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="0dp"
+        app:strokeColor="@color/gray_border"
+        app:strokeWidth="1dp">
+
+        <ImageView
+            android:id="@+id/img_dialog_spot"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:contentDescription="@string/label_header_place"
+            android:src="@drawable/default_parking_spot" />
+    </com.google.android.material.card.MaterialCardView>
+
     <TextView
         android:id="@+id/text_dialog_title"
         android:layout_width="wrap_content"

@@ -316,6 +316,17 @@ public class ReservationsActivity extends BaseActivity implements ReservationsAd
         dialogBinding.textDialogStreet.setText(reservation.getStreet() != null ? reservation.getStreet() : "Warszawa");
         dialogBinding.textDialogPin.setText(reservation.getPinCode() != null ? reservation.getPinCode() : "4829");
 
+        String placeImg = reservation.getImageUri();
+        if (placeImg == null || placeImg.isEmpty()) {
+            com.example.project.model.ParkingPlace p = com.example.project.repository.AppRepository.getInstance().getPlaceById(reservation.getPlaceId());
+            if (p != null) placeImg = p.getImageUri();
+        }
+        com.example.project.utils.ImageLoader.getInstance(this).loadImage(
+                dialogBinding.imgDialogSpot,
+                placeImg,
+                reservation.getPhotoResId() != 0 ? reservation.getPhotoResId() : R.drawable.default_parking_spot
+        );
+
         long startMs = reservation.getStartTimeMs() > 0 ? reservation.getStartTimeMs() : System.currentTimeMillis();
         long endMs = reservation.getEndTimeMs() > 0 ? reservation.getEndTimeMs() : (startMs + 3600000L);
 

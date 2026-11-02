@@ -115,6 +115,20 @@ public class ReservationsAdapter extends RecyclerView.Adapter<ReservationsAdapte
             binding.textReservationTitle.setText(res.getPlaceName() != null && !res.getPlaceName().isEmpty()
                     ? res.getPlaceName() : "Miejsce parkingowe");
 
+            // Spot Image loading via ImageLoader
+            String placeImage = res.getImageUri();
+            if (placeImage == null || placeImage.isEmpty()) {
+                com.example.project.model.ParkingPlace p = com.example.project.repository.AppRepository.getInstance().getPlaceById(res.getPlaceId());
+                if (p != null) {
+                    placeImage = p.getImageUri();
+                }
+            }
+            com.example.project.utils.ImageLoader.getInstance(context).loadImage(
+                    binding.imgReservationSpot,
+                    placeImage,
+                    res.getPhotoResId() != 0 ? res.getPhotoResId() : R.drawable.default_parking_spot
+            );
+
             String street = res.getStreet() != null && !res.getStreet().isEmpty() ? res.getStreet() : "Warszawa";
             String city = res.getCity() != null && !res.getCity().isEmpty() ? res.getCity() : "Warszawa";
             binding.textReservationAddress.setText(String.format(Locale.getDefault(), "%s, %s", city, street));

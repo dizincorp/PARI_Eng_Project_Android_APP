@@ -32,12 +32,14 @@ public class ReservationEntity {
     private double totalPrice;
     private String pinCode;
     private int photoResId;
+    private String imageUri;
 
     public ReservationEntity() {
         this.id = "r_" + System.currentTimeMillis();
         this.userEmail = "";
         this.status = "AKTYWNA";
         this.pinCode = "4829";
+        this.imageUri = "";
     }
 
     @NonNull
@@ -200,5 +202,13 @@ public class ReservationEntity {
 
     public void setPhotoResId(int photoResId) {
         this.photoResId = photoResId;
+    }
+
+    public String getImageUri() {
+        return imageUri != null ? imageUri : "";
+    }
+
+    public void setImageUri(String imageUri) {
+        this.imageUri = imageUri != null ? imageUri : "";
     }
 }

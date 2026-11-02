@@ -3,6 +3,7 @@ package com.example.project.viewmodel;
 import android.app.Application;
 import android.location.Address;
 import android.location.Geocoder;
+import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -23,6 +24,7 @@ import com.example.project.network.model.ParkingSpot;
 import com.example.project.network.model.UpdateSpotRequest;
 import com.example.project.repository.AppRepository;
 import com.example.project.repository.AvailabilityRepository;
+import com.example.project.repository.MediaRepository;
 import com.example.project.repository.SpotRepository;
 import com.example.project.utils.AccessTimeParser;
 
@@ -45,6 +47,7 @@ public class AddPlaceViewModel extends AndroidViewModel {
     private final SpotRepository spotRepository;
     private final AppRepository appRepository;
     private final AvailabilityRepository availabilityRepository;
+    private final MediaRepository mediaRepository;
     private final ExecutorService executorService;
     private final Handler mainHandler;
 
@@ -65,6 +68,7 @@ public class AddPlaceViewModel extends AndroidViewModel {
         this.spotRepository = SpotRepository.getInstance(application);
         this.appRepository = AppRepository.getInstance();
         this.availabilityRepository = AvailabilityRepository.getInstance(application);
+        this.mediaRepository = MediaRepository.getInstance(application);
         this.executorService = Executors.newSingleThreadExecutor();
         this.mainHandler = new Handler(Looper.getMainLooper());
     }
@@ -85,6 +89,7 @@ public class AddPlaceViewModel extends AndroidViewModel {
         this.spotRepository = spotRepository;
         this.appRepository = appRepository;
         this.availabilityRepository = AvailabilityRepository.getInstance(application);
+        this.mediaRepository = MediaRepository.getInstance(application);
         this.executorService = executorService;
         this.mainHandler = new Handler(Looper.getMainLooper());
     }
@@ -419,8 +424,8 @@ public class AddPlaceViewModel extends AndroidViewModel {
             request.setAmenities(backendAmenities);
 
             List<String> photoKeys = new ArrayList<>();
-            if (photoUri != null && !photoUri.isEmpty()) {
-                photoKeys.add("spot_" + System.currentTimeMillis() + ".jpg");
+            if (photoUri != null && !photoUri.trim().isEmpty() && (photoUri.startsWith("spots/") || photoUri.startsWith("http"))) {
+                photoKeys.add(photoUri.trim());
             }
             request.setPhotoKeys(photoKeys);
 
@@ -480,6 +485,20 @@ public class AddPlaceViewModel extends AndroidViewModel {
                                 localPlace.setImageUri(photoUri != null ? photoUri : "");
                                 appRepository.addPlace(localPlace);
 
+                                // If owner selected a local photo, upload it to the backend
+                                if (photoUri != null && !photoUri.trim().isEmpty()
+                                        && (photoUri.startsWith("content://") || photoUri.startsWith("file://"))) {
+                                    mediaRepository.uploadSpotPhoto(placeId.trim(), Uri.parse(photoUri.trim()))
+                                            .observeForever(photoRes -> {
+                                                if (photoRes != null && photoRes.isSuccess() && photoRes.data != null) {
+                                                    String serverUrl = photoRes.data.getUrl() != null && !photoRes.data.getUrl().isEmpty()
+                                                            ? photoRes.data.getUrl() : photoRes.data.getStorageKey();
+                                                    localPlace.setImageUri(serverUrl);
+                                                    appRepository.addPlace(localPlace);
+                                                }
+                                            });
+                                }
+
                                 syncAvailabilityRules(placeId.trim(), accessTime);
 
                                 toastMessageLiveData.setValue(getApplication().getString(R.string.toast_spot_updated));
@@ -523,6 +542,20 @@ public class AddPlaceViewModel extends AndroidViewModel {
                                 localPlace.setOwnerEmail(ownerEmail != null ? ownerEmail : "");
                                 localPlace.setImageUri(photoUri != null ? photoUri : "");
                                 appRepository.addPlace(localPlace);
+
+                                // If owner selected a local photo, upload it to the backend via POST /api/spots/{id}/photos
+                                if (photoUri != null && !photoUri.trim().isEmpty()
+                                        && (photoUri.startsWith("content://") || photoUri.startsWith("file://"))) {
+                                    mediaRepository.uploadSpotPhoto(finalId, Uri.parse(photoUri.trim()))
+                                            .observeForever(photoRes -> {
+                                                if (photoRes != null && photoRes.isSuccess() && photoRes.data != null) {
+                                                    String serverUrl = photoRes.data.getUrl() != null && !photoRes.data.getUrl().isEmpty()
+                                                            ? photoRes.data.getUrl() : photoRes.data.getStorageKey();
+                                                    localPlace.setImageUri(serverUrl);
+                                                    appRepository.addPlace(localPlace);
+                                                }
+                                            });
+                                }
 
                                 syncAvailabilityRules(finalId, accessTime);
 
