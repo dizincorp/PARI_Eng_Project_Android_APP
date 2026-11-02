@@ -5,14 +5,14 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_main"
+    android:background="@color/brand_slate_50"
     tools:context=".ui.ReservationsActivity">
 
     <!-- Top Bar with Title, Progress Bar, and Refresh Action -->
     <LinearLayout
         android:id="@+id/layout_top_bar"
         android:layout_width="0dp"
-        android:layout_height="56dp"
+        android:layout_height="58dp"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingHorizontal="20dp"
@@ -25,7 +25,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/title_reservations"
-            android:textColor="@color/text_primary"
+            android:textColor="@color/brand_slate_950"
             android:textSize="22sp"
             android:textStyle="bold" />
 
@@ -35,30 +35,30 @@
             android:layout_height="22dp"
             android:layout_marginEnd="12dp"
             android:indeterminate="true"
+            android:indeterminateTint="@color/brand_emerald_500"
             android:visibility="gone" />
 
         <ImageView
             android:id="@+id/btn_refresh_reservations"
-            android:layout_width="26dp"
-            android:layout_height="26dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:clickable="true"
             android:contentDescription="@string/btn_refresh"
             android:focusable="true"
-            android:padding="2dp"
+            android:padding="7dp"
             android:src="@drawable/ic_refresh"
-            app:tint="@color/text_primary" />
+            app:tint="@color/brand_slate_700" />
     </LinearLayout>
 
-    <!-- Top Toggle Tabs (Aktywne / Historia) -->
+    <!-- Top Segmented Toggle Tabs (Aktywne / Historia) -->
     <LinearLayout
         android:id="@+id/layout_tabs"
         android:layout_width="0dp"
         android:layout_height="48dp"
-        android:layout_marginHorizontal="16dp"
-        android:layout_marginTop="8dp"
-        android:background="@drawable/bg_dashed_border"
-        android:backgroundTint="@color/gray_input_bg"
+        android:layout_marginHorizontal="20dp"
+        android:layout_marginTop="4dp"
+        android:background="@drawable/bg_segmented_container"
         android:orientation="horizontal"
         android:padding="4dp"
         app:layout_constraintEnd_toEndOf="parent"
@@ -70,13 +70,16 @@
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:backgroundTint="@color/chip_bg_selected"
+            android:backgroundTint="@color/brand_slate_950"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
             android:text="@string/tab_active"
             android:textAllCaps="false"
             android:textColor="@color/white"
-            android:textSize="14sp"
+            android:textSize="13sp"
             android:textStyle="bold"
-            app:cornerRadius="8dp" />
+            app:cornerRadius="10dp"
+            app:elevation="1dp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_tab_history"
@@ -84,13 +87,16 @@
             android:layout_height="match_parent"
             android:layout_marginStart="4dp"
             android:layout_weight="1"
-            android:backgroundTint="@color/gray_input_bg"
+            android:backgroundTint="@color/brand_slate_100"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
             android:text="@string/tab_history"
             android:textAllCaps="false"
-            android:textColor="@color/text_secondary"
-            android:textSize="14sp"
+            android:textColor="@color/brand_slate_600"
+            android:textSize="13sp"
             android:textStyle="bold"
-            app:cornerRadius="8dp" />
+            app:cornerRadius="10dp"
+            app:elevation="0dp" />
     </LinearLayout>
 
     <!-- Empty State Layout -->
@@ -109,11 +115,13 @@
         app:layout_constraintTop_toBottomOf="@id/layout_tabs">
 
         <ImageView
-            android:layout_width="68dp"
-            android:layout_height="68dp"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:background="@drawable/bg_icon_rounded_slate"
             android:contentDescription="@string/msg_no_active_reservation"
+            android:padding="16dp"
             android:src="@drawable/ic_places"
-            app:tint="@color/text_secondary" />
+            app:tint="@color/brand_slate_400" />
 
         <TextView
             android:id="@+id/text_empty_title"
@@ -121,7 +129,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
             android:text="@string/title_reservations"
-            android:textColor="@color/text_primary"
+            android:textColor="@color/brand_slate_950"
             android:textSize="18sp"
             android:textStyle="bold" />
 
@@ -133,21 +141,27 @@
             android:gravity="center"
             android:paddingHorizontal="16dp"
             android:text="@string/msg_no_active_reservation"
-            android:textColor="@color/text_secondary"
-            android:textSize="14sp" />
+            android:textColor="@color/brand_slate_500"
+            android:textSize="13sp" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_search_on_map"
             android:layout_width="wrap_content"
             android:layout_height="48dp"
             android:layout_marginTop="20dp"
-            android:backgroundTint="@color/chip_bg_selected"
+            android:backgroundTint="@color/brand_slate_950"
+            android:elevation="2dp"
             android:paddingHorizontal="24dp"
             android:text="@string/btn_search_on_map"
             android:textAllCaps="false"
             android:textColor="@color/white"
+            android:textSize="14sp"
             android:textStyle="bold"
-            app:cornerRadius="12dp" />
+            app:cornerRadius="14dp"
+            app:icon="@drawable/ic_search"
+            app:iconGravity="textStart"
+            app:iconSize="16dp"
+            app:iconTint="@color/brand_emerald_400" />
     </LinearLayout>
 
     <!-- RecyclerView for Active and History Reservations List -->
@@ -155,10 +169,11 @@
         android:id="@+id/recycler_reservations"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="10dp"
         android:clipToPadding="false"
-        android:paddingTop="8dp"
-        android:paddingBottom="16dp"
+        android:overScrollMode="never"
+        android:paddingTop="6dp"
+        android:paddingBottom="20dp"
         app:layout_constraintBottom_toTopOf="@id/bottom_navigation"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

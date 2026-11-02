@@ -339,10 +339,10 @@ public class AvailabilityCalendarActivity extends BaseActivity {
             if (isEditingStart[0]) {
                 dialogBinding.radioStartMode.setChecked(true);
                 dialogBinding.radioStartMode.setTextColor(ContextCompat.getColor(this, R.color.white));
-                dialogBinding.radioStartMode.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.chip_bg_selected));
+                dialogBinding.radioStartMode.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.brand_slate_950));
 
                 dialogBinding.radioEndMode.setChecked(false);
-                dialogBinding.radioEndMode.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
+                dialogBinding.radioEndMode.setTextColor(ContextCompat.getColor(this, R.color.brand_slate_600));
                 dialogBinding.radioEndMode.setBackgroundTintList(null);
 
                 dialogBinding.textActiveTargetLabel.setText(R.string.label_start_time);
@@ -350,10 +350,10 @@ public class AvailabilityCalendarActivity extends BaseActivity {
             } else {
                 dialogBinding.radioEndMode.setChecked(true);
                 dialogBinding.radioEndMode.setTextColor(ContextCompat.getColor(this, R.color.white));
-                dialogBinding.radioEndMode.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.chip_bg_selected));
+                dialogBinding.radioEndMode.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.brand_slate_950));
 
                 dialogBinding.radioStartMode.setChecked(false);
-                dialogBinding.radioStartMode.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
+                dialogBinding.radioStartMode.setTextColor(ContextCompat.getColor(this, R.color.brand_slate_600));
                 dialogBinding.radioStartMode.setBackgroundTintList(null);
 
                 dialogBinding.textActiveTargetLabel.setText(R.string.label_end_time);
@@ -447,10 +447,10 @@ public class AvailabilityCalendarActivity extends BaseActivity {
 
                 dialogBinding.radioModeWheels.setChecked(true);
                 dialogBinding.radioModeWheels.setTextColor(ContextCompat.getColor(this, R.color.white));
-                dialogBinding.radioModeWheels.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.chip_bg_selected));
+                dialogBinding.radioModeWheels.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.brand_slate_950));
 
                 dialogBinding.radioModeText.setChecked(false);
-                dialogBinding.radioModeText.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
+                dialogBinding.radioModeText.setTextColor(ContextCompat.getColor(this, R.color.brand_slate_600));
                 dialogBinding.radioModeText.setBackgroundTintList(null);
 
                 loadIntoPickers.execute(isEditingStart[0] ? tempStart : tempEnd);
@@ -466,10 +466,10 @@ public class AvailabilityCalendarActivity extends BaseActivity {
 
                 dialogBinding.radioModeText.setChecked(true);
                 dialogBinding.radioModeText.setTextColor(ContextCompat.getColor(this, R.color.white));
-                dialogBinding.radioModeText.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.chip_bg_selected));
+                dialogBinding.radioModeText.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.brand_slate_950));
 
                 dialogBinding.radioModeWheels.setChecked(false);
-                dialogBinding.radioModeWheels.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
+                dialogBinding.radioModeWheels.setTextColor(ContextCompat.getColor(this, R.color.brand_slate_600));
                 dialogBinding.radioModeWheels.setBackgroundTintList(null);
 
                 loadIntoPickers.execute(isEditingStart[0] ? tempStart : tempEnd);

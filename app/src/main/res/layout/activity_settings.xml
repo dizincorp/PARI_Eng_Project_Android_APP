@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_main"
+    android:background="@color/brand_slate_50"
     tools:context=".ui.SettingsActivity">
 
     <!-- Top Toolbar -->
@@ -13,6 +13,7 @@
         android:id="@+id/layout_top_bar"
         android:layout_width="0dp"
         android:layout_height="56dp"
+        android:background="@color/card_background"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingHorizontal="16dp"
@@ -22,30 +23,44 @@
 
         <ImageView
             android:id="@+id/btn_back"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/menu_settings"
-            android:src="@drawable/ic_arrow_back" />
+            android:padding="6dp"
+            android:src="@drawable/ic_arrow_back"
+            app:tint="@color/brand_slate_950" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
+            android:layout_marginStart="12dp"
             android:layout_weight="1"
             android:text="@string/menu_settings"
-            android:textColor="@color/text_primary"
-            android:textSize="20sp"
+            android:textColor="@color/brand_slate_950"
+            android:textSize="18sp"
             android:textStyle="bold" />
     </LinearLayout>
+
+    <View
+        android:id="@+id/divider_top_bar"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:background="@color/brand_slate_200"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/layout_top_bar" />
 
     <ScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:clipToPadding="false"
         android:fillViewport="true"
+        android:overScrollMode="never"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/layout_top_bar">
+        app:layout_constraintTop_toBottomOf="@id/divider_top_bar">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -54,50 +69,76 @@
             android:padding="16dp">
 
             <!-- User Header Card -->
-            <LinearLayout
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <com.google.android.material.imageview.ShapeableImageView
-                    android:id="@+id/img_settings_avatar"
-                    android:layout_width="56dp"
-                    android:layout_height="56dp"
-                    android:contentDescription="@string/menu_settings"
-                    android:scaleType="centerCrop"
-                    android:src="@drawable/ic_avatar"
-                    app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full" />
+                app:cardBackgroundColor="@color/card_background"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="1dp"
+                app:strokeColor="@color/brand_slate_200"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="16dp"
-                    android:orientation="vertical">
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:padding="16dp">
 
-                    <TextView
-                        android:id="@+id/text_settings_user_name"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/default_user_name"
-                        android:textColor="@color/text_primary"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
+                    <com.google.android.material.imageview.ShapeableImageView
+                        android:id="@+id/img_settings_avatar"
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:contentDescription="@string/menu_settings"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_avatar"
+                        app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full" />
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:background="@drawable/ic_arrow_up"
-                        android:backgroundTint="@color/blue_accent"
-                        android:paddingHorizontal="10dp"
-                        android:paddingVertical="3dp"
-                        android:text="@string/badge_czlonek_premium"
-                        android:textColor="@color/white"
-                        android:textSize="11sp"
-                        android:textStyle="bold" />
+                        android:layout_marginStart="16dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/text_settings_user_name"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/default_user_name"
+                            android:textColor="@color/brand_slate_950"
+                            android:textSize="17sp"
+                            android:textStyle="bold" />
+
+                        <LinearLayout
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:background="@drawable/bg_badge_emerald"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="3dp">
+
+                            <ImageView
+                                android:layout_width="12dp"
+                                android:layout_height="12dp"
+                                android:contentDescription="@null"
+                                android:src="@drawable/ic_shield_check"
+                                app:tint="@color/brand_emerald_700" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="4dp"
+                                android:text="@string/badge_czlonek_premium"
+                                android:textColor="@color/brand_emerald_700"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </LinearLayout>
                 </LinearLayout>
-            </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
             <!-- Section 1: DOSTĘPNOŚĆ -->
             <TextView
@@ -105,25 +146,25 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:text="@string/section_accessibility"
-                android:textColor="@color/text_secondary"
+                android:textColor="@color/brand_slate_500"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="8dp"
                 app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="16dp"
+                app:cardCornerRadius="20dp"
                 app:cardElevation="1dp"
-                app:strokeColor="@color/gray_border"
+                app:strokeColor="@color/brand_slate_200"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="20dp">
 
                     <RelativeLayout
                         android:layout_width="match_parent"
@@ -133,8 +174,9 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_alignParentStart="true"
+                            android:layout_centerVertical="true"
                             android:text="@string/label_font_size"
-                            android:textColor="@color/text_primary"
+                            android:textColor="@color/brand_slate_900"
                             android:textSize="15sp"
                             android:textStyle="bold" />
 
@@ -142,8 +184,9 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_alignParentEnd="true"
+                            android:layout_centerVertical="true"
                             android:text="Aa"
-                            android:textColor="@color/blue_accent"
+                            android:textColor="@color/brand_emerald_600"
                             android:textSize="18sp"
                             android:textStyle="bold" />
                     </RelativeLayout>
@@ -154,15 +197,16 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
                         android:max="4"
-                        android:progress="2" />
+                        android:progress="2"
+                        android:progressTint="@color/brand_emerald_500"
+                        android:thumbTint="@color/brand_slate_950" />
 
                     <!-- Preview Box -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
-                        android:background="@drawable/bg_dashed_border"
-                        android:backgroundTint="@color/gray_input_bg"
+                        android:background="@drawable/bg_input_rounded"
                         android:orientation="vertical"
                         android:padding="16dp">
 
@@ -170,16 +214,18 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/label_preview_text"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="11sp" />
+                            android:textColor="@color/brand_slate_500"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
 
                         <TextView
                             android:id="@+id/text_preview_sample"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginTop="6dp"
+                            android:lineSpacingExtra="2dp"
                             android:text="@string/sample_preview_text"
-                            android:textColor="@color/text_primary"
+                            android:textColor="@color/brand_slate_900"
                             android:textSize="15sp"
                             android:textStyle="bold" />
                     </LinearLayout>
@@ -192,14 +238,14 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
                 android:text="@string/section_general"
-                android:textColor="@color/text_secondary"
+                android:textColor="@color/brand_slate_500"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="8dp"
                 android:orientation="vertical">
 
                 <!-- Powiadomienia -->
@@ -207,14 +253,13 @@
                     android:id="@+id/card_notifications"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
+                    android:layout_marginBottom="10dp"
                     android:clickable="true"
                     android:focusable="true"
-                    android:foreground="?android:attr/selectableItemBackground"
                     app:cardBackgroundColor="@color/card_background"
                     app:cardCornerRadius="16dp"
                     app:cardElevation="1dp"
-                    app:strokeColor="@color/gray_border"
+                    app:strokeColor="@color/brand_slate_200"
                     app:strokeWidth="1dp">
 
                     <LinearLayout
@@ -224,22 +269,27 @@
                         android:orientation="horizontal"
                         android:padding="16dp">
 
-                        <ImageView
+                        <FrameLayout
                             android:layout_width="40dp"
                             android:layout_height="40dp"
-                            android:background="@drawable/ic_arrow_up"
-                            android:backgroundTint="@color/blue_badge_bg"
-                            android:contentDescription="@string/label_notifications"
-                            android:padding="8dp"
-                            android:src="@drawable/ic_bell" />
+                            android:background="@drawable/bg_icon_rounded_slate">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_gravity="center"
+                                android:contentDescription="@string/label_notifications"
+                                android:src="@drawable/ic_bell"
+                                app:tint="@color/brand_slate_800" />
+                        </FrameLayout>
 
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="16dp"
+                            android:layout_marginStart="14dp"
                             android:layout_weight="1"
                             android:text="@string/label_notifications"
-                            android:textColor="@color/text_primary"
+                            android:textColor="@color/brand_slate_900"
                             android:textSize="15sp"
                             android:textStyle="bold" />
 
@@ -247,7 +297,8 @@
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:contentDescription="@string/label_notifications"
-                            android:src="@drawable/ic_chevron_right" />
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/brand_slate_400" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -255,11 +306,11 @@
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="12dp"
+                    android:layout_marginBottom="10dp"
                     app:cardBackgroundColor="@color/card_background"
                     app:cardCornerRadius="16dp"
                     app:cardElevation="1dp"
-                    app:strokeColor="@color/gray_border"
+                    app:strokeColor="@color/brand_slate_200"
                     app:strokeWidth="1dp">
 
                     <LinearLayout
@@ -269,29 +320,36 @@
                         android:orientation="horizontal"
                         android:padding="16dp">
 
-                        <ImageView
+                        <FrameLayout
                             android:layout_width="40dp"
                             android:layout_height="40dp"
-                            android:background="@drawable/ic_arrow_up"
-                            android:backgroundTint="@color/blue_badge_bg"
-                            android:contentDescription="@string/label_dark_mode"
-                            android:padding="8dp"
-                            android:src="@drawable/ic_moon" />
+                            android:background="@drawable/bg_icon_rounded_slate">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_gravity="center"
+                                android:contentDescription="@string/label_dark_mode"
+                                android:src="@drawable/ic_moon"
+                                app:tint="@color/brand_slate_800" />
+                        </FrameLayout>
 
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="16dp"
+                            android:layout_marginStart="14dp"
                             android:layout_weight="1"
                             android:text="@string/label_dark_mode"
-                            android:textColor="@color/text_primary"
+                            android:textColor="@color/brand_slate_900"
                             android:textSize="15sp"
                             android:textStyle="bold" />
 
                         <com.google.android.material.switchmaterial.SwitchMaterial
                             android:id="@+id/switch_dark_mode"
                             android:layout_width="wrap_content"
-                            android:layout_height="wrap_content" />
+                            android:layout_height="wrap_content"
+                            app:thumbTint="@color/switch_thumb_selector"
+                            app:trackTint="@color/switch_track_selector" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -300,13 +358,13 @@
                     android:id="@+id/card_language"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_marginBottom="16dp"
                     android:clickable="true"
                     android:focusable="true"
-                    android:foreground="?android:attr/selectableItemBackground"
                     app:cardBackgroundColor="@color/card_background"
                     app:cardCornerRadius="16dp"
                     app:cardElevation="1dp"
-                    app:strokeColor="@color/gray_border"
+                    app:strokeColor="@color/brand_slate_200"
                     app:strokeWidth="1dp">
 
                     <LinearLayout
@@ -316,22 +374,27 @@
                         android:orientation="horizontal"
                         android:padding="16dp">
 
-                        <ImageView
+                        <FrameLayout
                             android:layout_width="40dp"
                             android:layout_height="40dp"
-                            android:background="@drawable/ic_arrow_up"
-                            android:backgroundTint="@color/blue_badge_bg"
-                            android:contentDescription="@string/label_language"
-                            android:padding="8dp"
-                            android:src="@drawable/ic_globe" />
+                            android:background="@drawable/bg_icon_rounded_slate">
+
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:layout_gravity="center"
+                                android:contentDescription="@string/label_language"
+                                android:src="@drawable/ic_globe"
+                                app:tint="@color/brand_slate_800" />
+                        </FrameLayout>
 
                         <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="16dp"
+                            android:layout_marginStart="14dp"
                             android:layout_weight="1"
                             android:text="@string/label_language"
-                            android:textColor="@color/text_primary"
+                            android:textColor="@color/brand_slate_900"
                             android:textSize="15sp"
                             android:textStyle="bold" />
 
@@ -341,14 +404,15 @@
                             android:layout_height="wrap_content"
                             android:layout_marginEnd="8dp"
                             android:text="@string/lang_polski"
-                            android:textColor="@color/text_secondary"
+                            android:textColor="@color/brand_slate_500"
                             android:textSize="14sp" />
 
                         <ImageView
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:contentDescription="@string/label_language"
-                            android:src="@drawable/ic_chevron_right" />
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/brand_slate_400" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 

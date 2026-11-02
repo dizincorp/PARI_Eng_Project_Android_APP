@@ -7,7 +7,7 @@
     app:cardBackgroundColor="@color/card_background"
     app:cardCornerRadius="16dp"
     app:cardElevation="1dp"
-    app:strokeColor="@color/gray_border"
+    app:strokeColor="@color/brand_slate_200"
     app:strokeWidth="1dp">
 
     <LinearLayout
@@ -24,13 +24,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
+                android:layout_toStartOf="@id/layout_confirmed_badge"
+                android:layout_marginEnd="12dp"
                 android:orientation="vertical">
 
                 <TextView
                     android:id="@+id/text_reservation_time"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/text_primary"
+                    android:textColor="@color/brand_slate_950"
                     android:textSize="15sp"
                     android:textStyle="bold" />
 
@@ -38,24 +40,47 @@
                     android:id="@+id/text_place_name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="2dp"
-                    android:textColor="@color/text_secondary"
+                    android:layout_marginTop="3dp"
+                    android:textColor="@color/brand_slate_500"
                     android:textSize="13sp" />
             </LinearLayout>
 
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+            <!-- Confirmed Pill Badge -->
+            <LinearLayout
+                android:id="@+id/layout_confirmed_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
-                android:contentDescription="@string/title_availability_calendar"
-                android:src="@drawable/ic_check_circle" />
+                android:layout_centerVertical="true"
+                android:background="@drawable/bg_badge_emerald"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="3dp">
+
+                <ImageView
+                    android:layout_width="12dp"
+                    android:layout_height="12dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_check_circle"
+                    app:tint="@color/brand_emerald_700" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:text="@string/status_confirmed"
+                    android:textColor="@color/brand_emerald_700"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
         </RelativeLayout>
 
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:layout_marginVertical="12dp"
-            android:background="@color/gray_border" />
+            android:background="@color/brand_slate_200" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -63,11 +88,19 @@
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
-            <ImageView
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:contentDescription="@string/title_availability_calendar"
-                android:src="@drawable/ic_avatar" />
+            <FrameLayout
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="@drawable/bg_icon_rounded_slate">
+
+                <ImageView
+                    android:layout_width="20dp"
+                    android:layout_height="20dp"
+                    android:layout_gravity="center"
+                    android:contentDescription="@string/title_availability_calendar"
+                    android:src="@drawable/ic_avatar"
+                    app:tint="@color/brand_slate_700" />
+            </FrameLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
@@ -79,8 +112,8 @@
                     android:id="@+id/text_user_name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/text_primary"
-                    android:textSize="15sp"
+                    android:textColor="@color/brand_slate_900"
+                    android:textSize="14sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -88,8 +121,8 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="13sp" />
+                    android:textColor="@color/brand_slate_500"
+                    android:textSize="12sp" />
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

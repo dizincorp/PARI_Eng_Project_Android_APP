@@ -5,13 +5,15 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_main"
+    android:background="@color/brand_slate_50"
     tools:context=".ui.OnboardingActivity">
 
     <ScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:clipToPadding="false"
         android:fillViewport="true"
+        android:overScrollMode="never"
         app:layout_constraintBottom_toTopOf="@id/layout_bottom_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -21,17 +23,64 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:paddingHorizontal="16dp"
+            android:paddingTop="28dp"
+            android:paddingBottom="20dp">
 
-            <!-- Card 1: Dla Kierowcy -->
+            <!-- Hero Header -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_badge_emerald"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp">
+
+                <ImageView
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_shield_check"
+                    app:tint="@color/brand_emerald_700" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:text="@string/verified_spot_badge"
+                    android:textColor="@color/brand_emerald_700"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/app_name"
+                android:textColor="@color/brand_slate_950"
+                android:textSize="28sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:lineSpacingExtra="2dp"
+                android:text="@string/app_tagline"
+                android:textColor="@color/brand_slate_600"
+                android:textSize="14sp" />
+
+            <!-- Card 1: Dla Kierowcy (Surface Card) -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="20dp"
                 app:cardBackgroundColor="@color/card_background"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="1dp"
-                app:strokeColor="@color/gray_border"
+                app:strokeColor="@color/brand_slate_200"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -46,38 +95,50 @@
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
-                        <ImageView
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:background="@drawable/ic_arrow_up"
-                            android:backgroundTint="@color/blue_badge_bg"
-                            android:contentDescription="@string/onboarding_driver_title"
-                            android:padding="6dp"
-                            android:src="@drawable/ic_ob_driver" />
+                        <FrameLayout
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/bg_icon_rounded_emerald">
+
+                            <ImageView
+                                android:layout_width="22dp"
+                                android:layout_height="22dp"
+                                android:layout_gravity="center"
+                                android:contentDescription="@string/onboarding_driver_title"
+                                android:src="@drawable/ic_ob_driver"
+                                app:tint="@color/brand_emerald_600" />
+                        </FrameLayout>
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_marginStart="12dp"
                             android:text="@string/onboarding_driver_title"
-                            android:textColor="@color/text_primary"
+                            android:textColor="@color/brand_slate_950"
                             android:textSize="18sp"
                             android:textStyle="bold" />
                     </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginVertical="14dp"
+                        android:background="@color/brand_slate_100" />
 
                     <!-- Item 1: Szukaj -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
+                        android:gravity="top"
                         android:orientation="horizontal">
 
                         <ImageView
                             android:layout_width="20dp"
                             android:layout_height="20dp"
+                            android:layout_marginTop="2dp"
                             android:contentDescription="@string/ob_search_title"
                             android:src="@drawable/ic_search"
-                            app:tint="@color/green_dark" />
+                            app:tint="@color/brand_emerald_600" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -90,7 +151,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/ob_search_title"
-                                android:textColor="@color/text_primary"
+                                android:textColor="@color/brand_slate_900"
                                 android:textSize="15sp"
                                 android:textStyle="bold" />
 
@@ -98,8 +159,9 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
+                                android:lineSpacingExtra="1dp"
                                 android:text="@string/ob_search_sub"
-                                android:textColor="@color/text_secondary"
+                                android:textColor="@color/brand_slate_500"
                                 android:textSize="13sp" />
                         </LinearLayout>
                     </LinearLayout>
@@ -108,15 +170,17 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="14dp"
+                        android:gravity="top"
                         android:orientation="horizontal">
 
                         <ImageView
                             android:layout_width="20dp"
                             android:layout_height="20dp"
+                            android:layout_marginTop="2dp"
                             android:contentDescription="@string/ob_reserve_title"
                             android:src="@drawable/ic_calendar"
-                            app:tint="@color/green_dark" />
+                            app:tint="@color/brand_emerald_600" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -129,7 +193,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/ob_reserve_title"
-                                android:textColor="@color/text_primary"
+                                android:textColor="@color/brand_slate_900"
                                 android:textSize="15sp"
                                 android:textStyle="bold" />
 
@@ -137,8 +201,9 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
+                                android:lineSpacingExtra="1dp"
                                 android:text="@string/ob_reserve_sub"
-                                android:textColor="@color/text_secondary"
+                                android:textColor="@color/brand_slate_500"
                                 android:textSize="13sp" />
                         </LinearLayout>
                     </LinearLayout>
@@ -147,15 +212,17 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="14dp"
+                        android:gravity="top"
                         android:orientation="horizontal">
 
                         <ImageView
                             android:layout_width="20dp"
                             android:layout_height="20dp"
+                            android:layout_marginTop="2dp"
                             android:contentDescription="@string/ob_park_title"
                             android:src="@drawable/ic_places"
-                            app:tint="@color/green_dark" />
+                            app:tint="@color/brand_emerald_600" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -168,7 +235,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/ob_park_title"
-                                android:textColor="@color/text_primary"
+                                android:textColor="@color/brand_slate_900"
                                 android:textSize="15sp"
                                 android:textStyle="bold" />
 
@@ -176,20 +243,21 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
+                                android:lineSpacingExtra="1dp"
                                 android:text="@string/ob_park_sub"
-                                android:textColor="@color/text_secondary"
+                                android:textColor="@color/brand_slate_500"
                                 android:textSize="13sp" />
                         </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Card 2: Dla Właściciela (Dark Card) -->
+            <!-- Card 2: Dla Właściciela (Modern Dark Brand Card) -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                app:cardBackgroundColor="@color/dark_card_bg"
+                app:cardBackgroundColor="@color/brand_slate_950"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="2dp">
 
@@ -205,14 +273,19 @@
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
-                        <ImageView
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:background="@drawable/ic_arrow_up"
-                            android:backgroundTint="@color/dark_card_icon_bg"
-                            android:contentDescription="@string/onboarding_owner_title"
-                            android:padding="6dp"
-                            android:src="@drawable/ic_ob_owner" />
+                        <FrameLayout
+                            android:layout_width="40dp"
+                            android:layout_height="40dp"
+                            android:background="@drawable/bg_icon_rounded_indigo">
+
+                            <ImageView
+                                android:layout_width="22dp"
+                                android:layout_height="22dp"
+                                android:layout_gravity="center"
+                                android:contentDescription="@string/onboarding_owner_title"
+                                android:src="@drawable/ic_ob_owner"
+                                app:tint="@color/brand_indigo_600" />
+                        </FrameLayout>
 
                         <TextView
                             android:layout_width="wrap_content"
@@ -224,19 +297,26 @@
                             android:textStyle="bold" />
                     </LinearLayout>
 
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginVertical="14dp"
+                        android:background="@color/brand_slate_800" />
+
                     <!-- Item 1: Dodaj -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
+                        android:gravity="top"
                         android:orientation="horizontal">
 
                         <ImageView
                             android:layout_width="20dp"
                             android:layout_height="20dp"
+                            android:layout_marginTop="2dp"
                             android:contentDescription="@string/ob_add_title"
                             android:src="@drawable/ic_add_location"
-                            app:tint="@color/green_accent" />
+                            app:tint="@color/brand_emerald_400" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -257,8 +337,9 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
+                                android:lineSpacingExtra="1dp"
                                 android:text="@string/ob_add_sub"
-                                android:textColor="#94A3B8"
+                                android:textColor="@color/brand_slate_400"
                                 android:textSize="13sp" />
                         </LinearLayout>
                     </LinearLayout>
@@ -267,15 +348,17 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="14dp"
+                        android:gravity="top"
                         android:orientation="horizontal">
 
                         <ImageView
                             android:layout_width="20dp"
                             android:layout_height="20dp"
+                            android:layout_marginTop="2dp"
                             android:contentDescription="@string/ob_earn_title"
                             android:src="@drawable/ic_card_payment"
-                            app:tint="@color/green_accent" />
+                            app:tint="@color/brand_emerald_400" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -296,8 +379,9 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
+                                android:lineSpacingExtra="1dp"
                                 android:text="@string/ob_earn_sub"
-                                android:textColor="#94A3B8"
+                                android:textColor="@color/brand_slate_400"
                                 android:textSize="13sp" />
                         </LinearLayout>
                     </LinearLayout>
@@ -306,15 +390,17 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="14dp"
+                        android:gravity="top"
                         android:orientation="horizontal">
 
                         <ImageView
                             android:layout_width="20dp"
                             android:layout_height="20dp"
+                            android:layout_marginTop="2dp"
                             android:contentDescription="@string/ob_manage_title"
                             android:src="@drawable/ic_card_settings"
-                            app:tint="@color/green_accent" />
+                            app:tint="@color/brand_emerald_400" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -335,8 +421,9 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
+                                android:lineSpacingExtra="1dp"
                                 android:text="@string/ob_manage_sub"
-                                android:textColor="#94A3B8"
+                                android:textColor="@color/brand_slate_400"
                                 android:textSize="13sp" />
                         </LinearLayout>
                     </LinearLayout>
@@ -350,74 +437,103 @@
                 android:layout_marginTop="28dp"
                 android:gravity="center"
                 android:text="@string/onboarding_why_title"
-                android:textColor="@color/text_primary"
-                android:textSize="22sp"
+                android:textColor="@color/brand_slate_950"
+                android:textSize="20sp"
                 android:textStyle="bold" />
 
-            <LinearLayout
+            <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:gravity="center"
-                android:orientation="vertical">
+                android:layout_marginTop="14dp"
+                android:layout_marginBottom="16dp"
+                app:cardBackgroundColor="@color/card_background"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="1dp"
+                app:strokeColor="@color/brand_slate_200"
+                app:strokeWidth="1dp">
 
-                <ImageView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:background="@drawable/ic_arrow_up"
-                    android:backgroundTint="@color/gray_input_bg"
-                    android:contentDescription="@string/ob_trust_title"
-                    android:padding="12dp"
-                    android:src="@drawable/ic_ob_trust" />
-
-                <TextView
-                    android:layout_width="wrap_content"
+                <LinearLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="@string/ob_trust_title"
-                    android:textColor="@color/text_primary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+                    android:gravity="center_horizontal"
+                    android:orientation="vertical"
+                    android:padding="20dp">
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:gravity="center"
-                    android:paddingHorizontal="32dp"
-                    android:text="@string/ob_trust_sub"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="13sp" />
+                    <FrameLayout
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:background="@drawable/bg_icon_rounded_slate">
 
-                <ImageView
-                    android:layout_width="48dp"
-                    android:layout_height="48dp"
-                    android:layout_marginTop="20dp"
-                    android:background="@drawable/ic_arrow_up"
-                    android:backgroundTint="@color/gray_input_bg"
-                    android:contentDescription="@string/ob_verified_title"
-                    android:padding="12dp"
-                    android:src="@drawable/ic_ob_verified" />
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="@string/ob_trust_title"
+                            android:src="@drawable/ic_ob_trust"
+                            app:tint="@color/brand_slate_800" />
+                    </FrameLayout>
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="@string/ob_verified_title"
-                    android:textColor="@color/text_primary"
-                    android:textSize="16sp"
-                    android:textStyle="bold" />
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:text="@string/ob_trust_title"
+                        android:textColor="@color/brand_slate_900"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
 
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:gravity="center"
-                    android:paddingHorizontal="32dp"
-                    android:text="@string/ob_verified_sub"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="13sp" />
-            </LinearLayout>
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:gravity="center"
+                        android:lineSpacingExtra="1dp"
+                        android:paddingHorizontal="16dp"
+                        android:text="@string/ob_trust_sub"
+                        android:textColor="@color/brand_slate_500"
+                        android:textSize="13sp" />
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginVertical="16dp"
+                        android:background="@color/brand_slate_100" />
+
+                    <FrameLayout
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        android:background="@drawable/bg_icon_rounded_emerald">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:layout_gravity="center"
+                            android:contentDescription="@string/ob_verified_title"
+                            android:src="@drawable/ic_ob_verified"
+                            app:tint="@color/brand_emerald_600" />
+                    </FrameLayout>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:text="@string/ob_verified_title"
+                        android:textColor="@color/brand_slate_900"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:gravity="center"
+                        android:lineSpacingExtra="1dp"
+                        android:paddingHorizontal="16dp"
+                        android:text="@string/ob_verified_sub"
+                        android:textColor="@color/brand_slate_500"
+                        android:textSize="13sp" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
 
         </LinearLayout>
     </ScrollView>
@@ -428,6 +544,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:background="@color/card_background"
+        android:elevation="8dp"
         android:padding="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -435,15 +552,23 @@
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_start_now"
+            style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
             android:layout_width="match_parent"
-            android:layout_height="54dp"
-            android:backgroundTint="@color/dark_card_bg"
+            android:layout_height="52dp"
+            android:backgroundTint="@color/brand_slate_950"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
             android:text="@string/btn_start_now"
             android:textAllCaps="false"
             android:textColor="@color/white"
-            android:textSize="16sp"
+            android:textSize="15sp"
             android:textStyle="bold"
-            app:cornerRadius="12dp" />
+            app:cornerRadius="14dp"
+            app:icon="@drawable/ic_arrow_forward"
+            app:iconGravity="textEnd"
+            app:iconPadding="8dp"
+            app:iconSize="16dp"
+            app:iconTint="@color/brand_emerald_400" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

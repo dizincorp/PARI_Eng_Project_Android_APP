@@ -24,7 +24,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/title_spot_reviews"
-                android:textColor="@color/text_primary"
+                android:textColor="@color/brand_slate_950"
                 android:textSize="18sp"
                 android:textStyle="bold" />
 
@@ -32,8 +32,8 @@
                 android:id="@+id/text_dialog_spot_rating"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:textColor="@color/orange_dot"
+                android:layout_marginTop="3dp"
+                android:textColor="@color/brand_amber_600"
                 android:textSize="14sp"
                 android:textStyle="bold" />
         </LinearLayout>
@@ -47,15 +47,15 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/btn_close"
             android:src="@drawable/ic_close"
-            app:tint="@color/text_secondary" />
+            app:tint="@color/brand_slate_400" />
     </RelativeLayout>
 
     <View
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_marginTop="12dp"
+        android:layout_marginTop="14dp"
         android:layout_marginBottom="12dp"
-        android:background="@color/gray_border" />
+        android:background="@color/brand_slate_200" />
 
     <!-- Loading ProgressBar -->
     <ProgressBar
@@ -66,6 +66,7 @@
         android:layout_gravity="center"
         android:layout_margin="16dp"
         android:indeterminate="true"
+        android:indeterminateTint="@color/brand_emerald_500"
         android:visibility="gone" />
 
     <!-- Empty state message -->
@@ -76,7 +77,7 @@
         android:gravity="center"
         android:padding="24dp"
         android:text="@string/msg_no_reviews_yet"
-        android:textColor="@color/text_secondary"
+        android:textColor="@color/brand_slate_500"
         android:textSize="14sp"
         android:visibility="gone" />
 
@@ -92,14 +93,18 @@
     <!-- Dismiss Button -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_dismiss_dialog"
+        style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:layout_marginTop="12dp"
-        android:backgroundTint="@color/gray_input_bg"
+        android:layout_marginTop="14dp"
+        android:backgroundTint="@color/brand_slate_950"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
         android:text="@string/btn_close"
         android:textAllCaps="false"
-        android:textColor="@color/text_primary"
+        android:textColor="@color/white"
         android:textSize="14sp"
-        app:cornerRadius="10dp" />
+        android:textStyle="bold"
+        app:cornerRadius="14dp" />
 
 </LinearLayout>

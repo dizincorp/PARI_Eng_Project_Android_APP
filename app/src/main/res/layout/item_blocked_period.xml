@@ -7,7 +7,7 @@
     app:cardBackgroundColor="@color/card_background"
     app:cardCornerRadius="16dp"
     app:cardElevation="1dp"
-    app:strokeColor="@color/gray_border"
+    app:strokeColor="@color/brand_slate_200"
     app:strokeWidth="1dp">
 
     <LinearLayout
@@ -24,14 +24,43 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
+                android:layout_marginEnd="12dp"
                 android:layout_toStartOf="@id/btn_unblock"
                 android:orientation="vertical">
+
+                <!-- Soft rose badge for blocked -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_badge_rose"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="3dp">
+
+                    <ImageView
+                        android:layout_width="12dp"
+                        android:layout_height="12dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_block"
+                        app:tint="@color/brand_rose_600" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="4dp"
+                        android:text="@string/status_blocked"
+                        android:textColor="@color/brand_rose_700"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
 
                 <TextView
                     android:id="@+id/text_block_time_range"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/text_primary"
+                    android:layout_marginTop="8dp"
+                    android:textColor="@color/brand_slate_950"
                     android:textSize="15sp"
                     android:textStyle="bold" />
 
@@ -39,25 +68,29 @@
                     android:id="@+id/text_block_reason"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:textColor="@color/text_secondary"
+                    android:layout_marginTop="3dp"
+                    android:textColor="@color/brand_slate_500"
                     android:textSize="13sp" />
             </LinearLayout>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_unblock"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="wrap_content"
-                android:layout_height="40dp"
+                android:layout_height="38dp"
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
-                android:backgroundTint="@color/delete_btn_bg"
+                android:backgroundTint="@color/brand_rose_50"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
+                android:paddingHorizontal="14dp"
                 android:text="@string/btn_unblock"
                 android:textAllCaps="false"
-                android:textColor="@color/delete_btn_text"
+                android:textColor="@color/brand_rose_700"
                 android:textSize="12sp"
                 android:textStyle="bold"
-                app:cornerRadius="8dp"
-                app:strokeColor="@color/delete_btn_text"
+                app:cornerRadius="10dp"
+                app:strokeColor="@color/brand_rose_200"
                 app:strokeWidth="1dp" />
         </RelativeLayout>
 

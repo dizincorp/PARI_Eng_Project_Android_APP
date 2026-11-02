@@ -5,9 +5,9 @@
     android:layout_height="wrap_content"
     android:layout_marginVertical="4dp"
     app:cardBackgroundColor="@color/card_background"
-    app:cardCornerRadius="12dp"
+    app:cardCornerRadius="16dp"
     app:cardElevation="0dp"
-    app:strokeColor="@color/gray_border"
+    app:strokeColor="@color/brand_slate_200"
     app:strokeWidth="1dp">
 
     <LinearLayout
@@ -18,13 +18,13 @@
         android:padding="12dp">
 
         <ImageView
-            android:layout_width="36dp"
-            android:layout_height="36dp"
-            android:background="@drawable/ic_arrow_up"
-            android:backgroundTint="@color/blue_badge_bg"
+            android:layout_width="38dp"
+            android:layout_height="38dp"
+            android:background="@drawable/bg_icon_rounded_indigo"
             android:contentDescription="@string/menu_my_vehicles"
-            android:padding="8dp"
-            android:src="@drawable/ic_card_vehicles" />
+            android:padding="9dp"
+            android:src="@drawable/ic_card_vehicles"
+            app:tint="@color/brand_indigo_600" />
 
         <LinearLayout
             android:layout_width="0dp"
@@ -37,7 +37,7 @@
                 android:id="@+id/text_vehicle_model"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/text_primary"
+                android:textColor="@color/brand_slate_950"
                 android:textSize="15sp"
                 android:textStyle="bold" />
 
@@ -46,7 +46,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="2dp"
-                android:textColor="@color/text_secondary"
+                android:textColor="@color/brand_slate_500"
                 android:textSize="13sp" />
         </LinearLayout>
 
@@ -57,6 +57,7 @@
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/dialog_delete_vehicle_title"
             android:padding="8dp"
-            android:src="@drawable/ic_delete" />
+            android:src="@drawable/ic_delete"
+            app:tint="@color/brand_rose_600" />
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

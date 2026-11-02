@@ -5,8 +5,10 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    android:background="@color/brand_slate_50"
+    tools:context=".ui.MainActivity">
 
+    <!-- Google Map View -->
     <androidx.fragment.app.FragmentContainerView
         android:id="@+id/map"
         android:name="com.google.android.gms.maps.SupportMapFragment"
@@ -17,85 +19,309 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/card_search"
+    <!-- Top Search and Filter Container -->
+    <LinearLayout
+        android:id="@+id/container_top_search"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        app:cardCornerRadius="24dp"
-        app:cardElevation="8dp"
-        app:cardPreventCornerOverlap="false"
+        android:orientation="vertical"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
-        <androidx.appcompat.widget.SearchView
-            android:id="@+id/search_view"
+        <!-- Floating Modern Search Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_search"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:iconifiedByDefault="false"
-            app:queryBackground="@null"
-            app:queryHint="@string/search_hint" />
+            android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
+            app:cardBackgroundColor="@color/card_background"
+            app:cardCornerRadius="22dp"
+            app:cardElevation="5dp"
+            app:cardPreventCornerOverlap="false"
+            app:strokeColor="@color/brand_slate_200"
+            app:strokeWidth="1dp">
 
+            <androidx.appcompat.widget.SearchView
+                android:id="@+id/search_view"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:theme="@style/ThemeOverlay.AppCompat.Light"
+                app:iconifiedByDefault="false"
+                app:queryBackground="@null"
+                app:queryHint="@string/search_hint" />
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Popular Polish Cities Pills Horizontal Bar (ParkShare Web Style) -->
+        <HorizontalScrollView
+            android:id="@+id/scroll_cities"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:clipToPadding="false"
+            android:overScrollMode="never"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:scrollbars="none">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/chip_city_all"
+                    style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginEnd="6dp"
+                    android:backgroundTint="@color/brand_slate_950"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:text="@string/city_all"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="@color/brand_slate_950"
+                    app:strokeWidth="1dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/chip_city_warszawa"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginEnd="6dp"
+                    android:backgroundTint="@color/card_background"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:text="@string/city_warszawa"
+                    android:textAllCaps="false"
+                    android:textColor="@color/brand_slate_700"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="@color/brand_slate_200"
+                    app:strokeWidth="1dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/chip_city_krakow"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginEnd="6dp"
+                    android:backgroundTint="@color/card_background"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:text="@string/city_krakow"
+                    android:textAllCaps="false"
+                    android:textColor="@color/brand_slate_700"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="@color/brand_slate_200"
+                    app:strokeWidth="1dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/chip_city_lublin"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginEnd="6dp"
+                    android:backgroundTint="@color/card_background"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:text="@string/city_lublin"
+                    android:textAllCaps="false"
+                    android:textColor="@color/brand_slate_700"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="@color/brand_slate_200"
+                    app:strokeWidth="1dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/chip_city_wroclaw"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginEnd="6dp"
+                    android:backgroundTint="@color/card_background"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:text="@string/city_wroclaw"
+                    android:textAllCaps="false"
+                    android:textColor="@color/brand_slate_700"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="@color/brand_slate_200"
+                    app:strokeWidth="1dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/chip_city_poznan"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:layout_marginEnd="6dp"
+                    android:backgroundTint="@color/card_background"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:text="@string/city_poznan"
+                    android:textAllCaps="false"
+                    android:textColor="@color/brand_slate_700"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="@color/brand_slate_200"
+                    app:strokeWidth="1dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/chip_city_gdansk"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:backgroundTint="@color/card_background"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:text="@string/city_gdansk"
+                    android:textAllCaps="false"
+                    android:textColor="@color/brand_slate_700"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="12dp"
+                    app:strokeColor="@color/brand_slate_200"
+                    app:strokeWidth="1dp" />
+
+            </LinearLayout>
+        </HorizontalScrollView>
+    </LinearLayout>
+
+    <!-- Floating Map Recenter / Center Button (ParkShare Web Style) -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_recenter_map"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="12dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackground"
+        app:cardBackgroundColor="@color/card_background"
+        app:cardCornerRadius="22dp"
+        app:cardElevation="5dp"
+        app:layout_constraintBottom_toTopOf="@id/card_place_preview"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:strokeColor="@color/brand_slate_200"
+        app:strokeWidth="1dp">
+
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:layout_gravity="center"
+            android:contentDescription="@string/btn_center_map_desc"
+            android:src="@drawable/ic_navigation"
+            app:tint="@color/brand_emerald_600" />
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- Floating Place Details Card Overlay (Screenshot 1) -->
+    <!-- Floating Spot Preview Card Overlay (ParkShare Modern Web Aesthetic) -->
     <com.google.android.material.card.MaterialCardView
         android:id="@+id/card_place_preview"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_margin="16dp"
+        android:layout_marginStart="14dp"
+        android:layout_marginEnd="14dp"
+        android:layout_marginBottom="14dp"
         android:visibility="gone"
         app:cardBackgroundColor="@color/card_background"
-        app:cardCornerRadius="20dp"
-        app:cardElevation="12dp"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="8dp"
         app:layout_constraintBottom_toTopOf="@id/bottom_navigation"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        app:strokeColor="@color/brand_slate_200"
+        app:strokeWidth="1dp"
+        tools:visibility="visible">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:padding="16dp">
 
+            <!-- Spot Header Row: Thumbnail + Details + Price Badge + Close Button -->
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentStart="true"
-                    android:layout_toStartOf="@id/card_price_badge"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/text_preview_title"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:textColor="@color/text_primary"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/text_preview_rating"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:text="@string/preview_rating_text"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="13sp" />
-                </LinearLayout>
-
+                <!-- Spot Image Thumbnail -->
                 <com.google.android.material.card.MaterialCardView
-                    android:id="@+id/card_price_badge"
+                    android:id="@+id/card_preview_image"
                     android:layout_width="72dp"
                     android:layout_height="72dp"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    app:cardBackgroundColor="@color/brand_slate_100"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="@color/brand_slate_200"
+                    app:strokeWidth="1dp">
+
+                    <ImageView
+                        android:id="@+id/image_preview_spot"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:contentDescription="@string/label_spot_name"
+                        android:scaleType="centerCrop"
+                        android:src="@drawable/ic_places"
+                        app:tint="@color/brand_slate_400" />
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Close Button (Top-Right) -->
+                <ImageButton
+                    android:id="@+id/btn_close_preview"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
                     android:layout_alignParentEnd="true"
-                    app:cardBackgroundColor="@color/blue_badge_bg"
-                    app:cardCornerRadius="12dp"
-                    app:cardElevation="0dp">
+                    android:layout_alignParentTop="true"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/btn_close"
+                    android:src="@drawable/ic_close"
+                    app:tint="@color/brand_slate_400" />
+
+                <!-- Price Badge -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/card_price_badge"
+                    android:layout_width="66dp"
+                    android:layout_height="66dp"
+                    android:layout_toStartOf="@id/btn_close_preview"
+                    android:layout_marginEnd="6dp"
+                    android:layout_centerVertical="true"
+                    app:cardBackgroundColor="@color/brand_emerald_50"
+                    app:cardCornerRadius="14dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="@color/brand_emerald_200"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
@@ -107,78 +333,203 @@
                             android:id="@+id/text_preview_price_value"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:textColor="@color/text_primary"
+                            android:includeFontPadding="false"
+                            android:textColor="@color/brand_slate_950"
                             android:textSize="20sp"
-                            android:textStyle="bold" />
+                            android:textStyle="bold"
+                            tools:text="15" />
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:gravity="center"
-                            android:text="@string/preview_price_unit"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="11sp" />
+                            android:text="@string/preview_price_unit_modern"
+                            android:textColor="@color/brand_emerald_700"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
+
+                <!-- Title and Location / Rating Details -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_toEndOf="@id/card_preview_image"
+                    android:layout_toStartOf="@id/card_price_badge"
+                    android:layout_marginStart="12dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_centerVertical="true"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/text_preview_title"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:ellipsize="end"
+                        android:maxLines="1"
+                        android:textColor="@color/brand_slate_950"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        tools:text="Parking Podziemny Centrum" />
+
+                    <!-- Rating and Location Row -->
+                    <TextView
+                        android:id="@+id/text_preview_rating"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="3dp"
+                        android:ellipsize="end"
+                        android:maxLines="2"
+                        android:textColor="@color/brand_slate_600"
+                        android:textSize="12sp"
+                        tools:text="★ 4.8 (124) • Warszawa, Złota" />
+
+                    <!-- Verified Pill Badge -->
+                    <LinearLayout
+                        android:id="@+id/container_verified_badge"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:background="@drawable/bg_badge_emerald"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="8dp"
+                        android:paddingTop="2dp"
+                        android:paddingEnd="8dp"
+                        android:paddingBottom="2dp">
+
+                        <ImageView
+                            android:layout_width="11dp"
+                            android:layout_height="11dp"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_shield_check"
+                            app:tint="@color/brand_emerald_700" />
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:text="@string/verified_spot_badge"
+                            android:textColor="@color/brand_emerald_700"
+                            android:textSize="10sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+
             </RelativeLayout>
 
+            <!-- Amenities Chips Group -->
             <com.google.android.material.chip.ChipGroup
                 android:id="@+id/chip_group_preview_amenities"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="10dp"
                 android:visibility="gone"
-                app:chipSpacingHorizontal="8dp" />
+                app:chipSpacingHorizontal="6dp"
+                tools:visibility="visible" />
 
+            <!-- Spot Description / Access Instructions -->
             <TextView
                 android:id="@+id/text_preview_description"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
+                android:layout_marginTop="6dp"
                 android:ellipsize="end"
                 android:lineSpacingExtra="2dp"
-                android:maxLines="3"
-                android:textColor="@color/text_secondary"
-                android:textSize="13sp"
-                android:visibility="gone" />
+                android:maxLines="2"
+                android:textColor="@color/brand_slate_600"
+                android:textSize="12sp"
+                android:visibility="gone"
+                tools:text="Miejsce blisko windy, poziom -1. Dostęp całodobowy."
+                tools:visibility="visible" />
 
+            <!-- Blocked / Occupied Warning Pill -->
             <TextView
                 android:id="@+id/text_preview_blocked_info"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:background="@drawable/bg_dialog_rounded"
-                android:backgroundTint="@color/status_cancelled_bg"
+                android:background="@drawable/bg_badge_rose"
                 android:drawableStart="@drawable/ic_block"
                 android:drawablePadding="8dp"
-                android:drawableTint="@color/delete_btn_bg"
-                android:padding="10dp"
-                android:textColor="@color/delete_btn_bg"
+                android:drawableTint="@color/brand_rose_600"
+                android:paddingStart="12dp"
+                android:paddingTop="8dp"
+                android:paddingEnd="12dp"
+                android:paddingBottom="8dp"
+                android:textColor="@color/brand_rose_700"
                 android:textSize="12sp"
                 android:textStyle="bold"
-                android:visibility="gone" />
+                android:visibility="gone"
+                tools:text="⛔ Zablokowane do 18:00"
+                tools:visibility="visible" />
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_reserve_now"
+            <!-- Actions Row: Reviews Button + Primary Reserve CTA -->
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginTop="16dp"
-                android:backgroundTint="@color/chip_bg_selected"
-                android:text="@string/btn_reserve_now"
-                android:textAllCaps="false"
-                android:textColor="@color/white"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                app:cornerRadius="12dp" />
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_preview_reviews"
+                    style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="48dp"
+                    android:layout_marginEnd="8dp"
+                    android:backgroundTint="@color/brand_slate_100"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:paddingStart="14dp"
+                    android:paddingEnd="14dp"
+                    android:text="@string/btn_spot_reviews"
+                    android:textAllCaps="false"
+                    android:textColor="@color/brand_slate_800"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="14dp"
+                    app:icon="@drawable/ic_star"
+                    app:iconGravity="textStart"
+                    app:iconPadding="6dp"
+                    app:iconSize="16dp"
+                    app:iconTint="@color/brand_amber_600" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_reserve_now"
+                    style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:backgroundTint="@color/brand_slate_950"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:text="@string/btn_reserve_now"
+                    android:textAllCaps="false"
+                    android:textColor="@color/white"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="14dp"
+                    app:icon="@drawable/ic_arrow_forward"
+                    app:iconGravity="textEnd"
+                    app:iconPadding="8dp"
+                    app:iconSize="16dp"
+                    app:iconTint="@color/brand_emerald_400" />
+
+            </LinearLayout>
 
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
+    <!-- Bottom Navigation Bar -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_navigation"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="?android:attr/windowBackground"
+        android:background="@color/card_background"
+        app:elevation="8dp"
+        app:itemIconTint="@color/bottom_nav_item_color"
+        app:itemTextColor="@color/bottom_nav_item_color"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

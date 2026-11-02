@@ -63,8 +63,16 @@ public class ProfileDetailsActivity extends BaseActivity {
                         String uriString = imageUri.toString();
                         viewModel.updateUserAvatarUri(uriString);
                         sessionManager.updateAvatarUri(uriString);
-                        binding.imgProfileDetailsAvatar.setImageURI(imageUri);
-                        Toast.makeText(this, R.string.msg_photo_updated, Toast.LENGTH_SHORT).show();
+                        com.example.project.utils.ImageLoader.getInstance(this).loadImage(
+                                binding.imgProfileDetailsAvatar, uriString, R.drawable.ic_profile);
+
+                        com.example.project.repository.MediaRepository.getInstance(this)
+                                .uploadAvatar(imageUri)
+                                .observe(this, res -> {
+                                    if (res != null && res.isSuccess()) {
+                                        Toast.makeText(this, R.string.msg_photo_updated, Toast.LENGTH_SHORT).show();
+                                    }
+                                });
                     }
                 }
             });
@@ -124,17 +132,15 @@ public class ProfileDetailsActivity extends BaseActivity {
             binding.textRoleValue.setText(R.string.role_both);
         }
 
-        binding.textRatingValue.setText(String.format(Locale.getDefault(), "★ %.1f", profile.getRating()));
+        binding.textRatingValue.setText(getString(R.string.badge_rating_format, profile.getRating()));
 
-        if (profile.getAvatarUri() != null && !profile.getAvatarUri().isEmpty()) {
-            try {
-                binding.imgProfileDetailsAvatar.setImageURI(Uri.parse(profile.getAvatarUri()));
-            } catch (Exception e) {
-                binding.imgProfileDetailsAvatar.setImageResource(profile.getAvatarResId());
-            }
-        } else {
-            binding.imgProfileDetailsAvatar.setImageResource(profile.getAvatarResId());
-        }
+        String avatarUri = (profile.getAvatarUri() != null && !profile.getAvatarUri().isEmpty())
+                ? profile.getAvatarUri() : sessionManager.getAvatarUri();
+        com.example.project.utils.ImageLoader.getInstance(this).loadImage(
+                binding.imgProfileDetailsAvatar,
+                avatarUri,
+                profile.getAvatarResId() != 0 ? profile.getAvatarResId() : R.drawable.ic_profile
+        );
     }
 
     /**
@@ -186,9 +192,9 @@ public class ProfileDetailsActivity extends BaseActivity {
             dialogBinding.editLastName.setText(sessionManager.getLastName());
         }
 
-        new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setView(dialogBinding.getRoot())
-                .setPositiveButton(R.string.btn_save, (dialog, which) -> {
+                .setPositiveButton(R.string.btn_save, (d, which) -> {
                     String firstName = dialogBinding.editFirstName.getText() != null
                             ? dialogBinding.editFirstName.getText().toString().trim() : "";
                     String lastName = dialogBinding.editLastName.getText() != null
@@ -204,7 +210,10 @@ public class ProfileDetailsActivity extends BaseActivity {
                     Toast.makeText(this, R.string.msg_name_updated, Toast.LENGTH_SHORT).show();
                 })
                 .setNegativeButton(R.string.btn_cancel, null)
-                .show();
+                .create();
+
+        dialogBinding.btnCloseDialog.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
     }
 
     /**
@@ -220,9 +229,9 @@ public class ProfileDetailsActivity extends BaseActivity {
             dialogBinding.editPhoneNumber.setText(sessionManager.getUserPhone());
         }
 
-        new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setView(dialogBinding.getRoot())
-                .setPositiveButton(R.string.btn_save, (dialog, which) -> {
+                .setPositiveButton(R.string.btn_save, (d, which) -> {
                     String phone = dialogBinding.editPhoneNumber.getText() != null
                             ? dialogBinding.editPhoneNumber.getText().toString().trim() : "";
 
@@ -233,7 +242,10 @@ public class ProfileDetailsActivity extends BaseActivity {
                     }
                 })
                 .setNegativeButton(R.string.btn_cancel, null)
-                .show();
+                .create();
+
+        dialogBinding.btnCloseDialog.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
     }
 
     @Override

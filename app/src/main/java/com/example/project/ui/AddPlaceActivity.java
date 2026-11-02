@@ -110,6 +110,7 @@ public class AddPlaceActivity extends BaseActivity {
         }
 
         binding.btnBack.setOnClickListener(v -> finish());
+        binding.btnMore.setOnClickListener(v -> finish());
 
         // Black button with white text "Dodaj zdjęcie" requesting storage permission before opening gallery
         binding.btnAddPhoto.setOnClickListener(v -> checkPermissionAndOpenGallery());
@@ -289,16 +290,12 @@ public class AddPlaceActivity extends BaseActivity {
             selectedPhotoUri = place.getImageUri();
             // Do NOT show default photo in creation/edit menu; only show if user has uploaded a custom image
             if (place.getImageUri() != null && !place.getImageUri().trim().isEmpty()) {
-                try {
-                    binding.imgSpotPreview.setImageURI(Uri.parse(place.getImageUri().trim()));
-                    if (binding.imgSpotPreview.getDrawable() != null) {
-                        binding.cardPhotoPreview.setVisibility(View.VISIBLE);
-                    } else {
-                        binding.cardPhotoPreview.setVisibility(View.GONE);
-                    }
-                } catch (Exception e) {
-                    binding.cardPhotoPreview.setVisibility(View.GONE);
-                }
+                binding.cardPhotoPreview.setVisibility(View.VISIBLE);
+                com.example.project.utils.ImageLoader.getInstance(this).loadImage(
+                        binding.imgSpotPreview,
+                        place.getImageUri().trim(),
+                        0
+                );
             } else {
                 binding.cardPhotoPreview.setVisibility(View.GONE);
             }

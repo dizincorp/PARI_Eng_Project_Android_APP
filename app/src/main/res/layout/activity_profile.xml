@@ -5,13 +5,14 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_main"
+    android:background="@color/brand_slate_50"
     tools:context=".ui.ProfileActivity">
 
     <ScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:fillViewport="true"
+        android:overScrollMode="never"
         app:layout_constraintBottom_toTopOf="@id/bottom_navigation"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -22,50 +23,89 @@
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:paddingHorizontal="20dp"
+            android:paddingTop="28dp"
+            android:paddingBottom="24dp">
 
-            <!-- Avatar (No pencil edit icon) -->
+            <!-- Avatar Container with Refined Emerald Accent Ring -->
             <com.google.android.material.imageview.ShapeableImageView
                 android:id="@+id/img_profile_avatar"
-                android:layout_width="100dp"
-                android:layout_height="100dp"
-                android:layout_marginTop="16dp"
+                android:layout_width="104dp"
+                android:layout_height="104dp"
                 android:contentDescription="@string/nav_profile"
                 android:scaleType="centerCrop"
                 android:src="@drawable/ic_avatar"
-                app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full" />
+                app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
+                app:strokeColor="@color/brand_emerald_200"
+                app:strokeWidth="3dp" />
 
-            <!-- Name (Displays only name and surname) -->
+            <!-- User Full Name (Bold deep slate tracking-tight) -->
             <TextView
                 android:id="@+id/text_user_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="14dp"
                 android:text="@string/default_user_name"
-                android:textColor="@color/text_primary"
+                android:textColor="@color/brand_slate_950"
                 android:textSize="22sp"
                 android:textStyle="bold" />
 
-            <!-- Rating Badge (Displays only rating) -->
-            <TextView
-                android:id="@+id/text_user_rating"
+            <!-- Modern Status Badges Row (Verified & Rating) -->
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                android:background="@drawable/ic_arrow_up"
-                android:backgroundTint="@color/rating_bg"
-                android:paddingHorizontal="14dp"
-                android:paddingVertical="6dp"
-                android:text="@string/badge_user_rating"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+                android:gravity="center"
+                android:orientation="horizontal">
 
-            <!-- Menu Cards Container -->
+                <!-- 1. Verified Profile Pill -->
+                <LinearLayout
+                    android:id="@+id/badge_verified"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_badge_emerald"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="5dp">
+
+                    <ImageView
+                        android:layout_width="13dp"
+                        android:layout_height="13dp"
+                        android:contentDescription="@string/badge_verified_profile"
+                        android:src="@drawable/ic_shield_check" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="5dp"
+                        android:text="@string/badge_verified_profile"
+                        android:textColor="@color/brand_emerald_700"
+                        android:textSize="11sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <!-- 2. Rating Pill -->
+                <TextView
+                    android:id="@+id/text_user_rating"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_badge_slate"
+                    android:gravity="center"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="5dp"
+                    android:text="@string/badge_user_rating"
+                    android:textColor="@color/brand_slate_700"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- Menu Cards Container (Modern Flat Surfaces with 20dp Rounded Corners) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="28dp"
+                android:layout_marginTop="26dp"
                 android:orientation="vertical">
 
                 <!-- 0. Profil (Szczegóły profilu) -->
@@ -78,9 +118,9 @@
                     android:focusable="true"
                     android:foreground="?android:attr/selectableItemBackground"
                     app:cardBackgroundColor="@color/card_background"
-                    app:cardCornerRadius="16dp"
+                    app:cardCornerRadius="20dp"
                     app:cardElevation="1dp"
-                    app:strokeColor="@color/gray_border"
+                    app:strokeColor="@color/brand_slate_200"
                     app:strokeWidth="1dp">
 
                     <LinearLayout
@@ -93,11 +133,11 @@
                         <ImageView
                             android:layout_width="44dp"
                             android:layout_height="44dp"
-                            android:background="@drawable/ic_arrow_up"
-                            android:backgroundTint="@color/blue_badge_bg"
+                            android:background="@drawable/bg_icon_rounded_emerald"
                             android:contentDescription="@string/menu_profile"
-                            android:padding="10dp"
-                            android:src="@drawable/ic_avatar" />
+                            android:padding="11dp"
+                            android:src="@drawable/ic_avatar"
+                            app:tint="@color/brand_emerald_700" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -110,8 +150,8 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/menu_profile"
-                                android:textColor="@color/text_primary"
-                                android:textSize="16sp"
+                                android:textColor="@color/brand_slate_900"
+                                android:textSize="15sp"
                                 android:textStyle="bold" />
 
                             <TextView
@@ -119,15 +159,16 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
                                 android:text="@string/menu_sub_profile"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="13sp" />
+                                android:textColor="@color/brand_slate_500"
+                                android:textSize="12sp" />
                         </LinearLayout>
 
                         <ImageView
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:contentDescription="@string/menu_profile"
-                            android:src="@drawable/ic_chevron_right" />
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/brand_slate_400" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -141,9 +182,9 @@
                     android:focusable="true"
                     android:foreground="?android:attr/selectableItemBackground"
                     app:cardBackgroundColor="@color/card_background"
-                    app:cardCornerRadius="16dp"
+                    app:cardCornerRadius="20dp"
                     app:cardElevation="1dp"
-                    app:strokeColor="@color/gray_border"
+                    app:strokeColor="@color/brand_slate_200"
                     app:strokeWidth="1dp">
 
                     <LinearLayout
@@ -156,11 +197,11 @@
                         <ImageView
                             android:layout_width="44dp"
                             android:layout_height="44dp"
-                            android:background="@drawable/ic_arrow_up"
-                            android:backgroundTint="@color/blue_badge_bg"
+                            android:background="@drawable/bg_icon_rounded_slate"
                             android:contentDescription="@string/menu_my_reservations"
-                            android:padding="10dp"
-                            android:src="@drawable/ic_card_reservations" />
+                            android:padding="11dp"
+                            android:src="@drawable/ic_card_reservations"
+                            app:tint="@color/brand_slate_900" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -173,8 +214,8 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/menu_my_reservations"
-                                android:textColor="@color/text_primary"
-                                android:textSize="16sp"
+                                android:textColor="@color/brand_slate_900"
+                                android:textSize="15sp"
                                 android:textStyle="bold" />
 
                             <TextView
@@ -182,15 +223,16 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
                                 android:text="@string/menu_sub_reservations"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="13sp" />
+                                android:textColor="@color/brand_slate_500"
+                                android:textSize="12sp" />
                         </LinearLayout>
 
                         <ImageView
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:contentDescription="@string/menu_my_reservations"
-                            android:src="@drawable/ic_chevron_right" />
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/brand_slate_400" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -204,9 +246,9 @@
                     android:focusable="true"
                     android:foreground="?android:attr/selectableItemBackground"
                     app:cardBackgroundColor="@color/card_background"
-                    app:cardCornerRadius="16dp"
+                    app:cardCornerRadius="20dp"
                     app:cardElevation="1dp"
-                    app:strokeColor="@color/gray_border"
+                    app:strokeColor="@color/brand_slate_200"
                     app:strokeWidth="1dp">
 
                     <LinearLayout
@@ -219,11 +261,11 @@
                         <ImageView
                             android:layout_width="44dp"
                             android:layout_height="44dp"
-                            android:background="@drawable/ic_arrow_up"
-                            android:backgroundTint="@color/blue_badge_bg"
+                            android:background="@drawable/bg_icon_rounded_indigo"
                             android:contentDescription="@string/menu_my_vehicles"
-                            android:padding="10dp"
-                            android:src="@drawable/ic_card_vehicles" />
+                            android:padding="11dp"
+                            android:src="@drawable/ic_card_vehicles"
+                            app:tint="@color/brand_indigo_600" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -236,8 +278,8 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/menu_my_vehicles"
-                                android:textColor="@color/text_primary"
-                                android:textSize="16sp"
+                                android:textColor="@color/brand_slate_900"
+                                android:textSize="15sp"
                                 android:textStyle="bold" />
 
                             <TextView
@@ -245,15 +287,16 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
                                 android:text="@string/menu_sub_vehicles"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="13sp" />
+                                android:textColor="@color/brand_slate_500"
+                                android:textSize="12sp" />
                         </LinearLayout>
 
                         <ImageView
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:contentDescription="@string/menu_my_vehicles"
-                            android:src="@drawable/ic_chevron_right" />
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/brand_slate_400" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -267,9 +310,9 @@
                     android:focusable="true"
                     android:foreground="?android:attr/selectableItemBackground"
                     app:cardBackgroundColor="@color/card_background"
-                    app:cardCornerRadius="16dp"
+                    app:cardCornerRadius="20dp"
                     app:cardElevation="1dp"
-                    app:strokeColor="@color/gray_border"
+                    app:strokeColor="@color/brand_slate_200"
                     app:strokeWidth="1dp">
 
                     <LinearLayout
@@ -282,11 +325,11 @@
                         <ImageView
                             android:layout_width="44dp"
                             android:layout_height="44dp"
-                            android:background="@drawable/ic_arrow_up"
-                            android:backgroundTint="@color/blue_badge_bg"
+                            android:background="@drawable/bg_icon_rounded_amber"
                             android:contentDescription="@string/menu_payment_methods"
-                            android:padding="10dp"
-                            android:src="@drawable/ic_card_payment" />
+                            android:padding="11dp"
+                            android:src="@drawable/ic_card_payment"
+                            app:tint="@color/brand_amber_600" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -299,8 +342,8 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/menu_payment_methods"
-                                android:textColor="@color/text_primary"
-                                android:textSize="16sp"
+                                android:textColor="@color/brand_slate_900"
+                                android:textSize="15sp"
                                 android:textStyle="bold" />
 
                             <TextView
@@ -308,15 +351,16 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
                                 android:text="@string/menu_sub_payment"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="13sp" />
+                                android:textColor="@color/brand_slate_500"
+                                android:textSize="12sp" />
                         </LinearLayout>
 
                         <ImageView
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:contentDescription="@string/menu_payment_methods"
-                            android:src="@drawable/ic_chevron_right" />
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/brand_slate_400" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
@@ -330,9 +374,9 @@
                     android:focusable="true"
                     android:foreground="?android:attr/selectableItemBackground"
                     app:cardBackgroundColor="@color/card_background"
-                    app:cardCornerRadius="16dp"
+                    app:cardCornerRadius="20dp"
                     app:cardElevation="1dp"
-                    app:strokeColor="@color/gray_border"
+                    app:strokeColor="@color/brand_slate_200"
                     app:strokeWidth="1dp">
 
                     <LinearLayout
@@ -345,11 +389,11 @@
                         <ImageView
                             android:layout_width="44dp"
                             android:layout_height="44dp"
-                            android:background="@drawable/ic_arrow_up"
-                            android:backgroundTint="@color/blue_badge_bg"
+                            android:background="@drawable/bg_icon_rounded_slate"
                             android:contentDescription="@string/menu_settings"
-                            android:padding="10dp"
-                            android:src="@drawable/ic_card_settings" />
+                            android:padding="11dp"
+                            android:src="@drawable/ic_card_settings"
+                            app:tint="@color/brand_slate_700" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -362,8 +406,8 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/menu_settings"
-                                android:textColor="@color/text_primary"
-                                android:textSize="16sp"
+                                android:textColor="@color/brand_slate_900"
+                                android:textSize="15sp"
                                 android:textStyle="bold" />
 
                             <TextView
@@ -371,19 +415,20 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
                                 android:text="@string/menu_sub_settings"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="13sp" />
+                                android:textColor="@color/brand_slate_500"
+                                android:textSize="12sp" />
                         </LinearLayout>
 
                         <ImageView
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:contentDescription="@string/menu_settings"
-                            android:src="@drawable/ic_chevron_right" />
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/brand_slate_400" />
                     </LinearLayout>
                 </com.google.android.material.card.MaterialCardView>
 
-                <!-- 4. Wyloguj się -->
+                <!-- 4. Wyloguj się (Soft Rose Surface with Contrast Accent) -->
                 <com.google.android.material.card.MaterialCardView
                     android:id="@+id/card_logout"
                     android:layout_width="match_parent"
@@ -391,10 +436,10 @@
                     android:clickable="true"
                     android:focusable="true"
                     android:foreground="?android:attr/selectableItemBackground"
-                    app:cardBackgroundColor="@color/logout_bg"
-                    app:cardCornerRadius="16dp"
+                    app:cardBackgroundColor="@color/brand_rose_50"
+                    app:cardCornerRadius="20dp"
                     app:cardElevation="0dp"
-                    app:strokeColor="#FCA5A5"
+                    app:strokeColor="@color/brand_rose_200"
                     app:strokeWidth="1dp">
 
                     <LinearLayout
@@ -407,11 +452,11 @@
                         <ImageView
                             android:layout_width="44dp"
                             android:layout_height="44dp"
-                            android:background="@drawable/ic_arrow_up"
-                            android:backgroundTint="@color/logout_icon_bg"
+                            android:background="@drawable/bg_icon_rounded_rose"
                             android:contentDescription="@string/menu_logout"
-                            android:padding="10dp"
-                            android:src="@drawable/ic_card_logout" />
+                            android:padding="11dp"
+                            android:src="@drawable/ic_card_logout"
+                            app:tint="@color/brand_rose_600" />
 
                         <LinearLayout
                             android:layout_width="0dp"
@@ -424,8 +469,8 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/menu_logout"
-                                android:textColor="@color/logout_text"
-                                android:textSize="16sp"
+                                android:textColor="@color/brand_rose_700"
+                                android:textSize="15sp"
                                 android:textStyle="bold" />
 
                             <TextView
@@ -433,8 +478,8 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
                                 android:text="@string/menu_sub_logout"
-                                android:textColor="@color/logout_text"
-                                android:textSize="13sp" />
+                                android:textColor="@color/brand_rose_600"
+                                android:textSize="12sp" />
                         </LinearLayout>
 
                     </LinearLayout>

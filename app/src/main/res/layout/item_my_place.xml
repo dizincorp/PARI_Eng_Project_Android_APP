@@ -9,9 +9,9 @@
     android:focusable="true"
     android:foreground="?android:attr/selectableItemBackground"
     app:cardBackgroundColor="@color/card_background"
-    app:cardCornerRadius="16dp"
+    app:cardCornerRadius="20dp"
     app:cardElevation="1dp"
-    app:strokeColor="@color/gray_border"
+    app:strokeColor="@color/brand_slate_200"
     app:strokeWidth="1dp">
 
     <LinearLayout
@@ -37,17 +37,17 @@
 
                 <View
                     android:id="@+id/view_status_dot"
-                    android:layout_width="10dp"
-                    android:layout_height="10dp"
+                    android:layout_width="8dp"
+                    android:layout_height="8dp"
                     android:layout_marginEnd="8dp"
                     android:background="@drawable/shape_status_dot"
-                    android:backgroundTint="@color/status_dot_green" />
+                    android:backgroundTint="@color/brand_emerald_500" />
 
                 <TextView
                     android:id="@+id/text_place_name"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/text_primary"
+                    android:textColor="@color/brand_slate_950"
                     android:textSize="16sp"
                     android:textStyle="bold" />
             </LinearLayout>
@@ -57,7 +57,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="3dp"
-                android:textColor="@color/text_secondary"
+                android:textColor="@color/brand_slate_500"
                 android:textSize="13sp" />
 
             <!-- Amenities under title/sub -->
@@ -78,7 +78,7 @@
                 android:layout_marginTop="4dp"
                 android:ellipsize="end"
                 android:maxLines="2"
-                android:textColor="@color/text_secondary"
+                android:textColor="@color/brand_slate_500"
                 android:textSize="12sp"
                 android:visibility="gone" />
 
@@ -88,13 +88,12 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="6dp"
-                android:background="@drawable/bg_dialog_rounded"
-                android:backgroundTint="@color/status_cancelled_bg"
+                android:background="@drawable/bg_badge_rose"
                 android:drawableStart="@drawable/ic_block"
                 android:drawablePadding="6dp"
-                android:drawableTint="@color/delete_btn_bg"
-                android:padding="6dp"
-                android:textColor="@color/delete_btn_bg"
+                android:drawableTint="@color/brand_rose_600"
+                android:padding="8dp"
+                android:textColor="@color/brand_rose_700"
                 android:textSize="12sp"
                 android:textStyle="bold"
                 android:visibility="gone" />
@@ -106,20 +105,22 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="5dp"
                 android:drawablePadding="6dp"
-                android:textColor="@color/primary"
-                android:textSize="13sp"
+                android:textColor="@color/brand_slate_900"
+                android:textSize="12sp"
                 android:textStyle="bold"
                 android:visibility="gone" />
 
         </LinearLayout>
 
-        <!-- Slider toggle (Active / Inactive) replacing plain text badge -->
+        <!-- Slider toggle (Active / Inactive) with emerald track styling -->
         <com.google.android.material.materialswitch.MaterialSwitch
             android:id="@+id/switch_spot_active"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:checked="true" />
+            android:checked="true"
+            app:thumbTint="@color/switch_thumb_selector"
+            app:trackTint="@color/switch_track_selector" />
 
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

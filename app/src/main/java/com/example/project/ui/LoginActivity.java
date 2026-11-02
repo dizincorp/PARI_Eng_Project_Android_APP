@@ -79,6 +79,11 @@ public class LoginActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
+        binding.tabRegister.setOnClickListener(v -> {
+            Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
+            startActivity(intent);
+        });
+
         binding.btnForgotPassword.setOnClickListener(v ->
                 Toast.makeText(this, R.string.link_forgot_password, Toast.LENGTH_SHORT).show()
         );

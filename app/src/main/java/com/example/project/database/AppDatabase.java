@@ -13,6 +13,7 @@ import com.example.project.database.dao.OwnerAnalyticsDao;
 import com.example.project.database.dao.ParkingPlaceDao;
 import com.example.project.database.dao.ReservationDao;
 import com.example.project.database.dao.ReviewDao;
+import com.example.project.database.dao.SpotPhotoDao;
 import com.example.project.database.dao.TransactionDao;
 import com.example.project.database.dao.UserDao;
 import com.example.project.database.dao.VehicleDao;
@@ -22,6 +23,7 @@ import com.example.project.database.entity.OwnerAnalyticsEntity;
 import com.example.project.database.entity.ParkingPlaceEntity;
 import com.example.project.database.entity.ReservationEntity;
 import com.example.project.database.entity.ReviewEntity;
+import com.example.project.database.entity.SpotPhotoEntity;
 import com.example.project.database.entity.TransactionEntity;
 import com.example.project.database.entity.UserEntity;
 import com.example.project.database.entity.VehicleEntity;
@@ -39,9 +41,10 @@ import com.example.project.database.entity.VehicleEntity;
                 ReviewEntity.class,
                 OwnerAnalyticsEntity.class,
                 AvailabilityRuleEntity.class,
-                BlockedPeriodEntity.class
+                BlockedPeriodEntity.class,
+                SpotPhotoEntity.class
         },
-        version = 8,
+        version = 10,
         exportSchema = false
 )
 @TypeConverters({Converters.class})
@@ -59,6 +62,7 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract OwnerAnalyticsDao ownerAnalyticsDao();
     public abstract AvailabilityRuleDao availabilityRuleDao();
     public abstract BlockedPeriodDao blockedPeriodDao();
+    public abstract SpotPhotoDao spotPhotoDao();
 
     /**
      * Gets the singleton instance of AppDatabase.

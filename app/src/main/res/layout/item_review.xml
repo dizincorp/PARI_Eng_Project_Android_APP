@@ -3,14 +3,14 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginStart="8dp"
+    android:layout_marginStart="4dp"
     android:layout_marginTop="4dp"
-    android:layout_marginEnd="8dp"
-    android:layout_marginBottom="6dp"
+    android:layout_marginEnd="4dp"
+    android:layout_marginBottom="8dp"
     app:cardBackgroundColor="@color/card_background"
-    app:cardCornerRadius="12dp"
+    app:cardCornerRadius="16dp"
     app:cardElevation="0dp"
-    app:strokeColor="@color/gray_border"
+    app:strokeColor="@color/brand_slate_200"
     app:strokeWidth="1dp">
 
     <LinearLayout
@@ -34,7 +34,7 @@
                     android:id="@+id/text_review_author"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/text_primary"
+                    android:textColor="@color/brand_slate_950"
                     android:textSize="14sp"
                     android:textStyle="bold" />
 
@@ -43,7 +43,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="2dp"
-                    android:textColor="@color/text_secondary"
+                    android:textColor="@color/brand_slate_500"
                     android:textSize="12sp" />
             </LinearLayout>
 
@@ -56,8 +56,8 @@
                 android:layout_centerVertical="true"
                 android:isIndicator="true"
                 android:numStars="5"
-                android:progressTint="@color/orange_dot"
-                android:secondaryProgressTint="@color/orange_dot"
+                android:progressTint="@color/brand_amber_600"
+                android:secondaryProgressTint="@color/brand_amber_600"
                 android:stepSize="1" />
         </RelativeLayout>
 
@@ -67,7 +67,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:lineSpacingExtra="2dp"
-            android:textColor="@color/text_primary"
+            android:textColor="@color/brand_slate_700"
             android:textSize="13sp" />
 
     </LinearLayout>

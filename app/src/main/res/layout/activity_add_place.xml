@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_main"
+    android:background="@color/brand_slate_50"
     tools:context=".ui.AddPlaceActivity">
 
     <!-- Top Bar -->
@@ -13,6 +13,7 @@
         android:id="@+id/layout_top_bar"
         android:layout_width="0dp"
         android:layout_height="56dp"
+        android:background="@color/card_background"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingHorizontal="16dp"
@@ -22,38 +23,55 @@
 
         <ImageView
             android:id="@+id/btn_back"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/title_add_place"
-            android:src="@drawable/ic_arrow_back" />
+            android:padding="6dp"
+            android:src="@drawable/ic_arrow_back"
+            app:tint="@color/brand_slate_950" />
 
         <TextView
             android:id="@+id/text_toolbar_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
+            android:layout_marginStart="12dp"
             android:layout_weight="1"
             android:text="@string/title_add_place"
-            android:textColor="@color/text_primary"
-            android:textSize="20sp"
+            android:textColor="@color/brand_slate_950"
+            android:textSize="18sp"
             android:textStyle="bold" />
 
         <ImageView
             android:id="@+id/btn_more"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/title_add_place"
-            android:src="@drawable/ic_more_vert" />
+            android:padding="6dp"
+            android:src="@drawable/ic_more_vert"
+            app:tint="@color/brand_slate_400" />
     </LinearLayout>
+
+    <View
+        android:id="@+id/divider_top_bar"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:background="@color/brand_slate_200"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/layout_top_bar" />
 
     <ScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:clipToPadding="false"
         android:fillViewport="true"
+        android:overScrollMode="never"
         app:layout_constraintBottom_toTopOf="@id/layout_bottom_button"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/layout_top_bar">
+        app:layout_constraintTop_toBottomOf="@id/divider_top_bar">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -66,16 +84,16 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="16dp"
+                app:cardCornerRadius="20dp"
                 app:cardElevation="1dp"
-                app:strokeColor="@color/gray_border"
+                app:strokeColor="@color/brand_slate_200"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="20dp">
 
                     <RelativeLayout
                         android:layout_width="match_parent"
@@ -86,7 +104,7 @@
                             android:layout_height="wrap_content"
                             android:layout_alignParentStart="true"
                             android:text="@string/section_location"
-                            android:textColor="@color/text_primary"
+                            android:textColor="@color/brand_slate_950"
                             android:textSize="18sp"
                             android:textStyle="bold" />
 
@@ -95,22 +113,28 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_alignParentEnd="true"
+                            android:background="?attr/selectableItemBackground"
+                            android:clickable="true"
+                            android:focusable="true"
                             android:gravity="center_vertical"
-                            android:orientation="horizontal">
+                            android:orientation="horizontal"
+                            android:paddingHorizontal="8dp"
+                            android:paddingVertical="4dp">
 
                             <ImageView
                                 android:layout_width="16dp"
                                 android:layout_height="16dp"
                                 android:contentDescription="@string/link_set_on_map"
-                                android:src="@drawable/ic_map_link" />
+                                android:src="@drawable/ic_navigation"
+                                app:tint="@color/brand_emerald_600" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="4dp"
                                 android:text="@string/link_set_on_map"
-                                android:textColor="@color/green_accent"
-                                android:textSize="14sp"
+                                android:textColor="@color/brand_emerald_700"
+                                android:textSize="13sp"
                                 android:textStyle="bold" />
                         </LinearLayout>
                     </RelativeLayout>
@@ -121,8 +145,9 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
                         android:text="@string/label_street"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="13sp" />
+                        android:textColor="@color/brand_slate_700"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
 
                     <EditText
                         android:id="@+id/edit_street"
@@ -130,12 +155,12 @@
                         android:layout_height="48dp"
                         android:layout_marginTop="6dp"
                         android:autofillHints="postalAddress"
-                        android:background="@drawable/bg_dashed_border"
-                        android:backgroundTint="@color/gray_input_bg"
+                        android:background="@drawable/bg_input_rounded"
                         android:hint="@string/hint_street"
                         android:inputType="textPostalAddress"
-                        android:paddingHorizontal="12dp"
-                        android:textColor="@color/text_primary"
+                        android:paddingHorizontal="14dp"
+                        android:textColor="@color/brand_slate_950"
+                        android:textColorHint="@color/brand_slate_400"
                         android:textSize="14sp" />
 
                     <!-- Miasto i Kod pocztowy -->
@@ -149,7 +174,7 @@
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginEnd="8dp"
+                            android:layout_marginEnd="6dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -157,8 +182,9 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/label_city"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="13sp" />
+                                android:textColor="@color/brand_slate_700"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
 
                             <EditText
                                 android:id="@+id/edit_city"
@@ -166,19 +192,19 @@
                                 android:layout_height="48dp"
                                 android:layout_marginTop="6dp"
                                 android:autofillHints="postalAddress"
-                                android:background="@drawable/bg_dashed_border"
-                                android:backgroundTint="@color/gray_input_bg"
+                                android:background="@drawable/bg_input_rounded"
                                 android:hint="@string/hint_city"
                                 android:inputType="textCapWords"
-                                android:paddingHorizontal="12dp"
-                                android:textColor="@color/text_primary"
+                                android:paddingHorizontal="14dp"
+                                android:textColor="@color/brand_slate_950"
+                                android:textColorHint="@color/brand_slate_400"
                                 android:textSize="14sp" />
                         </LinearLayout>
 
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="8dp"
+                            android:layout_marginStart="6dp"
                             android:layout_weight="1"
                             android:orientation="vertical">
 
@@ -186,8 +212,9 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/label_postal_code"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="13sp" />
+                                android:textColor="@color/brand_slate_700"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
 
                             <EditText
                                 android:id="@+id/edit_postal_code"
@@ -195,51 +222,52 @@
                                 android:layout_height="48dp"
                                 android:layout_marginTop="6dp"
                                 android:autofillHints="postalCode"
-                                android:background="@drawable/bg_dashed_border"
-                                android:backgroundTint="@color/gray_input_bg"
+                                android:background="@drawable/bg_input_rounded"
                                 android:hint="@string/hint_postal_code"
                                 android:inputType="textPostalAddress"
-                                android:paddingHorizontal="12dp"
-                                android:textColor="@color/text_primary"
+                                android:paddingHorizontal="14dp"
+                                android:textColor="@color/brand_slate_950"
+                                android:textColorHint="@color/brand_slate_400"
                                 android:textSize="14sp" />
                         </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Card 2: Informacje o miejscu (name, description, place number, floor) -->
+            <!-- Card 2: Informacje o miejscu (name, description, access instructions) -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="16dp"
+                app:cardCornerRadius="20dp"
                 app:cardElevation="1dp"
-                app:strokeColor="@color/gray_border"
+                app:strokeColor="@color/brand_slate_200"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="20dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/section_place_details"
-                        android:textColor="@color/text_primary"
+                        android:textColor="@color/brand_slate_950"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
-                    <!-- Nazwa miejsca (name) -->
+                    <!-- Nazwa miejsca -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
                         android:text="@string/label_spot_name"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="13sp" />
+                        android:textColor="@color/brand_slate_700"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
 
                     <EditText
                         android:id="@+id/edit_spot_name"
@@ -247,88 +275,90 @@
                         android:layout_height="48dp"
                         android:layout_marginTop="6dp"
                         android:autofillHints="none"
-                        android:background="@drawable/bg_dashed_border"
-                        android:backgroundTint="@color/gray_input_bg"
+                        android:background="@drawable/bg_input_rounded"
                         android:hint="@string/hint_spot_name"
                         android:inputType="textCapSentences"
-                        android:paddingHorizontal="12dp"
-                        android:textColor="@color/text_primary"
+                        android:paddingHorizontal="14dp"
+                        android:textColor="@color/brand_slate_950"
+                        android:textColorHint="@color/brand_slate_400"
                         android:textSize="14sp" />
 
-                    <!-- Opis miejsca (description) -->
+                    <!-- Opis miejsca -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
                         android:text="@string/label_spot_description"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="13sp" />
+                        android:textColor="@color/brand_slate_700"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
 
                     <EditText
                         android:id="@+id/edit_spot_description"
                         android:layout_width="match_parent"
-                        android:layout_height="72dp"
+                        android:layout_height="80dp"
                         android:layout_marginTop="6dp"
                         android:autofillHints="none"
-                        android:background="@drawable/bg_dashed_border"
-                        android:backgroundTint="@color/gray_input_bg"
+                        android:background="@drawable/bg_input_rounded"
                         android:gravity="top|start"
                         android:hint="@string/hint_spot_description"
                         android:inputType="textMultiLine"
                         android:lines="3"
                         android:padding="12dp"
-                        android:textColor="@color/text_primary"
+                        android:textColor="@color/brand_slate_950"
+                        android:textColorHint="@color/brand_slate_400"
                         android:textSize="14sp" />
 
-                    <!-- Instrukcje wjazdu (accessInstructions) -->
+                    <!-- Instrukcje wjazdu -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
                         android:text="@string/label_access_instructions"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="13sp" />
+                        android:textColor="@color/brand_slate_700"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
 
                     <EditText
                         android:id="@+id/edit_access_instructions"
                         android:layout_width="match_parent"
-                        android:layout_height="64dp"
+                        android:layout_height="70dp"
                         android:layout_marginTop="6dp"
                         android:autofillHints="none"
-                        android:background="@drawable/bg_dashed_border"
-                        android:backgroundTint="@color/gray_input_bg"
+                        android:background="@drawable/bg_input_rounded"
                         android:gravity="top|start"
                         android:hint="@string/hint_access_instructions"
                         android:inputType="textMultiLine"
                         android:lines="2"
                         android:padding="12dp"
-                        android:textColor="@color/text_primary"
+                        android:textColor="@color/brand_slate_950"
+                        android:textColorHint="@color/brand_slate_400"
                         android:textSize="14sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Card 3: Wymiary miejsca (lengthCm, widthCm, heightCm) -->
+            <!-- Card 3: Wymiary miejsca -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="16dp"
+                app:cardCornerRadius="20dp"
                 app:cardElevation="1dp"
-                app:strokeColor="@color/gray_border"
+                app:strokeColor="@color/brand_slate_200"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="20dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/section_dimensions"
-                        android:textColor="@color/text_primary"
+                        android:textColor="@color/brand_slate_950"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
@@ -339,7 +369,7 @@
                         android:baselineAligned="false"
                         android:orientation="horizontal">
 
-                        <!-- Długość (lengthCm) -->
+                        <!-- Długość -->
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
@@ -351,8 +381,9 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/label_length_cm"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="12sp" />
+                                android:textColor="@color/brand_slate_700"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
 
                             <EditText
                                 android:id="@+id/edit_length_cm"
@@ -360,17 +391,17 @@
                                 android:layout_height="48dp"
                                 android:layout_marginTop="6dp"
                                 android:autofillHints="none"
-                                android:background="@drawable/bg_dashed_border"
-                                android:backgroundTint="@color/gray_input_bg"
+                                android:background="@drawable/bg_input_rounded"
                                 android:hint="@string/hint_length_cm"
                                 android:inputType="number"
-                                android:paddingHorizontal="10dp"
+                                android:paddingHorizontal="12dp"
                                 android:text="500"
-                                android:textColor="@color/text_primary"
+                                android:textColor="@color/brand_slate_950"
+                                android:textColorHint="@color/brand_slate_400"
                                 android:textSize="14sp" />
                         </LinearLayout>
 
-                        <!-- Szerokość (widthCm) -->
+                        <!-- Szerokość -->
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
@@ -382,8 +413,9 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/label_width_cm"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="12sp" />
+                                android:textColor="@color/brand_slate_700"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
 
                             <EditText
                                 android:id="@+id/edit_width_cm"
@@ -391,17 +423,17 @@
                                 android:layout_height="48dp"
                                 android:layout_marginTop="6dp"
                                 android:autofillHints="none"
-                                android:background="@drawable/bg_dashed_border"
-                                android:backgroundTint="@color/gray_input_bg"
+                                android:background="@drawable/bg_input_rounded"
                                 android:hint="@string/hint_width_cm"
                                 android:inputType="number"
-                                android:paddingHorizontal="10dp"
+                                android:paddingHorizontal="12dp"
                                 android:text="250"
-                                android:textColor="@color/text_primary"
+                                android:textColor="@color/brand_slate_950"
+                                android:textColorHint="@color/brand_slate_400"
                                 android:textSize="14sp" />
                         </LinearLayout>
 
-                        <!-- Wysokość (heightCm) -->
+                        <!-- Wysokość -->
                         <LinearLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
@@ -413,8 +445,9 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/label_height_cm"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="12sp" />
+                                android:textColor="@color/brand_slate_700"
+                                android:textSize="12sp"
+                                android:textStyle="bold" />
 
                             <EditText
                                 android:id="@+id/edit_height_cm"
@@ -422,52 +455,53 @@
                                 android:layout_height="48dp"
                                 android:layout_marginTop="6dp"
                                 android:autofillHints="none"
-                                android:background="@drawable/bg_dashed_border"
-                                android:backgroundTint="@color/gray_input_bg"
+                                android:background="@drawable/bg_input_rounded"
                                 android:hint="@string/hint_height_cm"
                                 android:inputType="number"
-                                android:paddingHorizontal="10dp"
+                                android:paddingHorizontal="12dp"
                                 android:text="200"
-                                android:textColor="@color/text_primary"
+                                android:textColor="@color/brand_slate_950"
+                                android:textColorHint="@color/brand_slate_400"
                                 android:textSize="14sp" />
                         </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Card 4: Cena i Dostępność (hourlyPrice, accessInstructions, accessTime) -->
+            <!-- Card 4: Cena -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="16dp"
+                app:cardCornerRadius="20dp"
                 app:cardElevation="1dp"
-                app:strokeColor="@color/gray_border"
+                app:strokeColor="@color/brand_slate_200"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="20dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/section_price"
-                        android:textColor="@color/text_primary"
+                        android:textColor="@color/brand_slate_950"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
-                    <!-- Stawka godzinowa (hourlyPrice) -->
+                    <!-- Stawka godzinowa -->
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="16dp"
                         android:text="@string/label_hourly_rate"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="13sp" />
+                        android:textColor="@color/brand_slate_700"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
 
                     <EditText
                         android:id="@+id/edit_price"
@@ -475,12 +509,12 @@
                         android:layout_height="48dp"
                         android:layout_marginTop="6dp"
                         android:autofillHints="none"
-                        android:background="@drawable/bg_dashed_border"
-                        android:backgroundTint="@color/gray_input_bg"
+                        android:background="@drawable/bg_input_rounded"
                         android:hint="@string/hint_price"
                         android:inputType="numberDecimal"
-                        android:paddingHorizontal="12dp"
-                        android:textColor="@color/text_primary"
+                        android:paddingHorizontal="14dp"
+                        android:textColor="@color/brand_slate_950"
+                        android:textColorHint="@color/brand_slate_400"
                         android:textSize="14sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -493,28 +527,28 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp" />
 
-            <!-- Card 5: Udogodnienia (amenities: CCTV, LIGHTING, EV_CHARGER, UNDERGROUND, GATE, COVERED) -->
+            <!-- Card 5: Udogodnienia -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="16dp"
+                app:cardCornerRadius="20dp"
                 app:cardElevation="1dp"
-                app:strokeColor="@color/gray_border"
+                app:strokeColor="@color/brand_slate_200"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="20dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/section_amenities"
-                        android:textColor="@color/text_primary"
+                        android:textColor="@color/brand_slate_950"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
@@ -531,68 +565,104 @@
                             style="@style/Widget.MaterialComponents.Chip.Filter"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/amenity_monitoring" />
+                            android:text="@string/amenity_monitoring"
+                            android:textColor="@color/chip_filter_text_selector"
+                            app:checkedIconTint="@color/white"
+                            app:chipBackgroundColor="@color/chip_filter_bg_selector"
+                            app:chipCornerRadius="12dp"
+                            app:chipStrokeColor="@color/chip_filter_stroke_selector"
+                            app:chipStrokeWidth="1dp" />
 
                         <com.google.android.material.chip.Chip
                             android:id="@+id/chip_lighting"
                             style="@style/Widget.MaterialComponents.Chip.Filter"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/amenity_lighting" />
+                            android:text="@string/amenity_lighting"
+                            android:textColor="@color/chip_filter_text_selector"
+                            app:checkedIconTint="@color/white"
+                            app:chipBackgroundColor="@color/chip_filter_bg_selector"
+                            app:chipCornerRadius="12dp"
+                            app:chipStrokeColor="@color/chip_filter_stroke_selector"
+                            app:chipStrokeWidth="1dp" />
 
                         <com.google.android.material.chip.Chip
                             android:id="@+id/chip_ev"
                             style="@style/Widget.MaterialComponents.Chip.Filter"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/amenity_ev" />
+                            android:text="@string/amenity_ev"
+                            android:textColor="@color/chip_filter_text_selector"
+                            app:checkedIconTint="@color/white"
+                            app:chipBackgroundColor="@color/chip_filter_bg_selector"
+                            app:chipCornerRadius="12dp"
+                            app:chipStrokeColor="@color/chip_filter_stroke_selector"
+                            app:chipStrokeWidth="1dp" />
 
                         <com.google.android.material.chip.Chip
                             android:id="@+id/chip_underground"
                             style="@style/Widget.MaterialComponents.Chip.Filter"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/amenity_underground" />
+                            android:text="@string/amenity_underground"
+                            android:textColor="@color/chip_filter_text_selector"
+                            app:checkedIconTint="@color/white"
+                            app:chipBackgroundColor="@color/chip_filter_bg_selector"
+                            app:chipCornerRadius="12dp"
+                            app:chipStrokeColor="@color/chip_filter_stroke_selector"
+                            app:chipStrokeWidth="1dp" />
 
                         <com.google.android.material.chip.Chip
                             android:id="@+id/chip_gate"
                             style="@style/Widget.MaterialComponents.Chip.Filter"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/amenity_gate" />
+                            android:text="@string/amenity_gate"
+                            android:textColor="@color/chip_filter_text_selector"
+                            app:checkedIconTint="@color/white"
+                            app:chipBackgroundColor="@color/chip_filter_bg_selector"
+                            app:chipCornerRadius="12dp"
+                            app:chipStrokeColor="@color/chip_filter_stroke_selector"
+                            app:chipStrokeWidth="1dp" />
 
                         <com.google.android.material.chip.Chip
                             android:id="@+id/chip_covered"
                             style="@style/Widget.MaterialComponents.Chip.Filter"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="@string/amenity_covered" />
+                            android:text="@string/amenity_covered"
+                            android:textColor="@color/chip_filter_text_selector"
+                            app:checkedIconTint="@color/white"
+                            app:chipBackgroundColor="@color/chip_filter_bg_selector"
+                            app:chipCornerRadius="12dp"
+                            app:chipStrokeColor="@color/chip_filter_stroke_selector"
+                            app:chipStrokeWidth="1dp" />
                     </com.google.android.material.chip.ChipGroup>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Card 6: Opcje i Oświadczenia (autoAccept, requestVerification, ownershipDeclared) -->
+            <!-- Card 6: Opcje i Oświadczenia -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="16dp"
+                app:cardCornerRadius="20dp"
                 app:cardElevation="1dp"
-                app:strokeColor="@color/gray_border"
+                app:strokeColor="@color/brand_slate_200"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="20dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/section_options"
-                        android:textColor="@color/text_primary"
+                        android:textColor="@color/brand_slate_950"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
@@ -614,7 +684,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/label_auto_accept"
-                                android:textColor="@color/text_primary"
+                                android:textColor="@color/brand_slate_950"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
 
@@ -623,7 +693,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
                                 android:text="@string/desc_auto_accept"
-                                android:textColor="@color/text_secondary"
+                                android:textColor="@color/brand_slate_500"
                                 android:textSize="12sp" />
                         </LinearLayout>
 
@@ -631,14 +701,16 @@
                             android:id="@+id/switch_auto_accept"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:checked="true" />
+                            android:checked="true"
+                            app:thumbTint="@color/switch_thumb_selector"
+                            app:trackTint="@color/switch_track_selector" />
                     </LinearLayout>
 
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:layout_marginVertical="12dp"
-                        android:background="@color/gray_bar" />
+                        android:layout_marginVertical="14dp"
+                        android:background="@color/brand_slate_200" />
 
                     <!-- Request Verification Switch -->
                     <LinearLayout
@@ -657,7 +729,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/label_request_verification"
-                                android:textColor="@color/text_primary"
+                                android:textColor="@color/brand_slate_950"
                                 android:textSize="14sp"
                                 android:textStyle="bold" />
 
@@ -666,7 +738,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
                                 android:text="@string/desc_request_verification"
-                                android:textColor="@color/text_secondary"
+                                android:textColor="@color/brand_slate_500"
                                 android:textSize="12sp" />
                         </LinearLayout>
 
@@ -674,23 +746,26 @@
                             android:id="@+id/switch_request_verification"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:checked="false" />
+                            android:checked="false"
+                            app:thumbTint="@color/switch_thumb_selector"
+                            app:trackTint="@color/switch_track_selector" />
                     </LinearLayout>
 
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:layout_marginVertical="12dp"
-                        android:background="@color/gray_bar" />
+                        android:layout_marginVertical="14dp"
+                        android:background="@color/brand_slate_200" />
 
-                    <!-- Ownership Declaration Checkbox (Mandatory by Backend) -->
+                    <!-- Ownership Declaration Checkbox -->
                     <com.google.android.material.checkbox.MaterialCheckBox
                         android:id="@+id/check_ownership_declared"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:buttonTint="@color/brand_emerald_600"
                         android:checked="true"
                         android:text="@string/label_ownership_declaration"
-                        android:textColor="@color/text_primary"
+                        android:textColor="@color/brand_slate_950"
                         android:textSize="13sp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -700,52 +775,66 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
+                android:layout_marginBottom="8dp"
                 app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="16dp"
+                app:cardCornerRadius="20dp"
                 app:cardElevation="1dp"
-                app:strokeColor="@color/gray_border"
+                app:strokeColor="@color/brand_slate_200"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="20dp">
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/section_photos"
-                        android:textColor="@color/text_primary"
+                        android:textColor="@color/brand_slate_950"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
-                    <!-- Black button with white text "Dodaj zdjęcie" -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:text="@string/photos_format_hint"
+                        android:textColor="@color/brand_slate_500"
+                        android:textSize="12sp" />
+
+                    <!-- Black primary button with camera icon -->
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_add_photo"
+                        style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
                         android:layout_width="match_parent"
-                        android:layout_height="52dp"
-                        android:layout_marginTop="12dp"
-                        android:backgroundTint="@color/black"
+                        android:layout_height="50dp"
+                        android:layout_marginTop="14dp"
+                        android:backgroundTint="@color/brand_slate_950"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
                         android:text="@string/btn_add_photo"
                         android:textAllCaps="false"
                         android:textColor="@color/white"
-                        android:textSize="15sp"
+                        android:textSize="14sp"
                         android:textStyle="bold"
-                        app:cornerRadius="12dp"
+                        app:cornerRadius="14dp"
                         app:icon="@drawable/ic_camera"
-                        app:iconTint="@color/white" />
+                        app:iconGravity="textStart"
+                        app:iconPadding="8dp"
+                        app:iconTint="@color/brand_emerald_400" />
 
-                    <!-- User selected photo preview (hidden by default, default photo not shown) -->
+                    <!-- User selected photo preview -->
                     <com.google.android.material.card.MaterialCardView
                         android:id="@+id/card_photo_preview"
                         android:layout_width="match_parent"
                         android:layout_height="180dp"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="14dp"
                         android:visibility="gone"
-                        app:cardCornerRadius="12dp"
+                        app:cardCornerRadius="16dp"
                         app:cardElevation="0dp"
-                        app:strokeColor="@color/gray_border"
+                        app:strokeColor="@color/brand_slate_200"
                         app:strokeWidth="1dp">
 
                         <FrameLayout
@@ -764,12 +853,11 @@
                                 android:layout_width="36dp"
                                 android:layout_height="36dp"
                                 android:layout_gravity="top|end"
-                                android:layout_margin="8dp"
-                                android:background="@drawable/ic_arrow_up"
-                                android:backgroundTint="@color/black"
+                                android:layout_margin="10dp"
+                                android:background="@drawable/bg_badge_rose"
                                 android:contentDescription="@string/btn_remove_photo"
                                 android:src="@drawable/ic_delete"
-                                app:tint="@color/white" />
+                                app:tint="@color/brand_rose_600" />
                         </FrameLayout>
                     </com.google.android.material.card.MaterialCardView>
                 </LinearLayout>
@@ -786,35 +874,53 @@
         android:background="@color/card_background"
         android:orientation="vertical"
         android:padding="16dp"
+        app:elevation="8dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_submit_place"
+            style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
             android:layout_width="match_parent"
-            android:layout_height="54dp"
-            android:backgroundTint="@color/chip_bg_selected"
+            android:layout_height="52dp"
+            android:backgroundTint="@color/brand_slate_950"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
             android:text="@string/title_add_place"
             android:textAllCaps="false"
             android:textColor="@color/white"
-            android:textSize="16sp"
+            android:textSize="15sp"
             android:textStyle="bold"
-            app:cornerRadius="12dp" />
+            app:cornerRadius="14dp"
+            app:icon="@drawable/ic_arrow_forward"
+            app:iconGravity="textEnd"
+            app:iconPadding="8dp"
+            app:iconSize="16dp"
+            app:iconTint="@color/brand_emerald_400" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btn_delete_place"
+            style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
             android:layout_width="match_parent"
             android:layout_height="48dp"
             android:layout_marginTop="8dp"
-            android:backgroundTint="@color/delete_btn_bg"
+            android:backgroundTint="@color/brand_rose_50"
+            android:insetTop="0dp"
+            android:insetBottom="0dp"
             android:text="@string/btn_delete_place"
             android:textAllCaps="false"
-            android:textColor="@color/delete_btn_text"
+            android:textColor="@color/brand_rose_700"
             android:textSize="14sp"
             android:textStyle="bold"
             android:visibility="gone"
-            app:cornerRadius="12dp" />
+            app:cornerRadius="14dp"
+            app:icon="@drawable/ic_delete"
+            app:iconGravity="textStart"
+            app:iconPadding="6dp"
+            app:iconTint="@color/brand_rose_600"
+            app:strokeColor="@color/brand_rose_200"
+            app:strokeWidth="1dp" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

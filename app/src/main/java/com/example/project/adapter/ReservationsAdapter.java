@@ -115,6 +115,20 @@ public class ReservationsAdapter extends RecyclerView.Adapter<ReservationsAdapte
             binding.textReservationTitle.setText(res.getPlaceName() != null && !res.getPlaceName().isEmpty()
                     ? res.getPlaceName() : "Miejsce parkingowe");
 
+            // Spot Image loading via ImageLoader
+            String placeImage = res.getImageUri();
+            if (placeImage == null || placeImage.isEmpty()) {
+                com.example.project.model.ParkingPlace p = com.example.project.repository.AppRepository.getInstance().getPlaceById(res.getPlaceId());
+                if (p != null) {
+                    placeImage = p.getImageUri();
+                }
+            }
+            com.example.project.utils.ImageLoader.getInstance(context).loadImage(
+                    binding.imgReservationSpot,
+                    placeImage,
+                    res.getPhotoResId() != 0 ? res.getPhotoResId() : R.drawable.default_parking_spot
+            );
+
             String street = res.getStreet() != null && !res.getStreet().isEmpty() ? res.getStreet() : "Warszawa";
             String city = res.getCity() != null && !res.getCity().isEmpty() ? res.getCity() : "Warszawa";
             binding.textReservationAddress.setText(String.format(Locale.getDefault(), "%s, %s", city, street));
@@ -157,36 +171,44 @@ public class ReservationsAdapter extends RecyclerView.Adapter<ReservationsAdapte
             String status = res.getStatus() != null ? res.getStatus().toUpperCase(Locale.ROOT) : "CONFIRMED";
             if (status.contains("PENDING_PAYMENT")) {
                 binding.badgeStatus.setText(R.string.status_pending_payment);
-                binding.badgeStatus.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.rating_bg));
-                binding.badgeStatus.setTextColor(ContextCompat.getColor(context, R.color.orange_dot));
+                binding.badgeStatus.setBackgroundResource(R.drawable.bg_badge_amber);
+                binding.badgeStatus.setBackgroundTintList(null);
+                binding.badgeStatus.setTextColor(ContextCompat.getColor(context, R.color.brand_amber_800));
             } else if (status.contains("PENDING_APPROVAL")) {
                 binding.badgeStatus.setText(R.string.status_pending_approval);
-                binding.badgeStatus.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.rating_bg));
-                binding.badgeStatus.setTextColor(ContextCompat.getColor(context, R.color.orange_dot));
+                binding.badgeStatus.setBackgroundResource(R.drawable.bg_badge_amber);
+                binding.badgeStatus.setBackgroundTintList(null);
+                binding.badgeStatus.setTextColor(ContextCompat.getColor(context, R.color.brand_amber_800));
             } else if (status.contains("IN_PROGRESS")) {
                 binding.badgeStatus.setText(R.string.status_in_progress);
-                binding.badgeStatus.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.blue_badge_bg));
-                binding.badgeStatus.setTextColor(ContextCompat.getColor(context, R.color.primary));
+                binding.badgeStatus.setBackgroundResource(R.drawable.bg_badge_emerald);
+                binding.badgeStatus.setBackgroundTintList(null);
+                binding.badgeStatus.setTextColor(ContextCompat.getColor(context, R.color.brand_emerald_700));
             } else if (status.contains("AKT") || status.contains("CONFIRM") || status.contains("ACTIV")) {
                 binding.badgeStatus.setText(R.string.badge_active_now);
-                binding.badgeStatus.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.green_badge_bg));
-                binding.badgeStatus.setTextColor(ContextCompat.getColor(context, R.color.green_badge_text));
+                binding.badgeStatus.setBackgroundResource(R.drawable.bg_badge_emerald);
+                binding.badgeStatus.setBackgroundTintList(null);
+                binding.badgeStatus.setTextColor(ContextCompat.getColor(context, R.color.brand_emerald_700));
             } else if (status.contains("CANCEL") || status.contains("ANUL")) {
                 binding.badgeStatus.setText(R.string.status_cancelled);
-                binding.badgeStatus.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.logout_bg));
-                binding.badgeStatus.setTextColor(ContextCompat.getColor(context, R.color.logout_text));
+                binding.badgeStatus.setBackgroundResource(R.drawable.bg_badge_rose);
+                binding.badgeStatus.setBackgroundTintList(null);
+                binding.badgeStatus.setTextColor(ContextCompat.getColor(context, R.color.brand_rose_700));
             } else if (status.contains("REJECT") || status.contains("ODRZU")) {
                 binding.badgeStatus.setText(R.string.status_rejected);
-                binding.badgeStatus.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.logout_bg));
-                binding.badgeStatus.setTextColor(ContextCompat.getColor(context, R.color.logout_text));
+                binding.badgeStatus.setBackgroundResource(R.drawable.bg_badge_rose);
+                binding.badgeStatus.setBackgroundTintList(null);
+                binding.badgeStatus.setTextColor(ContextCompat.getColor(context, R.color.brand_rose_700));
             } else if (status.contains("EXPIRE") || status.contains("WYGAS")) {
                 binding.badgeStatus.setText(R.string.status_expired);
-                binding.badgeStatus.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.gray_input_bg));
-                binding.badgeStatus.setTextColor(ContextCompat.getColor(context, R.color.text_secondary));
+                binding.badgeStatus.setBackgroundResource(R.drawable.bg_badge_slate);
+                binding.badgeStatus.setBackgroundTintList(null);
+                binding.badgeStatus.setTextColor(ContextCompat.getColor(context, R.color.brand_slate_600));
             } else {
                 binding.badgeStatus.setText(R.string.status_completed);
-                binding.badgeStatus.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.gray_input_bg));
-                binding.badgeStatus.setTextColor(ContextCompat.getColor(context, R.color.text_secondary));
+                binding.badgeStatus.setBackgroundResource(R.drawable.bg_badge_slate);
+                binding.badgeStatus.setBackgroundTintList(null);
+                binding.badgeStatus.setTextColor(ContextCompat.getColor(context, R.color.brand_slate_600));
             }
 
             // Countdown banner & Navigation button
@@ -240,8 +262,9 @@ public class ReservationsAdapter extends RecyclerView.Adapter<ReservationsAdapte
                         (res.getStatus().equalsIgnoreCase("ZAKOŃCZONA") || res.getStatus().equalsIgnoreCase("COMPLETED"))) {
                     binding.btnItemCheckInOut.setVisibility(View.VISIBLE);
                     binding.btnItemCheckInOut.setText(R.string.btn_rate_spot);
-                    binding.btnItemCheckInOut.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.blue_accent));
+                    binding.btnItemCheckInOut.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.brand_slate_950));
                     binding.btnItemCheckInOut.setIcon(ContextCompat.getDrawable(context, R.drawable.ic_star));
+                    binding.btnItemCheckInOut.setIconTint(ContextCompat.getColorStateList(context, R.color.brand_amber_600));
                     binding.btnItemCheckInOut.setOnClickListener(v -> {
                         if (listener != null) listener.onRateSpotClick(res);
                     });
@@ -252,8 +275,9 @@ public class ReservationsAdapter extends RecyclerView.Adapter<ReservationsAdapte
                 // Checked in -> can Check-Out
                 binding.btnItemCheckInOut.setVisibility(View.VISIBLE);
                 binding.btnItemCheckInOut.setText(R.string.btn_check_out);
-                binding.btnItemCheckInOut.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.orange_dot));
+                binding.btnItemCheckInOut.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.brand_slate_950));
                 binding.btnItemCheckInOut.setIcon(ContextCompat.getDrawable(context, R.drawable.ic_arrow_up));
+                binding.btnItemCheckInOut.setIconTint(ContextCompat.getColorStateList(context, R.color.brand_emerald_400));
                 binding.btnItemCheckInOut.setOnClickListener(v -> {
                     if (listener != null) listener.onCheckOutClick(res);
                 });
@@ -261,8 +285,9 @@ public class ReservationsAdapter extends RecyclerView.Adapter<ReservationsAdapte
                 // Not checked in -> can Check-In
                 binding.btnItemCheckInOut.setVisibility(View.VISIBLE);
                 binding.btnItemCheckInOut.setText(R.string.btn_check_in);
-                binding.btnItemCheckInOut.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.chip_bg_selected));
+                binding.btnItemCheckInOut.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.brand_slate_950));
                 binding.btnItemCheckInOut.setIcon(ContextCompat.getDrawable(context, R.drawable.ic_ob_driver));
+                binding.btnItemCheckInOut.setIconTint(ContextCompat.getColorStateList(context, R.color.brand_emerald_400));
                 binding.btnItemCheckInOut.setOnClickListener(v -> {
                     if (listener != null) listener.onCheckInClick(res);
                 });

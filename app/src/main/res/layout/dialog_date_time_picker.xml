@@ -4,9 +4,9 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     app:cardBackgroundColor="@color/card_background"
-    app:cardCornerRadius="20dp"
-    app:cardElevation="6dp"
-    app:strokeColor="@color/gray_border"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="8dp"
+    app:strokeColor="@color/brand_slate_200"
     app:strokeWidth="1dp">
 
     <ScrollView
@@ -27,17 +27,24 @@
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
-                <ImageView
-                    android:layout_width="28dp"
-                    android:layout_height="28dp"
-                    android:contentDescription="@string/title_date_time_picker"
-                    android:src="@drawable/ic_calendar"
-                    app:tint="@color/primary" />
+                <FrameLayout
+                    android:layout_width="44dp"
+                    android:layout_height="44dp"
+                    android:background="@drawable/bg_icon_rounded_emerald">
+
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="@string/title_date_time_picker"
+                        android:src="@drawable/ic_calendar"
+                        app:tint="@color/brand_emerald_600" />
+                </FrameLayout>
 
                 <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_marginStart="12dp"
+                    android:layout_marginStart="14dp"
                     android:layout_weight="1"
                     android:orientation="vertical">
 
@@ -45,7 +52,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/title_date_time_picker"
-                        android:textColor="@color/text_primary"
+                        android:textColor="@color/brand_slate_900"
                         android:textSize="18sp"
                         android:textStyle="bold" />
 
@@ -54,7 +61,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
                         android:text="@string/subtitle_date_time_format"
-                        android:textColor="@color/text_secondary"
+                        android:textColor="@color/brand_slate_500"
                         android:textSize="12sp" />
                 </LinearLayout>
             </LinearLayout>
@@ -64,12 +71,12 @@
                 android:id="@+id/group_picker_mode"
                 android:layout_width="match_parent"
                 android:layout_height="44dp"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="18dp"
                 android:background="@drawable/bg_dialog_rounded"
-                android:backgroundTint="@color/gray_input_bg"
+                android:backgroundTint="@color/brand_slate_100"
                 android:checkedButton="@id/radio_start_mode"
                 android:orientation="horizontal"
-                android:padding="3dp">
+                android:padding="4dp">
 
                 <RadioButton
                     android:id="@+id/radio_start_mode"
@@ -77,7 +84,7 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:background="@drawable/bg_dialog_rounded"
-                    android:backgroundTint="@color/chip_bg_selected"
+                    android:backgroundTint="@color/brand_slate_950"
                     android:button="@null"
                     android:gravity="center"
                     android:text="@string/tab_picker_start"
@@ -95,7 +102,7 @@
                     android:button="@null"
                     android:gravity="center"
                     android:text="@string/tab_picker_end"
-                    android:textColor="@color/text_secondary"
+                    android:textColor="@color/brand_slate_600"
                     android:textSize="13sp"
                     android:textStyle="bold" />
             </RadioGroup>
@@ -104,7 +111,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="14dp"
                 android:gravity="center_vertical"
                 android:orientation="horizontal">
 
@@ -114,7 +121,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="@string/label_start_time"
-                    android:textColor="@color/primary"
+                    android:textColor="@color/brand_emerald_600"
                     android:textSize="14sp"
                     android:textStyle="bold" />
 
@@ -123,12 +130,12 @@
                     style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="wrap_content"
                     android:layout_height="36dp"
-                    android:paddingHorizontal="10dp"
+                    android:paddingHorizontal="12dp"
                     android:text="@string/btn_set_current_time"
-                    android:textColor="@color/primary"
+                    android:textColor="@color/brand_slate_900"
                     android:textSize="11sp"
-                    app:cornerRadius="8dp"
-                    app:strokeColor="@color/primary"
+                    app:cornerRadius="10dp"
+                    app:strokeColor="@color/brand_slate_300"
                     app:strokeWidth="1dp" />
             </LinearLayout>
 
@@ -137,12 +144,12 @@
                 android:id="@+id/group_input_type"
                 android:layout_width="match_parent"
                 android:layout_height="38dp"
-                android:layout_marginTop="10dp"
+                android:layout_marginTop="12dp"
                 android:background="@drawable/bg_dialog_rounded"
-                android:backgroundTint="@color/gray_input_bg"
+                android:backgroundTint="@color/brand_slate_100"
                 android:checkedButton="@id/radio_mode_wheels"
                 android:orientation="horizontal"
-                android:padding="2dp">
+                android:padding="3dp">
 
                 <RadioButton
                     android:id="@+id/radio_mode_wheels"
@@ -150,7 +157,7 @@
                     android:layout_height="match_parent"
                     android:layout_weight="1"
                     android:background="@drawable/bg_dialog_rounded"
-                    android:backgroundTint="@color/chip_bg_selected"
+                    android:backgroundTint="@color/brand_slate_950"
                     android:button="@null"
                     android:gravity="center"
                     android:text="@string/mode_picker_wheels"
@@ -168,7 +175,7 @@
                     android:button="@null"
                     android:gravity="center"
                     android:text="@string/mode_picker_text"
-                    android:textColor="@color/text_secondary"
+                    android:textColor="@color/brand_slate_600"
                     android:textSize="12sp"
                     android:textStyle="bold" />
             </RadioGroup>
@@ -184,11 +191,11 @@
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    app:cardBackgroundColor="@color/bg_main"
-                    app:cardCornerRadius="12dp"
+                    android:layout_marginTop="10dp"
+                    app:cardBackgroundColor="@color/brand_slate_50"
+                    app:cardCornerRadius="16dp"
                     app:cardElevation="0dp"
-                    app:strokeColor="@color/gray_border"
+                    app:strokeColor="@color/brand_slate_200"
                     app:strokeWidth="1dp">
 
                     <LinearLayout
@@ -203,7 +210,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginBottom="4dp"
                             android:text="@string/label_date_picker_header"
-                            android:textColor="@color/text_secondary"
+                            android:textColor="@color/brand_slate_600"
                             android:textSize="11sp"
                             android:textStyle="bold" />
 
@@ -221,10 +228,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="10dp"
-                    app:cardBackgroundColor="@color/bg_main"
-                    app:cardCornerRadius="12dp"
+                    app:cardBackgroundColor="@color/brand_slate_50"
+                    app:cardCornerRadius="16dp"
                     app:cardElevation="0dp"
-                    app:strokeColor="@color/gray_border"
+                    app:strokeColor="@color/brand_slate_200"
                     app:strokeWidth="1dp">
 
                     <LinearLayout
@@ -239,7 +246,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginBottom="6dp"
                             android:text="@string/label_time_picker_header"
-                            android:textColor="@color/text_secondary"
+                            android:textColor="@color/brand_slate_600"
                             android:textSize="11sp"
                             android:textStyle="bold" />
 
@@ -266,7 +273,7 @@
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="2dp"
                                     android:text="@string/unit_hour_label"
-                                    android:textColor="@color/text_secondary"
+                                    android:textColor="@color/brand_slate_500"
                                     android:textSize="11sp" />
                             </LinearLayout>
 
@@ -275,7 +282,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginHorizontal="8dp"
                                 android:text=":"
-                                android:textColor="@color/text_primary"
+                                android:textColor="@color/brand_slate_900"
                                 android:textSize="22sp"
                                 android:textStyle="bold" />
 
@@ -296,7 +303,7 @@
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="2dp"
                                     android:text="@string/unit_minute_label"
-                                    android:textColor="@color/text_secondary"
+                                    android:textColor="@color/brand_slate_500"
                                     android:textSize="11sp" />
                             </LinearLayout>
 
@@ -305,7 +312,7 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginHorizontal="8dp"
                                 android:text=":"
-                                android:textColor="@color/text_primary"
+                                android:textColor="@color/brand_slate_900"
                                 android:textSize="22sp"
                                 android:textStyle="bold" />
 
@@ -326,7 +333,7 @@
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="2dp"
                                     android:text="@string/unit_second_label"
-                                    android:textColor="@color/text_secondary"
+                                    android:textColor="@color/brand_slate_500"
                                     android:textSize="11sp" />
                             </LinearLayout>
                         </LinearLayout>
@@ -345,11 +352,11 @@
                 <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    app:cardBackgroundColor="@color/bg_main"
-                    app:cardCornerRadius="12dp"
+                    android:layout_marginTop="10dp"
+                    app:cardBackgroundColor="@color/brand_slate_50"
+                    app:cardCornerRadius="16dp"
                     app:cardElevation="0dp"
-                    app:strokeColor="@color/gray_border"
+                    app:strokeColor="@color/brand_slate_200"
                     app:strokeWidth="1dp">
 
                     <LinearLayout
@@ -363,14 +370,14 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/label_enter_date"
-                            android:textColor="@color/text_secondary"
+                            android:textColor="@color/brand_slate_700"
                             android:textSize="12sp"
                             android:textStyle="bold" />
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
+                            android:layout_marginTop="6dp"
                             android:gravity="center_vertical"
                             android:orientation="horizontal">
 
@@ -378,11 +385,13 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
+                                app:boxBackgroundColor="@color/white"
                                 app:boxBackgroundMode="outline"
-                                app:boxCornerRadiusBottomEnd="8dp"
-                                app:boxCornerRadiusBottomStart="8dp"
-                                app:boxCornerRadiusTopEnd="8dp"
-                                app:boxCornerRadiusTopStart="8dp">
+                                app:boxCornerRadiusBottomEnd="12dp"
+                                app:boxCornerRadiusBottomStart="12dp"
+                                app:boxCornerRadiusTopEnd="12dp"
+                                app:boxCornerRadiusTopStart="12dp"
+                                app:boxStrokeColor="@color/brand_slate_300">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/edit_text_date"
@@ -390,7 +399,7 @@
                                     android:layout_height="wrap_content"
                                     android:hint="@string/hint_enter_date"
                                     android:inputType="date"
-                                    android:textColor="@color/text_primary"
+                                    android:textColor="@color/brand_slate_900"
                                     android:textSize="14sp" />
                             </com.google.android.material.textfield.TextInputLayout>
 
@@ -406,28 +415,28 @@
                                 android:insetRight="0dp"
                                 android:insetTop="0dp"
                                 android:padding="0dp"
-                                app:cornerRadius="8dp"
+                                app:cornerRadius="12dp"
                                 app:icon="@drawable/ic_calendar"
                                 app:iconGravity="textStart"
                                 app:iconPadding="0dp"
-                                app:iconTint="@color/primary"
-                                app:strokeColor="@color/gray_border" />
+                                app:iconTint="@color/brand_emerald_600"
+                                app:strokeColor="@color/brand_slate_300" />
                         </LinearLayout>
 
                         <!-- Time input row -->
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="12dp"
+                            android:layout_marginTop="14dp"
                             android:text="@string/label_enter_time"
-                            android:textColor="@color/text_secondary"
+                            android:textColor="@color/brand_slate_700"
                             android:textSize="12sp"
                             android:textStyle="bold" />
 
                         <LinearLayout
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginTop="4dp"
+                            android:layout_marginTop="6dp"
                             android:gravity="center_vertical"
                             android:orientation="horizontal">
 
@@ -435,11 +444,13 @@
                                 android:layout_width="0dp"
                                 android:layout_height="wrap_content"
                                 android:layout_weight="1"
+                                app:boxBackgroundColor="@color/white"
                                 app:boxBackgroundMode="outline"
-                                app:boxCornerRadiusBottomEnd="8dp"
-                                app:boxCornerRadiusBottomStart="8dp"
-                                app:boxCornerRadiusTopEnd="8dp"
-                                app:boxCornerRadiusTopStart="8dp">
+                                app:boxCornerRadiusBottomEnd="12dp"
+                                app:boxCornerRadiusBottomStart="12dp"
+                                app:boxCornerRadiusTopEnd="12dp"
+                                app:boxCornerRadiusTopStart="12dp"
+                                app:boxStrokeColor="@color/brand_slate_300">
 
                                 <com.google.android.material.textfield.TextInputEditText
                                     android:id="@+id/edit_text_time"
@@ -447,7 +458,7 @@
                                     android:layout_height="wrap_content"
                                     android:hint="@string/hint_enter_time"
                                     android:inputType="time"
-                                    android:textColor="@color/text_primary"
+                                    android:textColor="@color/brand_slate_900"
                                     android:textSize="14sp" />
                             </com.google.android.material.textfield.TextInputLayout>
 
@@ -463,12 +474,12 @@
                                 android:insetRight="0dp"
                                 android:insetTop="0dp"
                                 android:padding="0dp"
-                                app:cornerRadius="8dp"
+                                app:cornerRadius="12dp"
                                 app:icon="@drawable/ic_clock"
                                 app:iconGravity="textStart"
                                 app:iconPadding="0dp"
-                                app:iconTint="@color/primary"
-                                app:strokeColor="@color/gray_border" />
+                                app:iconTint="@color/brand_emerald_600"
+                                app:strokeColor="@color/brand_slate_300" />
                         </LinearLayout>
 
                     </LinearLayout>
@@ -479,25 +490,25 @@
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
-                app:cardBackgroundColor="@color/gray_input_bg"
-                app:cardCornerRadius="12dp"
+                android:layout_marginTop="16dp"
+                app:cardBackgroundColor="@color/brand_slate_50"
+                app:cardCornerRadius="16dp"
                 app:cardElevation="0dp"
-                app:strokeColor="@color/gray_border"
+                app:strokeColor="@color/brand_slate_200"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="12dp">
+                    android:padding="14dp">
 
                     <TextView
                         android:id="@+id/text_preview_start_value"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="Początek: 2026-11-01 14:00:00"
-                        android:textColor="@color/text_primary"
+                        android:textColor="@color/brand_slate_900"
                         android:textSize="13sp"
                         android:textStyle="bold" />
 
@@ -507,7 +518,7 @@
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
                         android:text="Koniec: 2026-11-01 18:00:00"
-                        android:textColor="@color/text_primary"
+                        android:textColor="@color/brand_slate_900"
                         android:textSize="13sp"
                         android:textStyle="bold" />
                 </LinearLayout>
@@ -517,7 +528,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="18dp"
                 android:gravity="end|center_vertical"
                 android:orientation="horizontal">
 
@@ -527,18 +538,19 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/btn_cancel"
-                    android:textColor="@color/text_secondary" />
+                    android:textColor="@color/brand_slate_600" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_apply_dialog"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="48dp"
                     android:layout_marginStart="12dp"
-                    android:backgroundTint="@color/primary"
-                    android:paddingHorizontal="20dp"
+                    android:backgroundTint="@color/brand_slate_950"
+                    android:paddingHorizontal="22dp"
                     android:text="@string/btn_apply_datetime"
                     android:textColor="@color/white"
-                    app:cornerRadius="10dp" />
+                    android:textStyle="bold"
+                    app:cornerRadius="14dp" />
             </LinearLayout>
 
         </LinearLayout>

@@ -5,14 +5,15 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_main"
+    android:background="@color/brand_slate_50"
     tools:context=".ui.ProfileDetailsActivity">
 
-    <!-- Top Toolbar -->
+    <!-- Top Toolbar (Sticky modern bar with subtle blur vibe) -->
     <LinearLayout
         android:id="@+id/layout_top_bar"
         android:layout_width="0dp"
-        android:layout_height="56dp"
+        android:layout_height="58dp"
+        android:background="@color/card_background"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingHorizontal="16dp"
@@ -22,84 +23,100 @@
 
         <ImageView
             android:id="@+id/btn_back"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
             android:background="?android:attr/selectableItemBackgroundBorderless"
             android:clickable="true"
             android:contentDescription="@string/btn_cancel"
             android:focusable="true"
-            android:src="@drawable/ic_arrow_back" />
+            android:padding="6dp"
+            android:src="@drawable/ic_arrow_back"
+            app:tint="@color/brand_slate_900" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
+            android:layout_marginStart="12dp"
             android:layout_weight="1"
             android:text="@string/title_profile_details"
-            android:textColor="@color/text_primary"
-            android:textSize="20sp"
+            android:textColor="@color/brand_slate_950"
+            android:textSize="18sp"
             android:textStyle="bold" />
     </LinearLayout>
+
+    <View
+        android:id="@+id/top_bar_divider"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:background="@color/brand_slate_200"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/layout_top_bar" />
 
     <ScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:fillViewport="true"
+        android:overScrollMode="never"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/layout_top_bar">
+        app:layout_constraintTop_toBottomOf="@id/top_bar_divider">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="20dp">
+            android:paddingHorizontal="20dp"
+            android:paddingTop="24dp"
+            android:paddingBottom="32dp">
 
             <!-- Avatar & Change Photo Button -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="24dp"
+                android:layout_marginBottom="28dp"
                 android:gravity="center_horizontal"
                 android:orientation="vertical">
 
                 <com.google.android.material.imageview.ShapeableImageView
                     android:id="@+id/img_profile_details_avatar"
-                    android:layout_width="110dp"
-                    android:layout_height="110dp"
+                    android:layout_width="104dp"
+                    android:layout_height="104dp"
                     android:contentDescription="@string/nav_profile"
                     android:scaleType="centerCrop"
                     android:src="@drawable/ic_avatar"
                     app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
-                    app:strokeColor="@color/gray_border"
-                    app:strokeWidth="2dp" />
+                    app:strokeColor="@color/brand_emerald_200"
+                    app:strokeWidth="3dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_change_photo"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="12dp"
-                    android:backgroundTint="@color/dark_card_bg"
+                    android:backgroundTint="@color/brand_slate_950"
+                    android:elevation="2dp"
                     android:text="@string/btn_change_photo"
                     android:textColor="@color/white"
                     android:textSize="13sp"
                     android:textStyle="bold"
-                    app:cornerRadius="10dp"
+                    app:cornerRadius="14dp"
                     app:icon="@drawable/ic_edit_badge"
                     app:iconGravity="textStart"
                     app:iconSize="16dp"
-                    app:iconTint="@color/white" />
+                    app:iconTint="@color/brand_emerald_400" />
             </LinearLayout>
 
             <!-- 1. Dane osobowe -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
                 android:layout_marginBottom="8dp"
                 android:text="@string/section_personal_info"
-                android:textColor="@color/text_secondary"
-                android:textSize="13sp"
+                android:textColor="@color/brand_slate_500"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
             <com.google.android.material.card.MaterialCardView
@@ -111,9 +128,9 @@
                 android:focusable="true"
                 android:foreground="?android:attr/selectableItemBackground"
                 app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="14dp"
+                app:cardCornerRadius="20dp"
                 app:cardElevation="1dp"
-                app:strokeColor="@color/gray_border"
+                app:strokeColor="@color/brand_slate_200"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -133,7 +150,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/label_full_name"
-                            android:textColor="@color/text_secondary"
+                            android:textColor="@color/brand_slate_500"
                             android:textSize="12sp" />
 
                         <TextView
@@ -142,17 +159,20 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
                             android:text="@string/default_user_name"
-                            android:textColor="@color/text_primary"
-                            android:textSize="16sp"
+                            android:textColor="@color/brand_slate_950"
+                            android:textSize="15sp"
                             android:textStyle="bold" />
                     </LinearLayout>
 
                     <ImageView
                         android:id="@+id/btn_edit_name"
-                        android:layout_width="28dp"
-                        android:layout_height="28dp"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@drawable/bg_icon_rounded_slate"
                         android:contentDescription="@string/dialog_edit_name_title"
-                        android:src="@drawable/ic_edit_badge" />
+                        android:padding="9dp"
+                        android:src="@drawable/ic_edit_badge"
+                        app:tint="@color/brand_slate_700" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
@@ -160,10 +180,11 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
                 android:layout_marginBottom="8dp"
                 android:text="@string/section_contact_info"
-                android:textColor="@color/text_secondary"
-                android:textSize="13sp"
+                android:textColor="@color/brand_slate_500"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
             <com.google.android.material.card.MaterialCardView
@@ -171,9 +192,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="20dp"
                 app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="14dp"
+                app:cardCornerRadius="20dp"
                 app:cardElevation="1dp"
-                app:strokeColor="@color/gray_border"
+                app:strokeColor="@color/brand_slate_200"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -192,7 +213,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/label_email"
-                            android:textColor="@color/text_secondary"
+                            android:textColor="@color/brand_slate_500"
                             android:textSize="12sp" />
 
                         <TextView
@@ -201,7 +222,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
                             android:text="@string/default_user_email"
-                            android:textColor="@color/text_primary"
+                            android:textColor="@color/brand_slate_950"
                             android:textSize="15sp"
                             android:textStyle="bold" />
                     </LinearLayout>
@@ -209,7 +230,7 @@
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:background="@color/gray_border" />
+                        android:background="@color/brand_slate_100" />
 
                     <!-- Phone Row -->
                     <LinearLayout
@@ -233,7 +254,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:text="@string/label_phone_number"
-                                android:textColor="@color/text_secondary"
+                                android:textColor="@color/brand_slate_500"
                                 android:textSize="12sp" />
 
                             <TextView
@@ -242,17 +263,20 @@
                                 android:layout_height="wrap_content"
                                 android:layout_marginTop="2dp"
                                 android:text="@string/hint_phone_number"
-                                android:textColor="@color/text_primary"
+                                android:textColor="@color/brand_slate_950"
                                 android:textSize="15sp"
                                 android:textStyle="bold" />
                         </LinearLayout>
 
                         <ImageView
                             android:id="@+id/btn_edit_phone"
-                            android:layout_width="28dp"
-                            android:layout_height="28dp"
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:background="@drawable/bg_icon_rounded_slate"
                             android:contentDescription="@string/dialog_edit_phone_title"
-                            android:src="@drawable/ic_edit_badge" />
+                            android:padding="9dp"
+                            android:src="@drawable/ic_edit_badge"
+                            app:tint="@color/brand_slate_700" />
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -261,10 +285,11 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
                 android:layout_marginBottom="8dp"
                 android:text="@string/section_account_info"
-                android:textColor="@color/text_secondary"
-                android:textSize="13sp"
+                android:textColor="@color/brand_slate_500"
+                android:textSize="12sp"
                 android:textStyle="bold" />
 
             <com.google.android.material.card.MaterialCardView
@@ -272,9 +297,9 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="20dp"
                 app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="14dp"
+                app:cardCornerRadius="20dp"
                 app:cardElevation="1dp"
-                app:strokeColor="@color/gray_border"
+                app:strokeColor="@color/brand_slate_200"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -293,7 +318,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/label_role"
-                            android:textColor="@color/text_secondary"
+                            android:textColor="@color/brand_slate_500"
                             android:textSize="12sp" />
 
                         <TextView
@@ -302,7 +327,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
                             android:text="@string/role_driver"
-                            android:textColor="@color/text_primary"
+                            android:textColor="@color/brand_slate_950"
                             android:textSize="15sp"
                             android:textStyle="bold" />
                     </LinearLayout>
@@ -310,7 +335,7 @@
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
-                        android:background="@color/gray_border" />
+                        android:background="@color/brand_slate_100" />
 
                     <!-- Rating Row -->
                     <LinearLayout
@@ -323,7 +348,7 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/label_rating"
-                            android:textColor="@color/text_secondary"
+                            android:textColor="@color/brand_slate_500"
                             android:textSize="12sp" />
 
                         <TextView
@@ -332,7 +357,7 @@
                             android:layout_height="wrap_content"
                             android:layout_marginTop="2dp"
                             android:text="@string/badge_user_rating"
-                            android:textColor="@color/text_primary"
+                            android:textColor="@color/brand_slate_950"
                             android:textSize="15sp"
                             android:textStyle="bold" />
                     </LinearLayout>

@@ -2,22 +2,26 @@ package com.example.project.network;
 
 import com.example.project.network.model.CreateSpotRequest;
 import com.example.project.network.model.ParkingSpot;
+import com.example.project.network.model.SpotPhotoResponse;
 import com.example.project.network.model.UpdateSpotRequest;
 
 import java.util.List;
 
+import okhttp3.MultipartBody;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.DELETE;
 import retrofit2.http.GET;
+import retrofit2.http.Multipart;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
+import retrofit2.http.Part;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
 
 /**
  * Retrofit REST API interface defining parking spot discovery, creation,
- * activation, deactivation, edition, and deletion endpoints.
+ * activation, deactivation, edition, deletion, and photo management endpoints.
  */
 public interface SpotApiService {
 
@@ -107,4 +111,31 @@ public interface SpotApiService {
      */
     @DELETE("api/spots/{id}")
     Call<Void> deleteSpot(@Path("id") String id);
+
+    /**
+     * Uploads and attaches a photo to a parking spot via POST /api/spots/{id}/photos.
+     *
+     * @param id   Parking spot unique identifier
+     * @param file Multipart photo file part
+     * @return Retrofit Call delivering {@link SpotPhotoResponse}
+     */
+    @Multipart
+    @POST("api/spots/{id}/photos")
+    Call<SpotPhotoResponse> uploadSpotPhoto(
+            @Path("id") String id,
+            @Part MultipartBody.Part file
+    );
+
+    /**
+     * Deletes a photo from a parking spot via DELETE /api/spots/{id}/photos/{photoId}.
+     *
+     * @param id      Parking spot unique identifier
+     * @param photoId Photo unique identifier
+     * @return Retrofit Call delivering empty response body (204 No Content)
+     */
+    @DELETE("api/spots/{id}/photos/{photoId}")
+    Call<Void> deleteSpotPhoto(
+            @Path("id") String id,
+            @Path("photoId") String photoId
+    );
 }

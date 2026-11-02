@@ -5,7 +5,7 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_main"
+    android:background="@color/brand_slate_50"
     tools:context=".ui.ReservePlaceActivity">
 
     <!-- Top Bar -->
@@ -13,6 +13,7 @@
         android:id="@+id/layout_top_bar"
         android:layout_width="0dp"
         android:layout_height="56dp"
+        android:background="@color/card_background"
         android:gravity="center_vertical"
         android:orientation="horizontal"
         android:paddingHorizontal="16dp"
@@ -22,30 +23,44 @@
 
         <ImageView
             android:id="@+id/btn_back"
-            android:layout_width="24dp"
-            android:layout_height="24dp"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/title_reservation_details"
-            android:src="@drawable/ic_arrow_back" />
+            android:padding="6dp"
+            android:src="@drawable/ic_arrow_back"
+            app:tint="@color/brand_slate_950" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
+            android:layout_marginStart="12dp"
             android:layout_weight="1"
             android:text="@string/title_reservation_details"
-            android:textColor="@color/text_primary"
-            android:textSize="20sp"
+            android:textColor="@color/brand_slate_950"
+            android:textSize="18sp"
             android:textStyle="bold" />
     </LinearLayout>
+
+    <View
+        android:id="@+id/divider_top_bar"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:background="@color/brand_slate_200"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/layout_top_bar" />
 
     <ScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:clipToPadding="false"
         android:fillViewport="true"
+        android:overScrollMode="never"
         app:layout_constraintBottom_toTopOf="@id/bottom_navigation"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/layout_top_bar">
+        app:layout_constraintTop_toBottomOf="@id/divider_top_bar">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -53,14 +68,14 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <!-- Photo & Address Card -->
+            <!-- Card 1: Photo & Address Card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="16dp"
+                app:cardCornerRadius="20dp"
                 app:cardElevation="1dp"
-                app:strokeColor="@color/gray_border"
+                app:strokeColor="@color/brand_slate_200"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
@@ -78,138 +93,182 @@
                             android:layout_height="match_parent"
                             android:contentDescription="@string/title_reservation_details"
                             android:scaleType="centerCrop"
-                            android:src="@drawable/default_parking_spot" />
+                            android:src="@drawable/ic_places" />
 
-                        <TextView
+                        <!-- Available Now Pill Badge -->
+                        <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_margin="12dp"
-                            android:background="@drawable/ic_arrow_up"
-                            android:backgroundTint="@color/green_badge_bg"
+                            android:background="@drawable/bg_badge_emerald"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal"
                             android:paddingHorizontal="10dp"
-                            android:paddingVertical="4dp"
-                            android:text="@string/badge_available_now"
-                            android:textColor="@color/green_badge_text"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
+                            android:paddingVertical="4dp">
+
+                            <ImageView
+                                android:layout_width="12dp"
+                                android:layout_height="12dp"
+                                android:contentDescription="@null"
+                                android:src="@drawable/ic_shield_check"
+                                app:tint="@color/brand_emerald_700" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="4dp"
+                                android:text="@string/badge_available_now"
+                                android:textColor="@color/brand_emerald_700"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
                     </RelativeLayout>
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal"
+                        android:orientation="vertical"
                         android:padding="16dp">
 
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:contentDescription="@string/title_reservation_details"
-                            android:src="@drawable/ic_map_link" />
-
                         <LinearLayout
-                            android:layout_width="0dp"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_marginStart="12dp"
-                            android:layout_weight="1"
-                            android:orientation="vertical">
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
 
-                            <TextView
-                                android:id="@+id/text_place_street"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:textColor="@color/text_primary"
-                                android:textSize="17sp"
-                                android:textStyle="bold" />
+                            <ImageView
+                                android:layout_width="20dp"
+                                android:layout_height="20dp"
+                                android:contentDescription="@null"
+                                android:src="@drawable/ic_location_pin"
+                                app:tint="@color/brand_emerald_600" />
 
-                            <TextView
-                                android:id="@+id/text_place_city"
-                                android:layout_width="wrap_content"
+                            <LinearLayout
+                                android:layout_width="0dp"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="13sp" />
+                                android:layout_marginStart="10dp"
+                                android:layout_weight="1"
+                                android:orientation="vertical">
 
-                            <!-- Amenities under title/name -->
-                            <com.google.android.material.chip.ChipGroup
-                                android:id="@+id/chip_group_place_amenities"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:visibility="gone"
-                                app:chipSpacingHorizontal="6dp"
-                                app:chipSpacingVertical="4dp" />
+                                <TextView
+                                    android:id="@+id/text_place_street"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:textColor="@color/brand_slate_950"
+                                    android:textSize="17sp"
+                                    android:textStyle="bold"
+                                    tools:text="Parking Podziemny Centrum" />
 
-                            <!-- Description under amenities -->
-                            <TextView
-                                android:id="@+id/text_place_description"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:lineSpacingExtra="2dp"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="13sp"
-                                android:visibility="gone" />
-
-                            <!-- Blocked periods badge in announcement -->
-                            <TextView
-                                android:id="@+id/text_place_blocked_announcement"
-                                android:layout_width="match_parent"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="8dp"
-                                android:background="@drawable/bg_dialog_rounded"
-                                android:backgroundTint="@color/status_cancelled_bg"
-                                android:drawableStart="@drawable/ic_block"
-                                android:drawablePadding="8dp"
-                                android:drawableTint="@color/delete_btn_bg"
-                                android:padding="10dp"
-                                android:textColor="@color/delete_btn_bg"
-                                android:textSize="12sp"
-                                android:textStyle="bold"
-                                android:visibility="gone" />
+                                <TextView
+                                    android:id="@+id/text_place_city"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:textColor="@color/brand_slate_600"
+                                    android:textSize="13sp"
+                                    tools:text="Warszawa, Złota 44" />
+                            </LinearLayout>
                         </LinearLayout>
+
+                        <!-- Amenities under title -->
+                        <com.google.android.material.chip.ChipGroup
+                            android:id="@+id/chip_group_place_amenities"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:visibility="gone"
+                            app:chipSpacingHorizontal="6dp"
+                            app:chipSpacingVertical="4dp"
+                            tools:visibility="visible" />
+
+                        <!-- Description under amenities -->
+                        <TextView
+                            android:id="@+id/text_place_description"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="8dp"
+                            android:lineSpacingExtra="2dp"
+                            android:textColor="@color/brand_slate_600"
+                            android:textSize="13sp"
+                            android:visibility="gone"
+                            tools:text="Szerokie miejsce postojowe blisko windy, poziom -1."
+                            tools:visibility="visible" />
+
+                        <!-- Blocked periods badge in announcement -->
+                        <TextView
+                            android:id="@+id/text_place_blocked_announcement"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="10dp"
+                            android:background="@drawable/bg_badge_rose"
+                            android:drawableStart="@drawable/ic_block"
+                            android:drawablePadding="8dp"
+                            android:drawableTint="@color/brand_rose_600"
+                            android:paddingHorizontal="12dp"
+                            android:paddingVertical="8dp"
+                            android:textColor="@color/brand_rose_700"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:visibility="gone"
+                            tools:text="⛔ 18:00 - 20:00 zablokowane przez właściciela"
+                            tools:visibility="visible" />
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- HARMONOGRAM Card -->
+            <!-- Card 2: HARMONOGRAM Card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="16dp"
+                app:cardCornerRadius="20dp"
                 app:cardElevation="1dp"
-                app:strokeColor="@color/gray_border"
+                app:strokeColor="@color/brand_slate_200"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="20dp">
 
                     <RelativeLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content">
 
-                        <TextView
+                        <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_alignParentStart="true"
-                            android:text="@string/header_schedule"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <ImageView
+                                android:layout_width="18dp"
+                                android:layout_height="18dp"
+                                android:contentDescription="@null"
+                                android:src="@drawable/ic_clock"
+                                app:tint="@color/brand_emerald_600" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="8dp"
+                                android:text="@string/header_schedule"
+                                android:textColor="@color/brand_slate_950"
+                                android:textSize="16sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_alignParentEnd="true"
+                            android:layout_centerVertical="true"
                             android:text="@string/subtitle_date_time_format"
-                            android:textColor="@color/primary"
-                            android:textSize="11sp"
-                            android:textStyle="bold" />
+                            android:textColor="@color/brand_slate_500"
+                            android:textSize="11sp" />
                     </RelativeLayout>
 
                     <!-- Start & End Date-Time Selectors Grid -->
@@ -228,10 +287,11 @@
                             android:layout_weight="1"
                             android:clickable="true"
                             android:focusable="true"
-                            app:cardBackgroundColor="@color/bg_main"
-                            app:cardCornerRadius="12dp"
+                            android:foreground="?attr/selectableItemBackground"
+                            app:cardBackgroundColor="@color/brand_slate_50"
+                            app:cardCornerRadius="14dp"
                             app:cardElevation="0dp"
-                            app:strokeColor="@color/gray_border"
+                            app:strokeColor="@color/brand_slate_200"
                             app:strokeWidth="1dp">
 
                             <LinearLayout
@@ -251,14 +311,14 @@
                                         android:layout_height="14dp"
                                         android:contentDescription="@string/label_start_time"
                                         android:src="@drawable/ic_calendar"
-                                        app:tint="@color/primary" />
+                                        app:tint="@color/brand_emerald_600" />
 
                                     <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:layout_marginStart="6dp"
                                         android:text="@string/label_start_time"
-                                        android:textColor="@color/text_secondary"
+                                        android:textColor="@color/brand_slate_500"
                                         android:textSize="11sp"
                                         android:textStyle="bold" />
                                 </LinearLayout>
@@ -268,19 +328,19 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="6dp"
-                                    android:text="2026-10-25"
-                                    android:textColor="@color/text_secondary"
-                                    android:textSize="12sp" />
+                                    android:textColor="@color/brand_slate_500"
+                                    android:textSize="12sp"
+                                    tools:text="2026-11-02" />
 
                                 <TextView
                                     android:id="@+id/text_start_time_value"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="2dp"
-                                    android:text="14:00:00"
-                                    android:textColor="@color/text_primary"
-                                    android:textSize="15sp"
-                                    android:textStyle="bold" />
+                                    android:textColor="@color/brand_slate_950"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold"
+                                    tools:text="14:00:00" />
                             </LinearLayout>
                         </com.google.android.material.card.MaterialCardView>
 
@@ -288,9 +348,9 @@
                             android:layout_width="20dp"
                             android:layout_height="20dp"
                             android:layout_marginHorizontal="6dp"
-                            android:contentDescription="@string/header_schedule"
+                            android:contentDescription="@null"
                             android:src="@drawable/ic_chevron_right"
-                            app:tint="@color/text_secondary" />
+                            app:tint="@color/brand_slate_400" />
 
                         <!-- End Box -->
                         <com.google.android.material.card.MaterialCardView
@@ -300,10 +360,11 @@
                             android:layout_weight="1"
                             android:clickable="true"
                             android:focusable="true"
-                            app:cardBackgroundColor="@color/bg_main"
-                            app:cardCornerRadius="12dp"
+                            android:foreground="?attr/selectableItemBackground"
+                            app:cardBackgroundColor="@color/brand_slate_50"
+                            app:cardCornerRadius="14dp"
                             app:cardElevation="0dp"
-                            app:strokeColor="@color/gray_border"
+                            app:strokeColor="@color/brand_slate_200"
                             app:strokeWidth="1dp">
 
                             <LinearLayout
@@ -323,14 +384,14 @@
                                         android:layout_height="14dp"
                                         android:contentDescription="@string/label_end_time"
                                         android:src="@drawable/ic_clock"
-                                        app:tint="@color/primary" />
+                                        app:tint="@color/brand_emerald_600" />
 
                                     <TextView
                                         android:layout_width="wrap_content"
                                         android:layout_height="wrap_content"
                                         android:layout_marginStart="6dp"
                                         android:text="@string/label_end_time"
-                                        android:textColor="@color/text_secondary"
+                                        android:textColor="@color/brand_slate_500"
                                         android:textSize="11sp"
                                         android:textStyle="bold" />
                                 </LinearLayout>
@@ -340,38 +401,45 @@
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="6dp"
-                                    android:text="2026-10-25"
-                                    android:textColor="@color/text_secondary"
-                                    android:textSize="12sp" />
+                                    android:textColor="@color/brand_slate_500"
+                                    android:textSize="12sp"
+                                    tools:text="2026-11-02" />
 
                                 <TextView
                                     android:id="@+id/text_end_time_value"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
                                     android:layout_marginTop="2dp"
-                                    android:text="18:00:00"
-                                    android:textColor="@color/text_primary"
-                                    android:textSize="15sp"
-                                    android:textStyle="bold" />
+                                    android:textColor="@color/brand_slate_950"
+                                    android:textSize="16sp"
+                                    android:textStyle="bold"
+                                    tools:text="18:00:00" />
                             </LinearLayout>
                         </com.google.android.material.card.MaterialCardView>
                     </LinearLayout>
 
+                    <!-- Change time button -->
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_change_time"
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                         android:layout_width="match_parent"
                         android:layout_height="46dp"
                         android:layout_marginTop="14dp"
+                        android:backgroundTint="@color/card_background"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
                         android:text="@string/btn_select_datetime"
-                        android:textColor="@color/text_primary"
+                        android:textAllCaps="false"
+                        android:textColor="@color/brand_slate_800"
                         android:textSize="13sp"
                         android:textStyle="bold"
-                        app:cornerRadius="10dp"
+                        app:cornerRadius="12dp"
                         app:icon="@drawable/ic_calendar"
                         app:iconGravity="textStart"
-                        app:iconTint="@color/primary"
-                        app:strokeColor="@color/gray_border" />
+                        app:iconPadding="8dp"
+                        app:iconTint="@color/brand_emerald_600"
+                        app:strokeColor="@color/brand_slate_200"
+                        app:strokeWidth="1dp" />
 
                     <!-- Warning banner if spot is blocked -->
                     <TextView
@@ -379,35 +447,37 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="12dp"
-                        android:background="@drawable/bg_dialog_rounded"
-                        android:backgroundTint="@color/status_cancelled_bg"
+                        android:background="@drawable/bg_badge_rose"
                         android:drawableStart="@drawable/ic_block"
                         android:drawablePadding="8dp"
-                        android:drawableTint="@color/delete_btn_bg"
-                        android:padding="10dp"
-                        android:textColor="@color/delete_btn_bg"
+                        android:drawableTint="@color/brand_rose_600"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="8dp"
+                        android:textColor="@color/brand_rose_700"
                         android:textSize="12sp"
                         android:textStyle="bold"
-                        android:visibility="gone" />
+                        android:visibility="gone"
+                        tools:text="⛔ Miejsce zablokowane w wybranym terminie"
+                        tools:visibility="visible" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- WYBIERZ POJAZD Card -->
+            <!-- Card 3: WYBIERZ POJAZD Card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="16dp"
+                app:cardCornerRadius="20dp"
                 app:cardElevation="1dp"
-                app:strokeColor="@color/gray_border"
+                app:strokeColor="@color/brand_slate_200"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="20dp">
 
                     <RelativeLayout
                         android:layout_width="match_parent"
@@ -418,8 +488,8 @@
                             android:layout_height="wrap_content"
                             android:layout_alignParentStart="true"
                             android:text="@string/header_select_vehicle"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="12sp"
+                            android:textColor="@color/brand_slate_950"
+                            android:textSize="16sp"
                             android:textStyle="bold" />
 
                         <TextView
@@ -427,8 +497,11 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_alignParentEnd="true"
+                            android:background="?attr/selectableItemBackground"
+                            android:clickable="true"
+                            android:focusable="true"
                             android:text="@string/btn_add_vehicle_plus"
-                            android:textColor="@color/green_dark"
+                            android:textColor="@color/brand_emerald_700"
                             android:textSize="13sp"
                             android:textStyle="bold" />
                     </RelativeLayout>
@@ -438,20 +511,22 @@
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
                         android:layout_marginTop="12dp"
-                        android:background="@drawable/bg_dashed_border"
-                        android:backgroundTint="@color/gray_input_bg"
+                        android:background="@drawable/bg_input_rounded"
                         android:paddingHorizontal="12dp" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- PODSUMOWANIE Card -->
+            <!-- Card 4: PODSUMOWANIE Card (ParkShare Web Style) -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                app:cardBackgroundColor="#F0F7FF"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="0dp">
+                android:layout_marginBottom="12dp"
+                app:cardBackgroundColor="@color/card_background"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="1dp"
+                app:strokeColor="@color/brand_slate_200"
+                app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
@@ -463,21 +538,22 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:text="@string/header_summary"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp"
+                        android:textColor="@color/brand_slate_950"
+                        android:textSize="17sp"
                         android:textStyle="bold" />
 
+                    <!-- Duration row -->
                     <RelativeLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp">
+                        android:layout_marginTop="14dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_alignParentStart="true"
                             android:text="@string/label_duration"
-                            android:textColor="@color/text_secondary"
+                            android:textColor="@color/brand_slate_600"
                             android:textSize="14sp" />
 
                         <TextView
@@ -485,48 +561,50 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_alignParentEnd="true"
-                            android:text="@string/sample_4h"
-                            android:textColor="@color/text_primary"
+                            android:textColor="@color/brand_slate_950"
                             android:textSize="14sp"
-                            android:textStyle="bold" />
+                            android:textStyle="bold"
+                            tools:text="4.0h" />
                     </RelativeLayout>
 
+                    <!-- Rate row -->
                     <RelativeLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp">
+                        android:layout_marginTop="10dp">
 
                         <TextView
                             android:id="@+id/text_summary_rate_label"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_alignParentStart="true"
-                            android:text="Stawka (10 PLN/h)"
-                            android:textColor="@color/text_secondary"
-                            android:textSize="14sp" />
+                            android:textColor="@color/brand_slate_600"
+                            android:textSize="14sp"
+                            tools:text="Stawka (10.00 PLN/h)" />
 
                         <TextView
                             android:id="@+id/text_summary_rate_value"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_alignParentEnd="true"
-                            android:text="40.00 PLN"
-                            android:textColor="@color/text_primary"
+                            android:textColor="@color/brand_slate_950"
                             android:textSize="14sp"
-                            android:textStyle="bold" />
+                            android:textStyle="bold"
+                            tools:text="40.00 PLN" />
                     </RelativeLayout>
 
+                    <!-- Service fee row -->
                     <RelativeLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp">
+                        android:layout_marginTop="10dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_alignParentStart="true"
                             android:text="@string/label_service_fee"
-                            android:textColor="@color/text_secondary"
+                            android:textColor="@color/brand_slate_600"
                             android:textSize="14sp" />
 
                         <TextView
@@ -534,18 +612,48 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_alignParentEnd="true"
-                            android:text="2.50 PLN"
-                            android:textColor="@color/text_primary"
+                            android:textColor="@color/brand_slate_950"
                             android:textSize="14sp"
-                            android:textStyle="bold" />
+                            android:textStyle="bold"
+                            tools:text="2.50 PLN" />
                     </RelativeLayout>
+
+                    <!-- Soft Escrow Guarantee Banner (ParkShare Web Style) -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:background="@drawable/bg_badge_emerald"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:padding="12dp">
+
+                        <ImageView
+                            android:layout_width="18dp"
+                            android:layout_height="18dp"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_shield_check"
+                            app:tint="@color/brand_emerald_600" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:layout_weight="1"
+                            android:lineSpacingExtra="1dp"
+                            android:text="@string/info_escrow_guarantee"
+                            android:textColor="@color/brand_emerald_900"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
 
                     <View
                         android:layout_width="match_parent"
                         android:layout_height="1dp"
                         android:layout_marginVertical="16dp"
-                        android:background="#DBEAFE" />
+                        android:background="@color/brand_slate_200" />
 
+                    <!-- Total Sum row -->
                     <RelativeLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content">
@@ -554,9 +662,10 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_alignParentStart="true"
+                            android:layout_centerVertical="true"
                             android:text="@string/label_total_sum"
-                            android:textColor="@color/text_primary"
-                            android:textSize="20sp"
+                            android:textColor="@color/brand_slate_950"
+                            android:textSize="18sp"
                             android:textStyle="bold" />
 
                         <TextView
@@ -564,24 +673,34 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_alignParentEnd="true"
-                            android:text="42.50 PLN"
-                            android:textColor="@color/text_primary"
+                            android:layout_centerVertical="true"
+                            android:textColor="@color/brand_slate_950"
                             android:textSize="22sp"
-                            android:textStyle="bold" />
+                            android:textStyle="bold"
+                            tools:text="42.50 PLN" />
                     </RelativeLayout>
 
+                    <!-- Primary Booking Button -->
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_reserve_and_pay"
+                        style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
                         android:layout_width="match_parent"
-                        android:layout_height="54dp"
+                        android:layout_height="52dp"
                         android:layout_marginTop="20dp"
-                        android:backgroundTint="@color/chip_bg_selected"
+                        android:backgroundTint="@color/brand_slate_950"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
                         android:text="@string/btn_reserve_and_pay"
                         android:textAllCaps="false"
                         android:textColor="@color/white"
-                        android:textSize="16sp"
+                        android:textSize="15sp"
                         android:textStyle="bold"
-                        app:cornerRadius="12dp" />
+                        app:cornerRadius="14dp"
+                        app:icon="@drawable/ic_arrow_forward"
+                        app:iconGravity="textEnd"
+                        app:iconPadding="8dp"
+                        app:iconSize="16dp"
+                        app:iconTint="@color/brand_emerald_400" />
 
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
@@ -589,11 +708,15 @@
         </LinearLayout>
     </ScrollView>
 
+    <!-- Bottom Navigation Bar -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_navigation"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:background="?android:attr/windowBackground"
+        android:background="@color/card_background"
+        app:elevation="8dp"
+        app:itemIconTint="@color/bottom_nav_item_color"
+        app:itemTextColor="@color/bottom_nav_item_color"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

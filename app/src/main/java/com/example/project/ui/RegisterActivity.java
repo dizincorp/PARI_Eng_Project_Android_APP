@@ -74,6 +74,7 @@ public class RegisterActivity extends AppCompatActivity {
         binding.btnGoogleRegister.setOnClickListener(v -> viewModel.loginWithGoogle());
 
         binding.btnGoToLogin.setOnClickListener(v -> finish());
+        binding.tabLogin.setOnClickListener(v -> finish());
     }
 
     private void observeViewModel() {

@@ -3,31 +3,65 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:background="@drawable/bg_dialog_rounded"
     android:orientation="vertical"
     android:padding="20dp">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/title_my_vehicles"
-        android:textColor="@color/text_primary"
-        android:textSize="20sp"
-        android:textStyle="bold" />
+    <!-- Header bar with Title, Subtitle, and Close 'X' Button -->
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:text="@string/subtitle_my_vehicles"
-        android:textColor="@color/text_secondary"
-        android:textSize="13sp" />
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_centerVertical="true"
+            android:layout_toStartOf="@id/btn_close_vehicles_dialog"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/title_my_vehicles"
+                android:textColor="@color/brand_slate_950"
+                android:textSize="20sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:text="@string/subtitle_my_vehicles"
+                android:textColor="@color/brand_slate_500"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <ImageButton
+            android:id="@+id/btn_close_vehicles_dialog"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/btn_close"
+            android:padding="6dp"
+            android:src="@drawable/ic_close"
+            app:tint="@color/brand_slate_400" />
+    </RelativeLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginTop="14dp"
+        android:layout_marginBottom="12dp"
+        android:background="@color/brand_slate_200" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recycler_vehicles"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:maxHeight="260dp"
+        android:maxHeight="280dp"
         android:nestedScrollingEnabled="false" />
 
     <TextView
@@ -37,21 +71,24 @@
         android:layout_marginVertical="24dp"
         android:gravity="center"
         android:text="@string/msg_no_vehicles"
-        android:textColor="@color/text_secondary"
+        android:textColor="@color/brand_slate_500"
         android:textSize="14sp"
         android:visibility="gone" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_add_new_vehicle"
+        style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:layout_marginTop="16dp"
-        android:backgroundTint="@color/blue_accent"
+        android:backgroundTint="@color/brand_slate_950"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
         android:text="@string/btn_add_vehicle_dialog"
         android:textAllCaps="false"
         android:textColor="@color/white"
         android:textSize="15sp"
         android:textStyle="bold"
-        app:cornerRadius="12dp" />
+        app:cornerRadius="14dp" />
 
 </LinearLayout>

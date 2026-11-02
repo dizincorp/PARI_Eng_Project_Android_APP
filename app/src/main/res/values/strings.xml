@@ -282,6 +282,9 @@
     <string name="badge_not_premium_member">NOT PREMIUM MEMBER</string>
     <string name="badge_czlonek_premium">Członek Premium</string>
     <string name="badge_user_rating">★ 4.9 Rating</string>
+    <string name="badge_verified_profile">Zweryfikowany profil</string>
+    <string name="badge_role_format">Tryb: %1$s</string>
+    <string name="badge_rating_format">★ %.1f Ocena</string>
     <string name="menu_profile">Profil</string>
     <string name="menu_sub_profile">Imię, nazwisko, telefon, e-mail</string>
     <string name="title_profile_details">Szczegóły profilu</string>
@@ -482,4 +485,33 @@
     <string name="format_spots_ratio">%1$d z %2$d</string>
     <string name="title_daily_breakdown">Dzienny rozkład przychodów</string>
     <string name="msg_no_daily_data">Brak danych dziennych do wyświetlenia.</string>
+
+    <!-- Map & Search Screen Strings -->
+    <string name="city_all">Wszystkie</string>
+    <string name="city_warszawa">Warszawa</string>
+    <string name="city_krakow">Kraków</string>
+    <string name="city_lublin">Lublin</string>
+    <string name="city_wroclaw">Wrocław</string>
+    <string name="city_poznan">Poznań</string>
+    <string name="city_gdansk">Gdańsk</string>
+    <string name="btn_center_map_desc">Wycentruj mapę</string>
+    <string name="verified_spot_badge">Zweryfikowane</string>
+    <string name="btn_spot_reviews">Opinie</string>
+    <string name="preview_price_unit_modern">zł / h</string>
+    <string name="search_popular_label">Popularne:</string>
+
+    <!-- Auth Brand Strings (Web Style) -->
+    <string name="app_brand_letter">P</string>
+    <string name="app_tagline">Platforma współdzielenia prywatnych miejsc parkingowych</string>
+    <string name="tab_auth_login">Logowanie</string>
+    <string name="tab_auth_register">Rejestracja</string>
+    <string name="subtitle_register_account">Wypełnij dane, aby utworzyć nowe konto.</string>
+    <string name="google_signin_text">Kontynuuj przez Google</string>
+    <string name="info_escrow_guarantee">Bezpieczeństwo Soft Escrow: Środki zostaną przekazane właścicielowi po zakończeniu parkowania.</string>
+    <string name="status_blocked">Zablokowane</string>
+    <string name="subtitle_add_vehicle">Wprowadź markę i numer rejestracyjny</string>
+    <string name="label_review_comment">Komentarz (opcjonalnie)</string>
+    <string name="subtitle_payment_methods">Zarządzaj kartami płatniczymi i rozliczeniami</string>
+    <string name="badge_default_payment">Domyślna</string>
+    <string name="label_saved_cards">Zapisane karty</string>
 </resources>

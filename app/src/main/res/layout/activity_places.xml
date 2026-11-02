@@ -5,13 +5,14 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_main"
-    tools:context=".PlacesActivity">
+    android:background="@color/brand_slate_50"
+    tools:context=".ui.PlacesActivity">
 
     <ScrollView
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:fillViewport="true"
+        android:overScrollMode="never"
         app:layout_constraintBottom_toTopOf="@id/bottom_navigation"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -21,7 +22,9 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:padding="16dp">
+            android:paddingHorizontal="20dp"
+            android:paddingTop="28dp"
+            android:paddingBottom="24dp">
 
             <!-- Greeting Section -->
             <TextView
@@ -29,8 +32,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/user_greeting"
-                android:textColor="@color/text_primary"
-                android:textSize="26sp"
+                android:textColor="@color/brand_slate_950"
+                android:textSize="24sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -39,29 +42,29 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:text="@string/dashboard_subtitle"
-                android:textColor="@color/text_secondary"
-                android:textSize="14sp" />
+                android:textColor="@color/brand_slate_500"
+                android:textSize="13sp" />
 
-            <!-- Earnings Card -->
+            <!-- Earnings Card (Modern White Flat Surface with Rounded Corners) -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/card_earnings"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="20dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?android:attr/selectableItemBackground"
                 app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="16dp"
-                app:cardElevation="2dp"
-                app:strokeColor="@color/gray_border"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="1dp"
+                app:strokeColor="@color/brand_slate_200"
                 app:strokeWidth="1dp">
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="16dp">
+                    android:padding="18dp">
 
                     <RelativeLayout
                         android:layout_width="match_parent"
@@ -71,36 +74,37 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_alignParentStart="true"
+                            android:layout_centerVertical="true"
                             android:text="@string/earnings_title"
-                            android:textColor="@color/text_secondary"
+                            android:textColor="@color/brand_slate_500"
                             android:textSize="12sp"
                             android:textStyle="bold" />
 
-                        <!-- Growth Badge -->
+                        <!-- Growth Badge (Soft Emerald Pill) -->
                         <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_alignParentEnd="true"
-                            android:background="@drawable/ic_arrow_up"
-                            android:backgroundTint="@color/green_badge_bg"
+                            android:background="@drawable/bg_badge_emerald"
                             android:gravity="center"
                             android:orientation="horizontal"
                             android:paddingHorizontal="8dp"
                             android:paddingVertical="4dp">
 
                             <ImageView
-                                android:layout_width="14dp"
-                                android:layout_height="14dp"
+                                android:layout_width="12dp"
+                                android:layout_height="12dp"
                                 android:contentDescription="@string/earnings_growth"
-                                android:src="@drawable/ic_arrow_up" />
+                                android:src="@drawable/ic_arrow_up"
+                                app:tint="@color/brand_emerald_700" />
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="4dp"
                                 android:text="@string/earnings_growth"
-                                android:textColor="@color/green_badge_text"
-                                android:textSize="12sp"
+                                android:textColor="@color/brand_emerald_700"
+                                android:textSize="11sp"
                                 android:textStyle="bold" />
                         </LinearLayout>
                     </RelativeLayout>
@@ -109,121 +113,125 @@
                         android:id="@+id/text_earnings_value"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="8dp"
+                        android:layout_marginTop="10dp"
                         android:text="@string/earnings_value"
-                        android:textColor="@color/text_primary"
+                        android:textColor="@color/brand_slate_950"
                         android:textSize="28sp"
                         android:textStyle="bold" />
 
-                    <!-- Bar Chart Representation -->
+                    <!-- Bar Chart Representation with Rounded Bars -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="64dp"
-                        android:layout_marginTop="16dp"
+                        android:layout_marginTop="18dp"
                         android:gravity="bottom"
                         android:orientation="horizontal">
 
                         <View
                             android:layout_width="0dp"
+                            android:layout_height="18dp"
+                            android:layout_marginEnd="8dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_bar_chart_slate" />
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="32dp"
+                            android:layout_marginEnd="8dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_bar_chart_slate" />
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="44dp"
+                            android:layout_marginEnd="8dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_bar_chart_slate" />
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="24dp"
+                            android:layout_marginEnd="8dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_bar_chart_slate" />
+
+                        <View
+                            android:layout_width="0dp"
+                            android:layout_height="62dp"
+                            android:layout_marginEnd="8dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_bar_chart_emerald" />
+
+                        <View
+                            android:layout_width="0dp"
                             android:layout_height="16dp"
-                            android:layout_marginEnd="8dp"
                             android:layout_weight="1"
-                            android:background="@color/gray_bar" />
-
-                        <View
-                            android:layout_width="0dp"
-                            android:layout_height="28dp"
-                            android:layout_marginEnd="8dp"
-                            android:layout_weight="1"
-                            android:background="@color/gray_bar" />
-
-                        <View
-                            android:layout_width="0dp"
-                            android:layout_height="40dp"
-                            android:layout_marginEnd="8dp"
-                            android:layout_weight="1"
-                            android:background="@color/gray_bar" />
-
-                        <View
-                            android:layout_width="0dp"
-                            android:layout_height="20dp"
-                            android:layout_marginEnd="8dp"
-                            android:layout_weight="1"
-                            android:background="@color/gray_bar" />
-
-                        <View
-                            android:layout_width="0dp"
-                            android:layout_height="60dp"
-                            android:layout_marginEnd="8dp"
-                            android:layout_weight="1"
-                            android:background="@color/green_dark" />
-
-                        <View
-                            android:layout_width="0dp"
-                            android:layout_height="14dp"
-                            android:layout_weight="1"
-                            android:background="@color/gray_bar" />
+                            android:background="@drawable/bg_bar_chart_slate" />
                     </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Action Buttons Row -->
+            <!-- Action Buttons Row (Add Spot & Availability) -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="18dp"
                 android:orientation="horizontal">
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_add_place"
                     android:layout_width="0dp"
-                    android:layout_height="52dp"
-                    android:layout_marginEnd="8dp"
+                    android:layout_height="50dp"
+                    android:layout_marginEnd="6dp"
                     android:layout_weight="1"
-                    android:backgroundTint="@color/chip_bg_selected"
+                    android:backgroundTint="@color/brand_slate_950"
+                    android:elevation="2dp"
                     android:text="@string/btn_add_place"
                     android:textAllCaps="false"
                     android:textColor="@color/white"
-                    android:textSize="14sp"
+                    android:textSize="13sp"
                     android:textStyle="bold"
-                    app:cornerRadius="12dp"
+                    app:cornerRadius="14dp"
                     app:icon="@drawable/ic_add_location"
                     app:iconGravity="textStart"
-                    app:iconTint="@color/white" />
+                    app:iconSize="16dp"
+                    app:iconTint="@color/brand_emerald_400" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_availability"
                     android:layout_width="0dp"
-                    android:layout_height="52dp"
-                    android:layout_marginStart="8dp"
+                    android:layout_height="50dp"
+                    android:layout_marginStart="6dp"
                     android:layout_weight="1"
-                    android:backgroundTint="@color/white"
+                    android:backgroundTint="@color/card_background"
+                    android:elevation="1dp"
                     android:text="@string/btn_availability"
                     android:textAllCaps="false"
-                    android:textColor="@color/text_primary"
-                    android:textSize="14sp"
+                    android:textColor="@color/brand_slate_900"
+                    android:textSize="13sp"
                     android:textStyle="bold"
-                    app:cornerRadius="12dp"
+                    app:cornerRadius="14dp"
                     app:icon="@drawable/ic_calendar"
                     app:iconGravity="textStart"
-                    app:iconTint="@color/text_primary"
-                    app:strokeColor="@color/text_primary"
+                    app:iconSize="16dp"
+                    app:iconTint="@color/brand_slate_700"
+                    app:strokeColor="@color/brand_slate_200"
                     app:strokeWidth="1dp" />
             </LinearLayout>
 
-            <!-- Section Moje Miejsca -->
+            <!-- Section Moje Miejsca Header -->
             <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp">
+                android:layout_marginTop="26dp">
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentStart="true"
                     android:text="@string/my_places_title"
-                    android:textColor="@color/text_primary"
-                    android:textSize="20sp"
+                    android:textColor="@color/brand_slate_950"
+                    android:textSize="18sp"
                     android:textStyle="bold" />
 
                 <TextView
@@ -231,12 +239,12 @@
                     android:layout_height="wrap_content"
                     android:layout_alignParentEnd="true"
                     android:text="@string/link_all"
-                    android:textColor="@color/green_dark"
-                    android:textSize="14sp"
+                    android:textColor="@color/brand_emerald_600"
+                    android:textSize="13sp"
                     android:textStyle="bold" />
             </RelativeLayout>
 
-            <!-- My Places Container -->
+            <!-- My Places Dynamic Container -->
             <LinearLayout
                 android:id="@+id/container_my_places"
                 android:layout_width="match_parent"

@@ -3,11 +3,11 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="12dp"
+    android:layout_marginBottom="10dp"
     app:cardBackgroundColor="@color/card_background"
     app:cardCornerRadius="16dp"
     app:cardElevation="1dp"
-    app:strokeColor="@color/gray_border"
+    app:strokeColor="@color/brand_slate_200"
     app:strokeWidth="1dp">
 
     <LinearLayout
@@ -25,8 +25,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
-                android:textColor="@color/text_primary"
-                android:textSize="16sp"
+                android:textColor="@color/brand_slate_950"
+                android:textSize="15sp"
                 android:textStyle="bold" />
 
             <TextView
@@ -34,7 +34,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_alignParentEnd="true"
-                android:textColor="@color/green_dark"
+                android:textColor="@color/brand_emerald_600"
                 android:textSize="16sp"
                 android:textStyle="bold" />
         </RelativeLayout>
@@ -44,8 +44,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:textColor="@color/text_primary"
-            android:textSize="14sp" />
+            android:textColor="@color/brand_slate_700"
+            android:textSize="13sp" />
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -58,15 +58,15 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:textColor="@color/text_secondary"
-                android:textSize="13sp" />
+                android:textColor="@color/brand_slate_500"
+                android:textSize="12sp" />
 
             <TextView
                 android:id="@+id/text_date"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textColor="@color/text_secondary"
-                android:textSize="13sp" />
+                android:textColor="@color/brand_slate_500"
+                android:textSize="12sp" />
         </LinearLayout>
 
     </LinearLayout>

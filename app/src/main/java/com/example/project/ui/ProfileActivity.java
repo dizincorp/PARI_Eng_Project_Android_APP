@@ -114,18 +114,14 @@ public class ProfileActivity extends BaseActivity {
             binding.textUserName.setText(profile.getName());
 
             // Display rating in the header
-            binding.textUserRating.setText(String.format(Locale.getDefault(), "★ %.1f Rating", profile.getRating()));
+            binding.textUserRating.setText(getString(R.string.badge_rating_format, profile.getRating()));
 
             // Display avatar image (URI if selected, else default drawable)
-            if (profile.getAvatarUri() != null && !profile.getAvatarUri().isEmpty()) {
-                try {
-                    binding.imgProfileAvatar.setImageURI(Uri.parse(profile.getAvatarUri()));
-                } catch (Exception e) {
-                    binding.imgProfileAvatar.setImageResource(profile.getAvatarResId());
-                }
-            } else {
-                binding.imgProfileAvatar.setImageResource(profile.getAvatarResId());
-            }
+            com.example.project.utils.ImageLoader.getInstance(this).loadImage(
+                    binding.imgProfileAvatar,
+                    profile.getAvatarUri(),
+                    profile.getAvatarResId() != 0 ? profile.getAvatarResId() : R.drawable.ic_profile
+            );
         });
 
         viewModel.getRemoteProfileLiveData().observe(this, resource -> {
@@ -134,6 +130,15 @@ public class ProfileActivity extends BaseActivity {
             if (resource.status == Resource.Status.SUCCESS && resource.data != null) {
                 UserProfileResponse data = resource.data;
                 binding.textUserName.setText(data.getFullName());
+                if (data.getAvatarUrl() != null && !data.getAvatarUrl().trim().isEmpty()) {
+                    sessionManager.updateAvatarUri(data.getAvatarUrl().trim());
+                    viewModel.updateUserAvatarUri(data.getAvatarUrl().trim());
+                    com.example.project.utils.ImageLoader.getInstance(this).loadImage(
+                            binding.imgProfileAvatar,
+                            data.getAvatarUrl().trim(),
+                            R.drawable.ic_profile
+                    );
+                }
             }
         });
     }
@@ -173,6 +178,7 @@ public class ProfileActivity extends BaseActivity {
         });
 
         dialogBinding.btnAddNewVehicle.setOnClickListener(v -> showAddVehicleDialog());
+        dialogBinding.btnCloseVehiclesDialog.setOnClickListener(v -> dialog.dismiss());
 
         dialog.show();
     }
@@ -180,9 +186,9 @@ public class ProfileActivity extends BaseActivity {
     private void showAddVehicleDialog() {
         DialogAddVehicleBinding addBinding = DialogAddVehicleBinding.inflate(LayoutInflater.from(this));
 
-        new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setView(addBinding.getRoot())
-                .setPositiveButton(R.string.btn_save_vehicle, (dialog, which) -> {
+                .setPositiveButton(R.string.btn_save_vehicle, (d, which) -> {
                     String make = addBinding.editVehicleMake.getText() != null ? addBinding.editVehicleMake.getText().toString().trim() : "";
                     String plate = addBinding.editVehiclePlate.getText() != null ? addBinding.editVehiclePlate.getText().toString().trim() : "";
 
@@ -195,7 +201,10 @@ public class ProfileActivity extends BaseActivity {
                     Toast.makeText(this, R.string.msg_vehicle_added, Toast.LENGTH_SHORT).show();
                 })
                 .setNegativeButton(R.string.btn_cancel, null)
-                .show();
+                .create();
+
+        addBinding.btnCloseDialog.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
     }
 
     @Override

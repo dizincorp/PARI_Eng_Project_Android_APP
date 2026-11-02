@@ -26,6 +26,7 @@ public class Reservation {
     private double totalPrice;
     private String pinCode;
     private int photoResId;
+    private String imageUri;
 
     /**
      * Default constructor for Reservation.
@@ -37,6 +38,7 @@ public class Reservation {
         this.userName = "Użytkownik";
         this.carModel = "Tesla Model 3";
         this.carPlate = "WX 12345";
+        this.imageUri = "";
     }
 
     /**
@@ -260,5 +262,13 @@ public class Reservation {
 
     public void setPhotoResId(int photoResId) {
         this.photoResId = photoResId;
+    }
+
+    public String getImageUri() {
+        return imageUri != null ? imageUri : "";
+    }
+
+    public void setImageUri(String imageUri) {
+        this.imageUri = imageUri != null ? imageUri : "";
     }
 }

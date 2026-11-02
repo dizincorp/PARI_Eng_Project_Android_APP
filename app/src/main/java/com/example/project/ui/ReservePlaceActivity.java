@@ -151,19 +151,11 @@ public class ReservePlaceActivity extends BaseActivity {
     private void setupUI() {
         if (binding == null || currentPlace == null) return;
 
-        if (currentPlace.getImageUri() != null && !currentPlace.getImageUri().trim().isEmpty()) {
-            try {
-                Uri uri = Uri.parse(currentPlace.getImageUri().trim());
-                binding.imgPlacePhoto.setImageURI(uri);
-                if (binding.imgPlacePhoto.getDrawable() == null) {
-                    binding.imgPlacePhoto.setImageResource(currentPlace.getPhotoResId());
-                }
-            } catch (Exception e) {
-                binding.imgPlacePhoto.setImageResource(currentPlace.getPhotoResId());
-            }
-        } else {
-            binding.imgPlacePhoto.setImageResource(currentPlace.getPhotoResId());
-        }
+        com.example.project.utils.ImageLoader.getInstance(this).loadImage(
+                binding.imgPlacePhoto,
+                currentPlace.getImageUri(),
+                currentPlace.getPhotoResId() != 0 ? currentPlace.getPhotoResId() : R.drawable.default_parking_spot
+        );
 
         if (currentPlace.getTitle() != null && !currentPlace.getTitle().isEmpty()) {
             binding.textPlaceStreet.setText(currentPlace.getTitle());
@@ -190,6 +182,12 @@ public class ReservePlaceActivity extends BaseActivity {
                     chip.setText(label);
                     chip.setClickable(false);
                     chip.setCheckable(false);
+                    chip.setChipBackgroundColor(ContextCompat.getColorStateList(this, R.color.brand_slate_100));
+                    chip.setChipStrokeColor(ContextCompat.getColorStateList(this, R.color.brand_slate_200));
+                    chip.setChipStrokeWidth(1f);
+                    chip.setChipCornerRadius(16f);
+                    chip.setTextColor(ContextCompat.getColor(this, R.color.brand_slate_700));
+                    chip.setTextSize(12f);
                     binding.chipGroupPlaceAmenities.addView(chip);
                     hasAmenities = true;
                 }
@@ -416,6 +414,28 @@ public class ReservePlaceActivity extends BaseActivity {
     }
 
     private void observeViewModel() {
+        // Reactively observe parking place updates to dynamically update image and details
+        if (currentPlace != null && currentPlace.getId() != null) {
+            String targetId = currentPlace.getId();
+            com.example.project.repository.AppRepository.getInstance().getPlacesLiveData().observe(this, places -> {
+                if (places != null) {
+                    for (com.example.project.model.ParkingPlace p : places) {
+                        if (p != null && targetId.equals(p.getId())) {
+                            currentPlace = p;
+                            if (binding != null) {
+                                com.example.project.utils.ImageLoader.getInstance(this).loadImage(
+                                        binding.imgPlacePhoto,
+                                        p.getImageUri(),
+                                        p.getPhotoResId() != 0 ? p.getPhotoResId() : R.drawable.default_parking_spot
+                                );
+                            }
+                            break;
+                        }
+                    }
+                }
+            });
+        }
+
         // Observe user vehicles for spinner dropdown
         viewModel.getVehiclesLiveData().observe(this, vehicles -> {
             if (binding == null || vehicles == null) return;
@@ -638,10 +658,10 @@ public class ReservePlaceActivity extends BaseActivity {
             if (isEditingStart[0]) {
                 dialogBinding.radioStartMode.setChecked(true);
                 dialogBinding.radioStartMode.setTextColor(ContextCompat.getColor(this, R.color.white));
-                dialogBinding.radioStartMode.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.chip_bg_selected));
+                dialogBinding.radioStartMode.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.brand_slate_950));
 
                 dialogBinding.radioEndMode.setChecked(false);
-                dialogBinding.radioEndMode.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
+                dialogBinding.radioEndMode.setTextColor(ContextCompat.getColor(this, R.color.brand_slate_600));
                 dialogBinding.radioEndMode.setBackgroundTintList(null);
 
                 dialogBinding.textActiveTargetLabel.setText(R.string.label_start_time);
@@ -649,10 +669,10 @@ public class ReservePlaceActivity extends BaseActivity {
             } else {
                 dialogBinding.radioEndMode.setChecked(true);
                 dialogBinding.radioEndMode.setTextColor(ContextCompat.getColor(this, R.color.white));
-                dialogBinding.radioEndMode.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.chip_bg_selected));
+                dialogBinding.radioEndMode.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.brand_slate_950));
 
                 dialogBinding.radioStartMode.setChecked(false);
-                dialogBinding.radioStartMode.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
+                dialogBinding.radioStartMode.setTextColor(ContextCompat.getColor(this, R.color.brand_slate_600));
                 dialogBinding.radioStartMode.setBackgroundTintList(null);
 
                 dialogBinding.textActiveTargetLabel.setText(R.string.label_end_time);
@@ -746,10 +766,10 @@ public class ReservePlaceActivity extends BaseActivity {
 
                 dialogBinding.radioModeWheels.setChecked(true);
                 dialogBinding.radioModeWheels.setTextColor(ContextCompat.getColor(this, R.color.white));
-                dialogBinding.radioModeWheels.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.chip_bg_selected));
+                dialogBinding.radioModeWheels.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.brand_slate_950));
 
                 dialogBinding.radioModeText.setChecked(false);
-                dialogBinding.radioModeText.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
+                dialogBinding.radioModeText.setTextColor(ContextCompat.getColor(this, R.color.brand_slate_600));
                 dialogBinding.radioModeText.setBackgroundTintList(null);
 
                 loadIntoPickers.execute(isEditingStart[0] ? tempStart : tempEnd);
@@ -765,10 +785,10 @@ public class ReservePlaceActivity extends BaseActivity {
 
                 dialogBinding.radioModeText.setChecked(true);
                 dialogBinding.radioModeText.setTextColor(ContextCompat.getColor(this, R.color.white));
-                dialogBinding.radioModeText.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.chip_bg_selected));
+                dialogBinding.radioModeText.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.brand_slate_950));
 
                 dialogBinding.radioModeWheels.setChecked(false);
-                dialogBinding.radioModeWheels.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
+                dialogBinding.radioModeWheels.setTextColor(ContextCompat.getColor(this, R.color.brand_slate_600));
                 dialogBinding.radioModeWheels.setBackgroundTintList(null);
 
                 loadIntoPickers.execute(isEditingStart[0] ? tempStart : tempEnd);
@@ -839,9 +859,9 @@ public class ReservePlaceActivity extends BaseActivity {
     private void showAddVehicleDialog() {
         DialogAddVehicleBinding dialogBinding = DialogAddVehicleBinding.inflate(LayoutInflater.from(this));
 
-        new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setView(dialogBinding.getRoot())
-                .setPositiveButton(R.string.btn_save_vehicle, (dialog, which) -> {
+                .setPositiveButton(R.string.btn_save_vehicle, (d, which) -> {
                     String make = dialogBinding.editVehicleMake.getText() != null ? dialogBinding.editVehicleMake.getText().toString() : "";
                     String plate = dialogBinding.editVehiclePlate.getText() != null ? dialogBinding.editVehiclePlate.getText().toString() : "";
 
@@ -854,7 +874,10 @@ public class ReservePlaceActivity extends BaseActivity {
                     Toast.makeText(this, R.string.msg_vehicle_added, Toast.LENGTH_SHORT).show();
                 })
                 .setNegativeButton(R.string.btn_cancel, null)
-                .show();
+                .create();
+
+        dialogBinding.btnCloseDialog.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
     }
 
     @Override

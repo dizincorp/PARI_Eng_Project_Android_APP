@@ -131,19 +131,19 @@ public class ReservationsActivity extends BaseActivity implements ReservationsAd
         adapter.setIsHistoryTab(isHistory);
 
         if (isHistory) {
-            binding.btnTabActive.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.gray_input_bg));
-            binding.btnTabActive.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
+            binding.btnTabActive.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.brand_slate_100));
+            binding.btnTabActive.setTextColor(ContextCompat.getColor(this, R.color.brand_slate_600));
 
-            binding.btnTabHistory.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.chip_bg_selected));
+            binding.btnTabHistory.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.brand_slate_950));
             binding.btnTabHistory.setTextColor(ContextCompat.getColor(this, R.color.white));
 
             renderList(historyReservationsList);
         } else {
-            binding.btnTabActive.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.chip_bg_selected));
+            binding.btnTabActive.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.brand_slate_950));
             binding.btnTabActive.setTextColor(ContextCompat.getColor(this, R.color.white));
 
-            binding.btnTabHistory.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.gray_input_bg));
-            binding.btnTabHistory.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
+            binding.btnTabHistory.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.brand_slate_100));
+            binding.btnTabHistory.setTextColor(ContextCompat.getColor(this, R.color.brand_slate_600));
 
             renderList(activeReservationsList);
         }
@@ -316,6 +316,17 @@ public class ReservationsActivity extends BaseActivity implements ReservationsAd
         dialogBinding.textDialogStreet.setText(reservation.getStreet() != null ? reservation.getStreet() : "Warszawa");
         dialogBinding.textDialogPin.setText(reservation.getPinCode() != null ? reservation.getPinCode() : "4829");
 
+        String placeImg = reservation.getImageUri();
+        if (placeImg == null || placeImg.isEmpty()) {
+            com.example.project.model.ParkingPlace p = com.example.project.repository.AppRepository.getInstance().getPlaceById(reservation.getPlaceId());
+            if (p != null) placeImg = p.getImageUri();
+        }
+        com.example.project.utils.ImageLoader.getInstance(this).loadImage(
+                dialogBinding.imgDialogSpot,
+                placeImg,
+                reservation.getPhotoResId() != 0 ? reservation.getPhotoResId() : R.drawable.default_parking_spot
+        );
+
         long startMs = reservation.getStartTimeMs() > 0 ? reservation.getStartTimeMs() : System.currentTimeMillis();
         long endMs = reservation.getEndTimeMs() > 0 ? reservation.getEndTimeMs() : (startMs + 3600000L);
 
@@ -404,6 +415,8 @@ public class ReservationsActivity extends BaseActivity implements ReservationsAd
             }
         });
 
+        dialogBinding.btnCloseDetails.setOnClickListener(v -> dialog.dismiss());
+
         dialog.show();
     }
 
@@ -417,9 +430,9 @@ public class ReservationsActivity extends BaseActivity implements ReservationsAd
     private void showRatingDialog(@NonNull String reservationId, @Nullable String spotId) {
         DialogRatingBinding ratingBinding = DialogRatingBinding.inflate(LayoutInflater.from(this));
 
-        new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setView(ratingBinding.getRoot())
-                .setPositiveButton(R.string.btn_submit_review, (dialog, which) -> {
+                .setPositiveButton(R.string.btn_submit_review, (d, which) -> {
                     int rating = Math.round(ratingBinding.ratingBar.getRating());
                     if (rating < 1) {
                         Toast.makeText(this, R.string.error_rating_required, Toast.LENGTH_SHORT).show();
@@ -441,7 +454,10 @@ public class ReservationsActivity extends BaseActivity implements ReservationsAd
                             });
                 })
                 .setNegativeButton(R.string.btn_cancel, null)
-                .show();
+                .create();
+
+        ratingBinding.btnCloseDialog.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
     }
 
     @Override

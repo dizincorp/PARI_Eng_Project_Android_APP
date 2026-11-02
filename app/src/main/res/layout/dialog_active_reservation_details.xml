@@ -6,11 +6,30 @@
     android:orientation="vertical"
     android:padding="20dp">
 
+    <!-- Spot Image Preview Card -->
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="140dp"
+        android:layout_marginBottom="14dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:strokeColor="@color/brand_slate_200"
+        app:strokeWidth="1dp">
+
+        <ImageView
+            android:id="@+id/img_dialog_spot"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:contentDescription="@string/label_header_place"
+            android:scaleType="centerCrop"
+            android:src="@drawable/default_parking_spot" />
+    </com.google.android.material.card.MaterialCardView>
+
     <TextView
         android:id="@+id/text_dialog_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:textColor="@color/text_primary"
+        android:textColor="@color/brand_slate_950"
         android:textSize="20sp"
         android:textStyle="bold" />
 
@@ -19,17 +38,19 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="2dp"
-        android:textColor="@color/text_secondary"
+        android:textColor="@color/brand_slate_500"
         android:textSize="14sp" />
 
-    <!-- PIN Box -->
+    <!-- PIN Access Card (Emerald Accent) -->
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
-        app:cardBackgroundColor="#F0F7FF"
-        app:cardCornerRadius="12dp"
-        app:cardElevation="0dp">
+        app:cardBackgroundColor="@color/brand_emerald_50"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="0dp"
+        app:strokeColor="@color/brand_emerald_200"
+        app:strokeWidth="1dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -42,7 +63,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/label_pin_code"
-                android:textColor="@color/text_secondary"
+                android:textColor="@color/brand_emerald_800"
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
@@ -52,87 +73,111 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:letterSpacing="0.2"
-                android:textColor="@color/blue_badge_text"
+                android:textColor="@color/brand_slate_950"
                 android:textSize="28sp"
                 android:textStyle="bold" />
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- Wjazd i Wyjazd -->
+    <!-- Wjazd i Wyjazd Cards -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="14dp"
         android:baselineAligned="false"
         android:orientation="horizontal">
 
-        <LinearLayout
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginEnd="6dp"
             android:layout_weight="1"
-            android:orientation="vertical">
+            app:cardBackgroundColor="@color/brand_slate_50"
+            app:cardCornerRadius="14dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/brand_slate_200"
+            app:strokeWidth="1dp">
 
-            <TextView
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/label_entry"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+                android:orientation="vertical"
+                android:padding="12dp">
 
-            <TextView
-                android:id="@+id/text_dialog_entry_time"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="14:00"
-                android:textColor="@color/text_primary"
-                android:textSize="18sp"
-                android:textStyle="bold" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_entry"
+                    android:textColor="@color/brand_slate_500"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/text_dialog_entry_date"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="14.10.2024"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp" />
-        </LinearLayout>
+                <TextView
+                    android:id="@+id/text_dialog_entry_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="14:00"
+                    android:textColor="@color/brand_slate_950"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
 
-        <LinearLayout
+                <TextView
+                    android:id="@+id/text_dialog_entry_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="14.10.2024"
+                    android:textColor="@color/brand_slate_500"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <com.google.android.material.card.MaterialCardView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
             android:layout_weight="1"
-            android:orientation="vertical">
+            app:cardBackgroundColor="@color/brand_slate_50"
+            app:cardCornerRadius="14dp"
+            app:cardElevation="0dp"
+            app:strokeColor="@color/brand_slate_200"
+            app:strokeWidth="1dp">
 
-            <TextView
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/label_exit"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp"
-                android:textStyle="bold" />
+                android:orientation="vertical"
+                android:padding="12dp">
 
-            <TextView
-                android:id="@+id/text_dialog_exit_time"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="18:00"
-                android:textColor="@color/text_primary"
-                android:textSize="18sp"
-                android:textStyle="bold" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_exit"
+                    android:textColor="@color/brand_slate_500"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
 
-            <TextView
-                android:id="@+id/text_dialog_exit_date"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:text="14.10.2024"
-                android:textColor="@color/text_secondary"
-                android:textSize="12sp" />
-        </LinearLayout>
+                <TextView
+                    android:id="@+id/text_dialog_exit_time"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="18:00"
+                    android:textColor="@color/brand_slate_950"
+                    android:textSize="18sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/text_dialog_exit_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="14.10.2024"
+                    android:textColor="@color/brand_slate_500"
+                    android:textSize="12sp" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 
     <!-- Parking Lifecycle Actions (Check-In & Check-Out) -->
@@ -141,34 +186,36 @@
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:layout_marginTop="20dp"
-        android:backgroundTint="@color/chip_bg_selected"
+        android:backgroundTint="@color/brand_slate_950"
+        android:elevation="2dp"
         android:text="@string/btn_check_in"
         android:textAllCaps="false"
         android:textColor="@color/white"
         android:textSize="15sp"
         android:textStyle="bold"
-        app:cornerRadius="12dp"
+        app:cornerRadius="14dp"
         app:icon="@drawable/ic_ob_driver"
         app:iconGravity="textStart"
         app:iconSize="18dp"
-        app:iconTint="@color/white" />
+        app:iconTint="@color/brand_emerald_400" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_check_out"
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:layout_marginTop="8dp"
-        android:backgroundTint="@color/chip_bg_selected"
+        android:backgroundTint="@color/brand_slate_950"
+        android:elevation="2dp"
         android:text="@string/btn_check_out"
         android:textAllCaps="false"
         android:textColor="@color/white"
         android:textSize="15sp"
         android:textStyle="bold"
-        app:cornerRadius="12dp"
+        app:cornerRadius="14dp"
         app:icon="@drawable/ic_arrow_up"
         app:iconGravity="textStart"
         app:iconSize="18dp"
-        app:iconTint="@color/white" />
+        app:iconTint="@color/brand_emerald_400" />
 
     <!-- Secondary Actions -->
     <com.google.android.material.button.MaterialButton
@@ -176,23 +223,41 @@
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:layout_marginTop="8dp"
-        android:backgroundTint="@color/blue_badge_bg"
+        android:backgroundTint="@color/brand_emerald_50"
         android:text="@string/btn_download_confirmation"
         android:textAllCaps="false"
-        android:textColor="@color/blue_badge_text"
+        android:textColor="@color/brand_emerald_800"
+        android:textSize="14sp"
         android:textStyle="bold"
-        app:cornerRadius="12dp" />
+        app:cornerRadius="14dp"
+        app:strokeColor="@color/brand_emerald_200"
+        app:strokeWidth="1dp" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_cancel_reservation"
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:layout_marginTop="8dp"
-        android:backgroundTint="#FEE2E2"
+        android:backgroundTint="@color/brand_rose_50"
         android:text="@string/btn_cancel_reservation"
         android:textAllCaps="false"
-        android:textColor="#DC2626"
+        android:textColor="@color/brand_rose_600"
+        android:textSize="14sp"
         android:textStyle="bold"
-        app:cornerRadius="12dp" />
+        app:cornerRadius="14dp"
+        app:strokeColor="@color/brand_rose_200"
+        app:strokeWidth="1dp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_close_details"
+        style="@style/Widget.MaterialComponents.Button.TextButton"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="8dp"
+        android:text="@string/btn_close"
+        android:textAllCaps="false"
+        android:textColor="@color/brand_slate_600"
+        android:textSize="14sp"
+        android:textStyle="bold" />
 
 </LinearLayout>

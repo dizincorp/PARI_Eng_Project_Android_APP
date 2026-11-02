@@ -166,7 +166,7 @@ public class PlacesActivity extends BaseActivity {
             android.widget.TextView emptyView = new android.widget.TextView(this);
             emptyView.setText(R.string.msg_no_places);
             emptyView.setTextSize(14);
-            emptyView.setTextColor(androidx.core.content.ContextCompat.getColor(this, R.color.text_secondary));
+            emptyView.setTextColor(androidx.core.content.ContextCompat.getColor(this, R.color.brand_slate_500));
             emptyView.setPadding(16, 24, 16, 24);
             binding.containerMyPlaces.addView(emptyView);
             return;
@@ -199,6 +199,10 @@ public class PlacesActivity extends BaseActivity {
                         chip.setTextSize(11f);
                         chip.setClickable(false);
                         chip.setCheckable(false);
+                        chip.setChipBackgroundColorResource(R.color.brand_slate_100);
+                        chip.setChipStrokeColorResource(R.color.brand_slate_200);
+                        chip.setChipStrokeWidth(1f);
+                        chip.setTextColor(getColor(R.color.brand_slate_700));
                         itemBinding.chipGroupItemAmenities.addView(chip);
                         hasAmenities = true;
                     }
@@ -253,7 +257,7 @@ public class PlacesActivity extends BaseActivity {
             if (!isActive) {
                 itemBinding.cardPlaceRoot.setAlpha(0.60f);
                 itemBinding.cardPlaceRoot.setCardBackgroundColor(getColor(R.color.inactive_card_bg));
-                itemBinding.viewStatusDot.setBackgroundTintList(getColorStateList(R.color.status_dot_gray));
+                itemBinding.viewStatusDot.setBackgroundTintList(getColorStateList(R.color.brand_slate_400));
                 itemBinding.textDriverInfo.setVisibility(View.GONE);
             } else {
                 itemBinding.cardPlaceRoot.setAlpha(1.0f);
@@ -267,7 +271,7 @@ public class PlacesActivity extends BaseActivity {
                     String vehicle = p.getDriverVehicle() != null && !p.getDriverVehicle().isEmpty()
                             ? p.getDriverVehicle() : "Pojazd na miejscu";
                     itemBinding.textDriverInfo.setText(String.format("🚗 Parkuje: %s • %s", driver, vehicle));
-                    itemBinding.textDriverInfo.setTextColor(getColor(R.color.status_dot_red));
+                    itemBinding.textDriverInfo.setTextColor(getColor(R.color.brand_rose_600));
                     itemBinding.textDriverInfo.setVisibility(View.VISIBLE);
                 } else if (p.isOccupied() || p.isReserved() || (p.getDriverName() != null && !p.getDriverName().isEmpty())) {
                     // YELLOW: Reserved by a driver
@@ -277,11 +281,11 @@ public class PlacesActivity extends BaseActivity {
                     String vehicle = p.getDriverVehicle() != null && !p.getDriverVehicle().isEmpty()
                             ? " • " + p.getDriverVehicle() : "";
                     itemBinding.textDriverInfo.setText(String.format("👤 Zarezerwowane: %s%s", driver, vehicle));
-                    itemBinding.textDriverInfo.setTextColor(getColor(R.color.status_dot_yellow));
+                    itemBinding.textDriverInfo.setTextColor(getColor(R.color.brand_amber_600));
                     itemBinding.textDriverInfo.setVisibility(View.VISIBLE);
                 } else {
                     // GREEN: Free & Active
-                    itemBinding.viewStatusDot.setBackgroundTintList(getColorStateList(R.color.status_dot_green));
+                    itemBinding.viewStatusDot.setBackgroundTintList(getColorStateList(R.color.brand_emerald_500));
                     itemBinding.textDriverInfo.setVisibility(View.GONE);
                 }
             }
