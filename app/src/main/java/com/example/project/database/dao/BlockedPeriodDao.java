@@ -36,6 +36,22 @@ public interface BlockedPeriodDao {
     List<BlockedPeriodEntity> getBlockedPeriodsForSpotSync(String spotId);
 
     /**
+     * Retrieves all blocked periods across all spots ordered by start time.
+     *
+     * @return List of all blocked periods
+     */
+    @Query("SELECT * FROM blocked_periods ORDER BY start ASC")
+    List<BlockedPeriodEntity> getAllBlockedPeriodsSync();
+
+    /**
+     * Observes all blocked periods across all spots ordered by start time.
+     *
+     * @return LiveData emitting list of all blocked periods
+     */
+    @Query("SELECT * FROM blocked_periods ORDER BY start ASC")
+    LiveData<List<BlockedPeriodEntity>> getAllBlockedPeriodsLiveData();
+
+    /**
      * Inserts or replaces a single blocked period into the database.
      *
      * @param block Blocked period to insert

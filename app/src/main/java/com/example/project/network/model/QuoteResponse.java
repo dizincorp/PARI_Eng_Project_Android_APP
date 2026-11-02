@@ -10,22 +10,22 @@ import java.util.Date;
  */
 public class QuoteResponse {
 
-    @SerializedName("spotId")
+    @SerializedName(value = "spotId", alternate = {"id"})
     private String spotId;
 
-    @SerializedName("spotName")
+    @SerializedName(value = "spotName", alternate = {"name", "title"})
     private String spotName;
 
-    @SerializedName("startsAt")
+    @SerializedName(value = "startsAt", alternate = {"start"})
     private Date startsAt;
 
-    @SerializedName("endsAt")
+    @SerializedName(value = "endsAt", alternate = {"end"})
     private Date endsAt;
 
     @SerializedName("hourlyRate")
     private Double hourlyRate;
 
-    @SerializedName("durationHours")
+    @SerializedName(value = "durationHours", alternate = {"durationMinutes"})
     private Double durationHours;
 
     @SerializedName("spotCost")

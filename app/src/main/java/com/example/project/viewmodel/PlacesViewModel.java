@@ -287,4 +287,15 @@ public class PlacesViewModel extends AndroidViewModel {
     public void deletePlace(String placeId) {
         deleteSpot(placeId);
     }
+
+    /**
+     * Gets reactive LiveData stream of all calendar blocked periods from Room DB.
+     *
+     * @return LiveData emitting list of BlockedPeriodEntity
+     */
+    public LiveData<List<com.example.project.database.entity.BlockedPeriodEntity>> getBlockedPeriodsLiveData() {
+        return com.example.project.database.AppDatabase.getInstance(getApplication())
+                .blockedPeriodDao()
+                .getAllBlockedPeriodsLiveData();
+    }
 }

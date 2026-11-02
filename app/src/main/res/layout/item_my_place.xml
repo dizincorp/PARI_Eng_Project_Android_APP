@@ -82,6 +82,23 @@
                 android:textSize="12sp"
                 android:visibility="gone" />
 
+            <!-- Blocked periods badge for owner -->
+            <TextView
+                android:id="@+id/text_item_blocked_info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/bg_dialog_rounded"
+                android:backgroundTint="@color/status_cancelled_bg"
+                android:drawableStart="@drawable/ic_block"
+                android:drawablePadding="6dp"
+                android:drawableTint="@color/delete_btn_bg"
+                android:padding="6dp"
+                android:textColor="@color/delete_btn_bg"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
             <!-- Driver and vehicle reservation info row (visible when reserved/occupied) -->
             <TextView
                 android:id="@+id/text_driver_info"

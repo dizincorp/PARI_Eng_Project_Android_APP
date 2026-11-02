@@ -930,34 +930,50 @@ public class ReservationRepository {
      * @return User-facing error message
      */
     private String parseErrorMessage(Response<?> response) {
-        String defaultMsg = "Błąd rezerwacji: HTTP " + response.code();
-
-        if (response.code() == 409) {
-            defaultMsg = "To miejsce jest już zajęte w wybranym terminie!";
-        } else if (response.code() == 402) {
-            defaultMsg = "Płatność została odrzucona.";
-        } else if (response.code() == 403) {
-            defaultMsg = "Nie możesz zarezerwować własnego miejsca parkingowego!";
-        } else if (response.code() == 404) {
-            defaultMsg = "Nie znaleziono wybranego miejsca parkingowego lub pojazdu.";
-        }
-
+        String serverMsg = "";
         try {
             if (response.errorBody() != null) {
                 String errorBodyStr = response.errorBody().string();
                 JsonObject obj = JsonParser.parseString(errorBodyStr).getAsJsonObject();
                 if (obj.has("message") && !obj.get("message").isJsonNull()) {
-                    String serverMsg = obj.get("message").getAsString();
-                    if (response.code() == 409) {
-                        return "To miejsce jest już zajęte w wybranym terminie! (" + serverMsg + ")";
-                    }
-                    return serverMsg;
+                    serverMsg = obj.get("message").getAsString();
+                } else if (obj.has("detail") && !obj.get("detail").isJsonNull()) {
+                    serverMsg = obj.get("detail").getAsString();
+                } else if (obj.has("error") && !obj.get("error").isJsonNull()) {
+                    serverMsg = obj.get("error").getAsString();
+                } else if (obj.has("reason") && !obj.get("reason").isJsonNull()) {
+                    serverMsg = obj.get("reason").getAsString();
                 }
             }
         } catch (Exception ignored) {
         }
 
-        return defaultMsg;
+        String lower = serverMsg.toLowerCase(Locale.ROOT);
+
+        if (response.code() == 409) {
+            if (lower.contains("block") || lower.contains("zablokowan") || lower.contains("calendar")) {
+                return !serverMsg.isEmpty()
+                        ? "⛔ To miejsce jest zablokowane przez właściciela (" + serverMsg + ")"
+                        : "⛔ To miejsce jest zablokowane przez właściciela w wybranym terminie!";
+            } else if (lower.contains("occup") || lower.contains("zajet") || lower.contains("reserv")) {
+                return !serverMsg.isEmpty()
+                        ? "🚗 To miejsce jest już zajęte przez innego kierowcę (" + serverMsg + ")"
+                        : "🚗 To miejsce jest już zajęte przez innego kierowcę w wybranym terminie!";
+            } else if (!serverMsg.isEmpty()) {
+                return "Konflikt rezerwacji: " + serverMsg;
+            }
+            return "To miejsce jest niedostępne w wybranym terminie (zajęte lub zablokowane)!";
+        } else if (response.code() == 402) {
+            return !serverMsg.isEmpty() ? ("Płatność odrzucona: " + serverMsg) : "Płatność została odrzucona.";
+        } else if (response.code() == 403) {
+            return !serverMsg.isEmpty() ? ("Brak uprawnień: " + serverMsg) : "Nie możesz zarezerwować własnego miejsca parkingowego!";
+        } else if (response.code() == 404) {
+            return !serverMsg.isEmpty() ? ("Nie znaleziono: " + serverMsg) : "Nie znaleziono wybranego miejsca parkingowego lub pojazdu.";
+        } else if (response.code() == 400) {
+            return !serverMsg.isEmpty() ? ("Nieprawidłowe dane: " + serverMsg) : "Nieprawidłowy termin lub dane rezerwacji.";
+        }
+
+        return !serverMsg.isEmpty() ? serverMsg : ("Błąd rezerwacji: HTTP " + response.code());
     }
 
     /**

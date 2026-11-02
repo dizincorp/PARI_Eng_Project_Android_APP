@@ -10,13 +10,13 @@ import java.util.Date;
  */
 public class QuoteRequest {
 
-    @SerializedName("spotId")
+    @SerializedName(value = "spotId", alternate = {"id"})
     private String spotId;
 
-    @SerializedName("startsAt")
+    @SerializedName(value = "start", alternate = {"startsAt"})
     private Date startsAt;
 
-    @SerializedName("endsAt")
+    @SerializedName(value = "end", alternate = {"endsAt"})
     private Date endsAt;
 
     /**

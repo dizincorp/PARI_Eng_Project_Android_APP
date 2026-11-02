@@ -150,6 +150,23 @@
                                 android:textColor="@color/text_secondary"
                                 android:textSize="13sp"
                                 android:visibility="gone" />
+
+                            <!-- Blocked periods badge in announcement -->
+                            <TextView
+                                android:id="@+id/text_place_blocked_announcement"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="8dp"
+                                android:background="@drawable/bg_dialog_rounded"
+                                android:backgroundTint="@color/status_cancelled_bg"
+                                android:drawableStart="@drawable/ic_block"
+                                android:drawablePadding="8dp"
+                                android:drawableTint="@color/delete_btn_bg"
+                                android:padding="10dp"
+                                android:textColor="@color/delete_btn_bg"
+                                android:textSize="12sp"
+                                android:textStyle="bold"
+                                android:visibility="gone" />
                         </LinearLayout>
                     </LinearLayout>
                 </LinearLayout>
@@ -199,7 +216,7 @@
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
+                        android:layout_marginTop="14dp"
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
@@ -355,6 +372,23 @@
                         app:iconGravity="textStart"
                         app:iconTint="@color/primary"
                         app:strokeColor="@color/gray_border" />
+
+                    <!-- Warning banner if spot is blocked -->
+                    <TextView
+                        android:id="@+id/text_reservation_blocked_warning"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:background="@drawable/bg_dialog_rounded"
+                        android:backgroundTint="@color/status_cancelled_bg"
+                        android:drawableStart="@drawable/ic_block"
+                        android:drawablePadding="8dp"
+                        android:drawableTint="@color/delete_btn_bg"
+                        android:padding="10dp"
+                        android:textColor="@color/delete_btn_bg"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 

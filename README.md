@@ -76,11 +76,21 @@ ParkShare is a modern Android application written in **Java** following the **MV
   * Endpoints: `POST /api/vehicles`, `GET /api/vehicles`, `DELETE /api/vehicles/{id}`.
   * Single Source of Truth caching in Room (`VehicleDao`) with plate-based deduplication preventing repeated entries.
 
-### 7. 🗓️ Availability Calendar (`AvailabilityCalendarActivity`)
-* **Interactive Calendar**: Dynamic calendar view allowing owners to check availability for any date.
-* **Spot & Time Range Selection**: Dropdown to select spot and input custom time range.
-* **Block Slot**: Ability to block slots for maintenance or private use.
-* **Quick Navigation**: Button to return back to the Places dashboard.
+### 7. 🗓️ Availability Calendar & Calendar Blocked Periods (`AvailabilityCalendarActivity` & F03)
+* **Weekly Availability Schedule (`PUT /api/spots/{id}/availability-rules`)**:
+  * Configures weekly rules (day of week, start time, end time) and synchronizes with local Room cache (`AvailabilityRuleEntity`).
+* **Calendar Block Management (`POST /api/spots/{id}/calendar/blocks` & `DELETE ...`)**:
+  * Allows owners to block specific date/time intervals (with optional reason) for maintenance or private use.
+  * Real-time list of active and upcoming blocks with one-click unblocking action.
+* **Automatic Badge & Marker Pruning on Term Expiry**:
+  * Real-time evaluation of `isExpired()`: badges (`⛔ 18:00 - 20:00 zablokowane`) and red markers automatically disappear and spots return to available status once the blocked period ends.
+* **Multi-User Visibility & Dynamic Map Markers**:
+  * Dynamic color-coding: Green (free), Yellow (reserved), Red (occupied / blocked by owner).
+  * Preview card (`card_place_preview`) and reservation announcement badges dynamically display active blocked intervals to drivers.
+* **Conflict & Status Distinction (`ReservePlaceActivity`)**:
+  * Distinct alert dialogs and warning banners separating "⛔ Miejsce zablokowane przez właściciela" from "🚗 Miejsce zajęte przez innego kierowcę" and "⏰ Poza godzinami dostępności".
+  * Preliminary cost calculation via `POST /api/reservations/quote` with instant conflict detection.
+  * Flexible Date/Time picker dialog with quick toggle between wheel spinners and direct text input.
 
 ### 8. 💰 Earnings & Transaction Logs (`EarningsActivity`)
 * **Monthly Summary**: Displays overall earnings summary card.

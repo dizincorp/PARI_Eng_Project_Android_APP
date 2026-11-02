@@ -59,13 +59,13 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- Mode Switcher (Pill RadioGroup) -->
+            <!-- Start / End Switcher -->
             <RadioGroup
                 android:id="@+id/group_picker_mode"
                 android:layout_width="match_parent"
                 android:layout_height="44dp"
                 android:layout_marginTop="16dp"
-                android:background="@drawable/bg_dashed_border"
+                android:background="@drawable/bg_dialog_rounded"
                 android:backgroundTint="@color/gray_input_bg"
                 android:checkedButton="@id/radio_start_mode"
                 android:orientation="horizontal"
@@ -76,7 +76,7 @@
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
-                    android:background="@drawable/ic_arrow_up"
+                    android:background="@drawable/bg_dialog_rounded"
                     android:backgroundTint="@color/chip_bg_selected"
                     android:button="@null"
                     android:gravity="center"
@@ -91,6 +91,7 @@
                     android:layout_height="match_parent"
                     android:layout_marginStart="4dp"
                     android:layout_weight="1"
+                    android:background="@drawable/bg_dialog_rounded"
                     android:button="@null"
                     android:gravity="center"
                     android:text="@string/tab_picker_end"
@@ -99,175 +100,386 @@
                     android:textStyle="bold" />
             </RadioGroup>
 
-            <!-- Current Target Indicator -->
-            <TextView
-                android:id="@+id/text_active_target_label"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:text="@string/label_start_time"
-                android:textColor="@color/primary"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-
-            <!-- Date Picker Card -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                app:cardBackgroundColor="@color/bg_main"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="0dp"
-                app:strokeColor="@color/gray_border"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_horizontal"
-                    android:orientation="vertical"
-                    android:padding="8dp">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="4dp"
-                        android:text="@string/label_date_picker_header"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="11sp"
-                        android:textStyle="bold" />
-
-                    <DatePicker
-                        android:id="@+id/date_picker_dialog"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:calendarViewShown="false"
-                        android:datePickerMode="spinner" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Time Picker Card (Hour, Minute, Second) -->
-            <com.google.android.material.card.MaterialCardView
+            <!-- Active Target Label & Now Button -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp"
-                app:cardBackgroundColor="@color/bg_main"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="0dp"
-                app:strokeColor="@color/gray_border"
-                app:strokeWidth="1dp">
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
-                <LinearLayout
+                <TextView
+                    android:id="@+id/text_active_target_label"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/label_start_time"
+                    android:textColor="@color/primary"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_set_now"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:paddingHorizontal="10dp"
+                    android:text="@string/btn_set_current_time"
+                    android:textColor="@color/primary"
+                    android:textSize="11sp"
+                    app:cornerRadius="8dp"
+                    app:strokeColor="@color/primary"
+                    app:strokeWidth="1dp" />
+            </LinearLayout>
+
+            <!-- Input Mode Selector: Wheels vs Text Input -->
+            <RadioGroup
+                android:id="@+id/group_input_type"
+                android:layout_width="match_parent"
+                android:layout_height="38dp"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_dialog_rounded"
+                android:backgroundTint="@color/gray_input_bg"
+                android:checkedButton="@id/radio_mode_wheels"
+                android:orientation="horizontal"
+                android:padding="2dp">
+
+                <RadioButton
+                    android:id="@+id/radio_mode_wheels"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_dialog_rounded"
+                    android:backgroundTint="@color/chip_bg_selected"
+                    android:button="@null"
+                    android:gravity="center"
+                    android:text="@string/mode_picker_wheels"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <RadioButton
+                    android:id="@+id/radio_mode_text"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginStart="4dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/bg_dialog_rounded"
+                    android:button="@null"
+                    android:gravity="center"
+                    android:text="@string/mode_picker_text"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </RadioGroup>
+
+            <!-- WHEELS CONTAINER -->
+            <LinearLayout
+                android:id="@+id/layout_wheels_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <!-- Date Picker Card -->
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center"
-                    android:orientation="vertical"
-                    android:padding="12dp">
+                    android:layout_marginTop="8dp"
+                    app:cardBackgroundColor="@color/bg_main"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="@color/gray_border"
+                    app:strokeWidth="1dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="8dp"
-                        android:text="@string/label_time_picker_header"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="11sp"
-                        android:textStyle="bold" />
+                        android:gravity="center_horizontal"
+                        android:orientation="vertical"
+                        android:padding="8dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginBottom="4dp"
+                            android:text="@string/label_date_picker_header"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <DatePicker
+                            android:id="@+id/date_picker_dialog"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:calendarViewShown="false"
+                            android:datePickerMode="spinner" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Time Picker Card (Hour, Minute, Second) -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="10dp"
+                    app:cardBackgroundColor="@color/bg_main"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="@color/gray_border"
+                    app:strokeWidth="1dp">
 
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center"
-                        android:orientation="horizontal">
-
-                        <!-- Hour -->
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:orientation="vertical">
-
-                            <NumberPicker
-                                android:id="@+id/picker_hour"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content" />
-
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="@string/unit_hour_label"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="11sp" />
-                        </LinearLayout>
+                        android:orientation="vertical"
+                        android:padding="10dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:layout_marginHorizontal="10dp"
-                            android:text=":"
-                            android:textColor="@color/text_primary"
-                            android:textSize="24sp"
+                            android:layout_marginBottom="6dp"
+                            android:text="@string/label_time_picker_header"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="11sp"
                             android:textStyle="bold" />
 
-                        <!-- Minute -->
                         <LinearLayout
-                            android:layout_width="wrap_content"
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
                             android:gravity="center"
-                            android:orientation="vertical">
+                            android:orientation="horizontal">
 
-                            <NumberPicker
-                                android:id="@+id/picker_minute"
+                            <!-- Hour -->
+                            <LinearLayout
                                 android:layout_width="wrap_content"
-                                android:layout_height="wrap_content" />
+                                android:layout_height="wrap_content"
+                                android:gravity="center"
+                                android:orientation="vertical">
+
+                                <NumberPicker
+                                    android:id="@+id/picker_hour"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:text="@string/unit_hour_label"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="11sp" />
+                            </LinearLayout>
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="@string/unit_minute_label"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="11sp" />
-                        </LinearLayout>
+                                android:layout_marginHorizontal="8dp"
+                                android:text=":"
+                                android:textColor="@color/text_primary"
+                                android:textSize="22sp"
+                                android:textStyle="bold" />
 
-                        <TextView
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginHorizontal="10dp"
-                            android:text=":"
-                            android:textColor="@color/text_primary"
-                            android:textSize="24sp"
-                            android:textStyle="bold" />
-
-                        <!-- Second -->
-                        <LinearLayout
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:gravity="center"
-                            android:orientation="vertical">
-
-                            <NumberPicker
-                                android:id="@+id/picker_second"
+                            <!-- Minute -->
+                            <LinearLayout
                                 android:layout_width="wrap_content"
-                                android:layout_height="wrap_content" />
+                                android:layout_height="wrap_content"
+                                android:gravity="center"
+                                android:orientation="vertical">
+
+                                <NumberPicker
+                                    android:id="@+id/picker_minute"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:text="@string/unit_minute_label"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="11sp" />
+                            </LinearLayout>
 
                             <TextView
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="@string/unit_second_label"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="11sp" />
+                                android:layout_marginHorizontal="8dp"
+                                android:text=":"
+                                android:textColor="@color/text_primary"
+                                android:textSize="22sp"
+                                android:textStyle="bold" />
+
+                            <!-- Second -->
+                            <LinearLayout
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:gravity="center"
+                                android:orientation="vertical">
+
+                                <NumberPicker
+                                    android:id="@+id/picker_second"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content" />
+
+                                <TextView
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginTop="2dp"
+                                    android:text="@string/unit_second_label"
+                                    android:textColor="@color/text_secondary"
+                                    android:textSize="11sp" />
+                            </LinearLayout>
                         </LinearLayout>
                     </LinearLayout>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <!-- DIRECT TEXT INPUT CONTAINER -->
+            <LinearLayout
+                android:id="@+id/layout_text_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    app:cardBackgroundColor="@color/bg_main"
+                    app:cardCornerRadius="12dp"
+                    app:cardElevation="0dp"
+                    app:strokeColor="@color/gray_border"
+                    app:strokeWidth="1dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="14dp">
+
+                        <!-- Date input row -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/label_enter_date"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                app:boxBackgroundMode="outline"
+                                app:boxCornerRadiusBottomEnd="8dp"
+                                app:boxCornerRadiusBottomStart="8dp"
+                                app:boxCornerRadiusTopEnd="8dp"
+                                app:boxCornerRadiusTopStart="8dp">
+
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/edit_text_date"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:hint="@string/hint_enter_date"
+                                    android:inputType="date"
+                                    android:textColor="@color/text_primary"
+                                    android:textSize="14sp" />
+                            </com.google.android.material.textfield.TextInputLayout>
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btn_pick_calendar"
+                                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:layout_marginStart="8dp"
+                                android:contentDescription="@string/btn_pick_calendar"
+                                android:insetBottom="0dp"
+                                android:insetLeft="0dp"
+                                android:insetRight="0dp"
+                                android:insetTop="0dp"
+                                android:padding="0dp"
+                                app:cornerRadius="8dp"
+                                app:icon="@drawable/ic_calendar"
+                                app:iconGravity="textStart"
+                                app:iconPadding="0dp"
+                                app:iconTint="@color/primary"
+                                app:strokeColor="@color/gray_border" />
+                        </LinearLayout>
+
+                        <!-- Time input row -->
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:text="@string/label_enter_time"
+                            android:textColor="@color/text_secondary"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="4dp"
+                            android:gravity="center_vertical"
+                            android:orientation="horizontal">
+
+                            <com.google.android.material.textfield.TextInputLayout
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                app:boxBackgroundMode="outline"
+                                app:boxCornerRadiusBottomEnd="8dp"
+                                app:boxCornerRadiusBottomStart="8dp"
+                                app:boxCornerRadiusTopEnd="8dp"
+                                app:boxCornerRadiusTopStart="8dp">
+
+                                <com.google.android.material.textfield.TextInputEditText
+                                    android:id="@+id/edit_text_time"
+                                    android:layout_width="match_parent"
+                                    android:layout_height="wrap_content"
+                                    android:hint="@string/hint_enter_time"
+                                    android:inputType="time"
+                                    android:textColor="@color/text_primary"
+                                    android:textSize="14sp" />
+                            </com.google.android.material.textfield.TextInputLayout>
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btn_pick_clock"
+                                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                                android:layout_width="48dp"
+                                android:layout_height="48dp"
+                                android:layout_marginStart="8dp"
+                                android:contentDescription="@string/btn_pick_clock"
+                                android:insetBottom="0dp"
+                                android:insetLeft="0dp"
+                                android:insetRight="0dp"
+                                android:insetTop="0dp"
+                                android:padding="0dp"
+                                app:cornerRadius="8dp"
+                                app:icon="@drawable/ic_clock"
+                                app:iconGravity="textStart"
+                                app:iconPadding="0dp"
+                                app:iconTint="@color/primary"
+                                app:strokeColor="@color/gray_border" />
+                        </LinearLayout>
+
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
 
             <!-- Preview Summary Card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
+                android:layout_marginTop="14dp"
                 app:cardBackgroundColor="@color/gray_input_bg"
                 app:cardCornerRadius="12dp"
                 app:cardElevation="0dp"
@@ -284,7 +496,7 @@
                         android:id="@+id/text_preview_start_value"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Początek: 2026-10-25 14:00:00"
+                        android:text="Początek: 2026-11-01 14:00:00"
                         android:textColor="@color/text_primary"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -294,7 +506,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="Koniec: 2026-10-25 18:00:00"
+                        android:text="Koniec: 2026-11-01 18:00:00"
                         android:textColor="@color/text_primary"
                         android:textSize="13sp"
                         android:textStyle="bold" />
@@ -305,7 +517,7 @@
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="18dp"
+                android:layout_marginTop="16dp"
                 android:gravity="end|center_vertical"
                 android:orientation="horizontal">
 

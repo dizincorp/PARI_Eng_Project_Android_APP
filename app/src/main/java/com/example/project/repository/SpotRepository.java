@@ -48,6 +48,7 @@ public class SpotRepository {
     private final ParkingPlaceDao parkingPlaceDao;
     private final ReservationDao reservationDao;
     private final ExecutorService diskExecutor;
+    private final Context appContext;
 
     private final MutableLiveData<Resource<Void>> syncStatusLiveData = new MutableLiveData<>();
 
@@ -61,7 +62,8 @@ public class SpotRepository {
                 ApiClient.getSpotApiService(),
                 AppDatabase.getInstance(context).parkingPlaceDao(),
                 AppDatabase.getInstance(context).reservationDao(),
-                Executors.newSingleThreadExecutor()
+                Executors.newSingleThreadExecutor(),
+                context.getApplicationContext()
         );
     }
 
@@ -72,21 +74,31 @@ public class SpotRepository {
      * @param parkingPlaceDao Room database ParkingPlaceDao instance
      * @param reservationDao  Room database ReservationDao instance
      * @param diskExecutor    Executor for asynchronous Room database writes
+     * @param appContext      Application context
      */
     public SpotRepository(@NonNull SpotApiService apiService,
                           @NonNull ParkingPlaceDao parkingPlaceDao,
                           @NonNull ReservationDao reservationDao,
-                          @NonNull ExecutorService diskExecutor) {
+                          @NonNull ExecutorService diskExecutor,
+                          @Nullable Context appContext) {
         this.apiService = apiService;
         this.parkingPlaceDao = parkingPlaceDao;
         this.reservationDao = reservationDao;
         this.diskExecutor = diskExecutor;
+        this.appContext = appContext;
+    }
+
+    public SpotRepository(@NonNull SpotApiService apiService,
+                          @NonNull ParkingPlaceDao parkingPlaceDao,
+                          @NonNull ReservationDao reservationDao,
+                          @NonNull ExecutorService diskExecutor) {
+        this(apiService, parkingPlaceDao, reservationDao, diskExecutor, null);
     }
 
     public SpotRepository(@NonNull SpotApiService apiService,
                           @NonNull ParkingPlaceDao parkingPlaceDao,
                           @NonNull ExecutorService diskExecutor) {
-        this(apiService, parkingPlaceDao, null, diskExecutor);
+        this(apiService, parkingPlaceDao, null, diskExecutor, null);
     }
 
     /**
@@ -508,7 +520,7 @@ public class SpotRepository {
                 } else {
                     String errorMsg = "Błąd pobierania miejsc: HTTP " + response.code();
                     Log.e(TAG, errorMsg);
-                    syncStatusLiveData.setValue(Resource.error(errorMsg, null, response.code()));
+                    syncStatusLiveData.postValue(Resource.error(errorMsg, null, response.code()));
                 }
             }
 
@@ -516,7 +528,7 @@ public class SpotRepository {
             public void onFailure(@NonNull Call<List<ParkingSpot>> call, @NonNull Throwable t) {
                 String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd sieci";
                 Log.e(TAG, "fetchAndSaveSpots network failure: " + errorMsg, t);
-                syncStatusLiveData.setValue(Resource.error(errorMsg, null, 0));
+                syncStatusLiveData.postValue(Resource.error(errorMsg, null, 0));
             }
         });
     }
@@ -601,7 +613,7 @@ public class SpotRepository {
                 } else {
                     String errorMsg = "Błąd pobierania moich miejsc: HTTP " + response.code();
                     Log.e(TAG, errorMsg);
-                    resultLiveData.setValue(Resource.error(errorMsg, null, response.code()));
+                    resultLiveData.postValue(Resource.error(errorMsg, null, response.code()));
                 }
             }
 
@@ -609,7 +621,7 @@ public class SpotRepository {
             public void onFailure(@NonNull Call<List<ParkingSpot>> call, @NonNull Throwable t) {
                 String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd sieci";
                 Log.e(TAG, "fetchMySpots network failure: " + errorMsg, t);
-                resultLiveData.setValue(Resource.error(errorMsg, null, 0));
+                resultLiveData.postValue(Resource.error(errorMsg, null, 0));
             }
         });
 
@@ -651,8 +663,12 @@ public class SpotRepository {
         if (spot.getOccupancy() != null) {
             boolean isOcc = "OCCUPIED".equalsIgnoreCase(spot.getOccupancy());
             boolean isRes = "RESERVED".equalsIgnoreCase(spot.getOccupancy());
+            boolean isBlk = "BLOCKED".equalsIgnoreCase(spot.getOccupancy());
             entity.setOccupied(isOcc || isRes);
             entity.setCheckedIn(isOcc);
+            if (isBlk) {
+                entity.setStatus("BLOCKED");
+            }
         }
 
         if (spot.getAmenities() != null && !spot.getAmenities().isEmpty()) {

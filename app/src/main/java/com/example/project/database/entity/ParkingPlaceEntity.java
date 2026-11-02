@@ -246,6 +246,33 @@ public class ParkingPlaceEntity {
         return "ACTIVE".equalsIgnoreCase(getStatus());
     }
 
+    /**
+     * Checks if this parking spot is blocked by owner.
+     *
+     * @return True if status is BLOCKED
+     */
+    public boolean isBlocked() {
+        return "BLOCKED".equalsIgnoreCase(getStatus());
+    }
+
+    /**
+     * Checks if this parking spot is draft.
+     *
+     * @return True if status is DRAFT
+     */
+    public boolean isDraft() {
+        return "DRAFT".equalsIgnoreCase(getStatus());
+    }
+
+    /**
+     * Checks if this parking spot is archived.
+     *
+     * @return True if status is ARCHIVED
+     */
+    public boolean isArchived() {
+        return "ARCHIVED".equalsIgnoreCase(getStatus());
+    }
+
     public String getStatus() {
         return status != null && !status.isEmpty() ? status : "ACTIVE";
     }

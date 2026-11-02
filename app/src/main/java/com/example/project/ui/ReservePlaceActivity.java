@@ -1,8 +1,12 @@
 package com.example.project.ui;
 
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.ArrayAdapter;
@@ -10,6 +14,8 @@ import android.widget.NumberPicker;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
@@ -18,16 +24,19 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
 
 import com.example.project.R;
+import com.example.project.database.entity.BlockedPeriodEntity;
 import com.example.project.databinding.ActivityReservePlaceBinding;
-import com.google.android.material.chip.Chip;
 import com.example.project.databinding.DialogAddVehicleBinding;
 import com.example.project.databinding.DialogDateTimePickerBinding;
 import com.example.project.model.ParkingPlace;
 import com.example.project.model.Vehicle;
+import com.example.project.network.model.QuoteResponse;
 import com.example.project.repository.AppRepository;
 import com.example.project.utils.AccessTimeParser;
+import com.example.project.utils.AmenityUtils;
 import com.example.project.utils.NotificationHelper;
 import com.example.project.viewmodel.ReservePlaceViewModel;
+import com.google.android.material.chip.Chip;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -38,8 +47,9 @@ import java.util.Locale;
 
 /**
  * Activity for booking a parking place with precise date and time selection
- * (Year, Month, Day, Hour, Minute, Second) in a styled Material dialog,
- * strict validation against owner's access limits, and reactive dispatch via {@link ReservePlaceViewModel}.
+ * supporting both Wheel Pickers and Direct Text Input, live pricing calculation
+ * via backend endpoints, strict validation against calendar blocked periods,
+ * and reactive reservation dispatch via {@link ReservePlaceViewModel}.
  */
 public class ReservePlaceActivity extends BaseActivity {
 
@@ -57,6 +67,14 @@ public class ReservePlaceActivity extends BaseActivity {
 
     private final Calendar startCalendar = Calendar.getInstance();
     private final Calendar endCalendar = Calendar.getInstance();
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (currentPlace != null) {
+            updatePriceSummary();
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -102,21 +120,32 @@ public class ReservePlaceActivity extends BaseActivity {
             allowedEndMinute = AccessTimeParser.getEndMinute(accessTime);
         }
 
-        // Initialize default start and end timestamps
+        // Initialize default start and end timestamps.
+        // If current actual time is already past opening hour, initialize to now.
+        Calendar now = Calendar.getInstance();
+        now.set(Calendar.SECOND, 0);
+        now.set(Calendar.MILLISECOND, 0);
+
         startCalendar.set(Calendar.HOUR_OF_DAY, allowedStartHour);
         startCalendar.set(Calendar.MINUTE, allowedStartMinute);
         startCalendar.set(Calendar.SECOND, 0);
         startCalendar.set(Calendar.MILLISECOND, 0);
 
-        endCalendar.setTimeInMillis(startCalendar.getTimeInMillis());
-        endCalendar.set(Calendar.HOUR_OF_DAY, allowedEndHour);
-        endCalendar.set(Calendar.MINUTE, allowedEndMinute);
-        endCalendar.set(Calendar.SECOND, 0);
-        endCalendar.set(Calendar.MILLISECOND, 0);
+        if (startCalendar.before(now)) {
+            startCalendar.setTimeInMillis(now.getTimeInMillis());
+        }
+
+        endCalendar.setTimeInMillis(startCalendar.getTimeInMillis() + 7200000L); // Default +2 hours
 
         setupUI();
         setupClickListeners();
         observeViewModel();
+
+        // Fetch latest blocked periods for this spot directly from backend
+        if (currentPlace != null && currentPlace.getId() != null) {
+            com.example.project.repository.AvailabilityRepository.getInstance(this)
+                    .fetchBlockedPeriods(currentPlace.getId());
+        }
     }
 
     private void setupUI() {
@@ -135,6 +164,7 @@ public class ReservePlaceActivity extends BaseActivity {
         } else {
             binding.imgPlacePhoto.setImageResource(currentPlace.getPhotoResId());
         }
+
         if (currentPlace.getTitle() != null && !currentPlace.getTitle().isEmpty()) {
             binding.textPlaceStreet.setText(currentPlace.getTitle());
             String address = String.format("%s, %s",
@@ -154,7 +184,7 @@ public class ReservePlaceActivity extends BaseActivity {
         List<String> amenities = currentPlace.getAmenities();
         if (amenities != null && !amenities.isEmpty()) {
             for (String amenity : amenities) {
-                String label = com.example.project.utils.AmenityUtils.formatAmenity(amenity);
+                String label = AmenityUtils.formatAmenity(amenity);
                 if (!label.isEmpty()) {
                     Chip chip = new Chip(this);
                     chip.setText(label);
@@ -183,7 +213,9 @@ public class ReservePlaceActivity extends BaseActivity {
     }
 
     /**
-     * Updates the UI date-time labels and recalculates total price summary.
+     * Updates the UI date-time labels, validates against calendar blocked periods,
+     * displays collision warnings, and recalculates preliminary total price summary
+     * while querying the backend quote endpoint for accurate rate calculation.
      */
     private void updatePriceSummary() {
         if (binding == null || currentPlace == null) return;
@@ -197,6 +229,35 @@ public class ReservePlaceActivity extends BaseActivity {
         binding.textEndDateValue.setText(dateFormat.format(endCalendar.getTime()));
         binding.textEndTimeValue.setText(timeFormat.format(endCalendar.getTime()));
 
+        // Check if selected timeframe overlaps with any blocked period
+        long reqStartMs = startCalendar.getTimeInMillis();
+        long reqEndMs = endCalendar.getTimeInMillis();
+
+        BlockedPeriodEntity conflict = viewModel.findConflictingBlockedPeriod(
+                currentPlace.getId(),
+                reqStartMs,
+                reqEndMs
+        );
+
+        if (conflict != null) {
+            String warningText = getString(R.string.error_spot_blocked_interval, conflict.getFormattedRange());
+            binding.textReservationBlockedWarning.setText(warningText);
+            binding.textReservationBlockedWarning.setVisibility(View.VISIBLE);
+            binding.btnReserveAndPay.setEnabled(false);
+        } else if (currentPlace.isBlocked()) {
+            binding.textReservationBlockedWarning.setText(R.string.warning_spot_currently_blocked);
+            binding.textReservationBlockedWarning.setVisibility(View.VISIBLE);
+            binding.btnReserveAndPay.setEnabled(false);
+        } else if (currentPlace.isOccupied()) {
+            binding.textReservationBlockedWarning.setText(R.string.warning_spot_currently_occupied);
+            binding.textReservationBlockedWarning.setVisibility(View.VISIBLE);
+            binding.btnReserveAndPay.setEnabled(false);
+        } else {
+            binding.textReservationBlockedWarning.setVisibility(View.GONE);
+            binding.btnReserveAndPay.setEnabled(true);
+        }
+
+        // Local pricing calculation fallback
         double rate = currentPlace.getPrice();
         long diffMs = endCalendar.getTimeInMillis() - startCalendar.getTimeInMillis();
         double hours = Math.max(0.5, (double) diffMs / (1000.0 * 60.0 * 60.0));
@@ -209,14 +270,92 @@ public class ReservePlaceActivity extends BaseActivity {
         binding.textSummaryRateValue.setText(String.format(Locale.getDefault(), "%.2f PLN", subtotal));
         binding.textSummaryServiceFee.setText(String.format(Locale.getDefault(), "%.2f PLN", serviceFee));
         binding.textSummaryTotalSum.setText(String.format(Locale.getDefault(), "%.2f PLN", total));
+
+        // Request live backend calculation from POST /api/reservations/quote
+        viewModel.fetchQuote(currentPlace.getId(), reqStartMs, reqEndMs);
     }
 
     /**
-     * Validates that selected reservation period does not violate parking availability hours.
+     * Updates the spot announcement card with formatted blocked period notices.
+     * Displays e.g. "⛔ 18:00 - 20:00 zablokowane" so drivers clearly see owner blocks in the announcement.
+     *
+     * @param blocks List of blocked periods for this spot
+     */
+    private void updateBlockedAnnouncement(@Nullable List<BlockedPeriodEntity> blocks) {
+        if (binding == null) return;
+        if (blocks == null || blocks.isEmpty()) {
+            binding.textPlaceBlockedAnnouncement.setVisibility(View.GONE);
+            return;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        for (BlockedPeriodEntity b : blocks) {
+            if (b == null || b.isExpired()) continue;
+            if (sb.length() > 0) sb.append("\n");
+            String reason = (b.getReason() != null && !b.getReason().trim().isEmpty())
+                    ? " (" + b.getReason().trim() + ")" : "";
+            sb.append("⛔ ").append(b.getFormattedBlockedNotice()).append(reason);
+        }
+
+        if (sb.length() > 0) {
+            binding.textPlaceBlockedAnnouncement.setText(sb.toString());
+            binding.textPlaceBlockedAnnouncement.setVisibility(View.VISIBLE);
+        } else {
+            binding.textPlaceBlockedAnnouncement.setVisibility(View.GONE);
+        }
+    }
+
+    /**
+     * Validates that selected reservation period does not violate parking availability hours
+     * and does not collide with owner calendar blocked periods.
      *
      * @return True if valid, false otherwise
      */
     private boolean validateReservationTimeLimits() {
+        if (startCalendar.getTimeInMillis() >= endCalendar.getTimeInMillis()) {
+            Toast.makeText(this, R.string.error_invalid_time_range, Toast.LENGTH_SHORT).show();
+            return false;
+        }
+
+        // Strict validation against calendar blocked periods and real-time status
+        if (currentPlace != null) {
+            if (currentPlace.isBlocked()) {
+                new AlertDialog.Builder(this)
+                        .setTitle(R.string.title_spot_blocked)
+                        .setMessage(R.string.msg_spot_blocked_by_owner)
+                        .setPositiveButton(R.string.btn_ok, null)
+                        .show();
+                return false;
+            }
+
+            if (currentPlace.isOccupied()) {
+                new AlertDialog.Builder(this)
+                        .setTitle(R.string.title_spot_occupied)
+                        .setMessage(R.string.msg_spot_occupied_by_driver)
+                        .setPositiveButton(R.string.btn_ok, null)
+                        .show();
+                return false;
+            }
+
+            BlockedPeriodEntity conflict = viewModel.findConflictingBlockedPeriod(
+                    currentPlace.getId(),
+                    startCalendar.getTimeInMillis(),
+                    endCalendar.getTimeInMillis()
+            );
+
+            if (conflict != null) {
+                String rangeStr = conflict.getFormattedRange();
+                String reason = (conflict.getReason() != null && !conflict.getReason().isEmpty())
+                        ? " (" + conflict.getReason() + ")" : "";
+                new AlertDialog.Builder(this)
+                        .setTitle(R.string.title_spot_blocked)
+                        .setMessage(getString(R.string.error_spot_blocked_interval, rangeStr + reason))
+                        .setPositiveButton(R.string.btn_ok, null)
+                        .show();
+                return false;
+            }
+        }
+
         int selectedStartMin = startCalendar.get(Calendar.HOUR_OF_DAY) * 60 + startCalendar.get(Calendar.MINUTE);
         int selectedEndMin = endCalendar.get(Calendar.HOUR_OF_DAY) * 60 + endCalendar.get(Calendar.MINUTE);
 
@@ -232,11 +371,6 @@ public class ReservePlaceActivity extends BaseActivity {
         if (selectedEndMin > allowedEndMin) {
             String allowedStr = String.format(Locale.getDefault(), "%02d:%02d", allowedEndHour, allowedEndMinute);
             Toast.makeText(this, getString(R.string.error_reservation_after_allowed, allowedStr), Toast.LENGTH_LONG).show();
-            return false;
-        }
-
-        if (startCalendar.getTimeInMillis() >= endCalendar.getTimeInMillis()) {
-            Toast.makeText(this, R.string.error_invalid_time_range, Toast.LENGTH_SHORT).show();
             return false;
         }
 
@@ -303,11 +437,53 @@ public class ReservePlaceActivity extends BaseActivity {
             binding.spinnerVehicles.setAdapter(adapter);
         });
 
+        // Observe blocked periods for this spot to update UI dynamically
+        if (currentPlace != null) {
+            viewModel.getBlockedPeriodsLiveData(currentPlace.getId()).observe(this, blocks -> {
+                updateBlockedAnnouncement(blocks);
+                updatePriceSummary();
+            });
+        }
+
+        // Observe backend calculated price quotes from POST /api/reservations/quote
+        viewModel.getQuoteLiveData().observe(this, resource -> {
+            if (binding == null || resource == null) return;
+
+            if (resource.isSuccess() && resource.getData() != null) {
+                QuoteResponse quote = resource.getData();
+                String currency = (quote.getCurrency() != null && !quote.getCurrency().isEmpty())
+                        ? quote.getCurrency() : "PLN";
+
+                if (quote.getHourlyRate() != null && quote.getHourlyRate() > 0) {
+                    binding.textSummaryRateLabel.setText(String.format(Locale.getDefault(), "Stawka (%.2f %s/h)", quote.getHourlyRate(), currency));
+                }
+                if (quote.getSpotCost() != null) {
+                    binding.textSummaryRateValue.setText(String.format(Locale.getDefault(), "%.2f %s", quote.getSpotCost(), currency));
+                }
+                if (quote.getServiceFee() != null) {
+                    binding.textSummaryServiceFee.setText(String.format(Locale.getDefault(), "%.2f %s", quote.getServiceFee(), currency));
+                }
+                if (quote.getTotal() != null) {
+                    binding.textSummaryTotalSum.setText(String.format(Locale.getDefault(), "%.2f %s", quote.getTotal(), currency));
+                }
+            } else if (resource.isError() && resource.getMessage() != null && !resource.getMessage().isEmpty()) {
+                binding.textReservationBlockedWarning.setText(resource.getMessage());
+                binding.textReservationBlockedWarning.setVisibility(View.VISIBLE);
+                binding.btnReserveAndPay.setEnabled(false);
+            }
+        });
+
         // Observe HTTP 409 Conflict error specifically to display conflict alert
         viewModel.getConflictErrorLiveData().observe(this, conflictMessage -> {
             if (conflictMessage != null && !conflictMessage.isEmpty()) {
+                int titleResId = R.string.title_reservation_conflict;
+                if (conflictMessage.contains("⛔") || conflictMessage.toLowerCase(Locale.ROOT).contains("zablokowan")) {
+                    titleResId = R.string.title_spot_blocked;
+                } else if (conflictMessage.contains("🚗") || conflictMessage.toLowerCase(Locale.ROOT).contains("zajęt") || conflictMessage.toLowerCase(Locale.ROOT).contains("zajet")) {
+                    titleResId = R.string.title_spot_occupied;
+                }
                 new AlertDialog.Builder(this)
-                        .setTitle(R.string.title_reservation_conflict)
+                        .setTitle(titleResId)
                         .setMessage(conflictMessage)
                         .setPositiveButton(R.string.btn_ok, null)
                         .show();
@@ -343,8 +519,10 @@ public class ReservePlaceActivity extends BaseActivity {
     }
 
     /**
-     * Shows a beautiful Material Dialog enabling exact selection of Year, Month, Day,
-     * Hour, Minute, and Second (format: yyyy-MM-dd HH:mm:ss) for start and end times.
+     * Shows a flexible Material Dialog enabling exact selection of Year, Month, Day,
+     * Hour, Minute, and Second (format: yyyy-MM-dd HH:mm:ss) for start and end times,
+     * offering an instant toggle between Wheel Pickers and Direct Text Input, as well as
+     * an automated "Set Current Time" action button.
      *
      * @param editStartFirst True if initial target is Start datetime, false for End datetime
      */
@@ -353,9 +531,24 @@ public class ReservePlaceActivity extends BaseActivity {
 
         Calendar tempStart = (Calendar) startCalendar.clone();
         Calendar tempEnd = (Calendar) endCalendar.clone();
+
+        // Default start to current actual time if past
+        Calendar now = Calendar.getInstance();
+        now.set(Calendar.SECOND, 0);
+        now.set(Calendar.MILLISECOND, 0);
+        if (tempStart.before(now)) {
+            tempStart.setTimeInMillis(now.getTimeInMillis());
+            if (tempEnd.getTimeInMillis() <= tempStart.getTimeInMillis()) {
+                tempEnd.setTimeInMillis(tempStart.getTimeInMillis() + 7200000L);
+            }
+        }
+
         final boolean[] isEditingStart = new boolean[]{editStartFirst};
+        final boolean[] isWheelsMode = new boolean[]{true};
 
         SimpleDateFormat fullFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
         NumberPicker.Formatter twoDigitFormatter = i -> String.format(Locale.US, "%02d", i);
 
         // Configure NumberPickers
@@ -371,15 +564,15 @@ public class ReservePlaceActivity extends BaseActivity {
         dialogBinding.pickerSecond.setMaxValue(59);
         dialogBinding.pickerSecond.setFormatter(twoDigitFormatter);
 
-        // Disallow past dates
-        dialogBinding.datePickerDialog.setMinDate(System.currentTimeMillis() - 1000);
+        // Disallow past dates in DatePicker
+        dialogBinding.datePickerDialog.setMinDate(System.currentTimeMillis() - 60000L);
 
         Runnable updatePreviews = () -> {
             dialogBinding.textPreviewStartValue.setText(getString(R.string.preview_start_format, fullFormat.format(tempStart.getTime())));
             dialogBinding.textPreviewEndValue.setText(getString(R.string.preview_end_format, fullFormat.format(tempEnd.getTime())));
         };
 
-        // Reads values from DatePicker and NumberPickers into the active working calendar
+        // Reads values from wheel pickers into the active working calendar
         Runnable savePickersToTarget = () -> {
             Calendar target = isEditingStart[0] ? tempStart : tempEnd;
             target.set(Calendar.YEAR, dialogBinding.datePickerDialog.getYear());
@@ -389,10 +582,43 @@ public class ReservePlaceActivity extends BaseActivity {
             target.set(Calendar.MINUTE, dialogBinding.pickerMinute.getValue());
             target.set(Calendar.SECOND, dialogBinding.pickerSecond.getValue());
             target.set(Calendar.MILLISECOND, 0);
+
+            // Synchronize text inputs
+            dialogBinding.editTextDate.setText(dateFormat.format(target.getTime()));
+            dialogBinding.editTextTime.setText(timeFormat.format(target.getTime()));
+
             updatePreviews.run();
         };
 
-        // Synchronizes DatePicker and NumberPickers with the given calendar
+        // Reads values from text inputs into the active working calendar
+        Runnable saveTextToTarget = () -> {
+            Calendar target = isEditingStart[0] ? tempStart : tempEnd;
+            String dateStr = dialogBinding.editTextDate.getText() != null ? dialogBinding.editTextDate.getText().toString().trim() : "";
+            String timeStr = dialogBinding.editTextTime.getText() != null ? dialogBinding.editTextTime.getText().toString().trim() : "";
+
+            if (!dateStr.isEmpty() && !timeStr.isEmpty()) {
+                try {
+                    String fullStr = dateStr + " " + (timeStr.length() == 5 ? timeStr + ":00" : timeStr);
+                    Date parsed = fullFormat.parse(fullStr);
+                    if (parsed != null) {
+                        target.setTimeInMillis(parsed.getTime());
+                        // Synchronize wheel pickers
+                        dialogBinding.datePickerDialog.updateDate(
+                                target.get(Calendar.YEAR),
+                                target.get(Calendar.MONTH),
+                                target.get(Calendar.DAY_OF_MONTH)
+                        );
+                        dialogBinding.pickerHour.setValue(target.get(Calendar.HOUR_OF_DAY));
+                        dialogBinding.pickerMinute.setValue(target.get(Calendar.MINUTE));
+                        dialogBinding.pickerSecond.setValue(target.get(Calendar.SECOND));
+                    }
+                } catch (Exception ignored) {
+                }
+            }
+            updatePreviews.run();
+        };
+
+        // Synchronizes both DatePicker/NumberPickers and Text fields with the given calendar
         HelperAction<Calendar> loadIntoPickers = target -> {
             dialogBinding.datePickerDialog.updateDate(
                     target.get(Calendar.YEAR),
@@ -402,9 +628,12 @@ public class ReservePlaceActivity extends BaseActivity {
             dialogBinding.pickerHour.setValue(target.get(Calendar.HOUR_OF_DAY));
             dialogBinding.pickerMinute.setValue(target.get(Calendar.MINUTE));
             dialogBinding.pickerSecond.setValue(target.get(Calendar.SECOND));
+
+            dialogBinding.editTextDate.setText(dateFormat.format(target.getTime()));
+            dialogBinding.editTextTime.setText(timeFormat.format(target.getTime()));
         };
 
-        // Apply current active mode styling and load state
+        // Apply current active target tab styling and load state
         Runnable applyMode = () -> {
             if (isEditingStart[0]) {
                 dialogBinding.radioStartMode.setChecked(true);
@@ -434,7 +663,7 @@ public class ReservePlaceActivity extends BaseActivity {
         applyMode.run();
         updatePreviews.run();
 
-        // Listeners for user changes in pickers
+        // Listeners for user changes in wheel pickers
         Calendar initial = isEditingStart[0] ? tempStart : tempEnd;
         dialogBinding.datePickerDialog.init(
                 initial.get(Calendar.YEAR),
@@ -446,10 +675,114 @@ public class ReservePlaceActivity extends BaseActivity {
         dialogBinding.pickerMinute.setOnValueChangedListener((picker, oldVal, newVal) -> savePickersToTarget.run());
         dialogBinding.pickerSecond.setOnValueChangedListener((picker, oldVal, newVal) -> savePickersToTarget.run());
 
+        // TextWatcher for text inputs
+        TextWatcher textWatcher = new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                if (!isWheelsMode[0]) {
+                    saveTextToTarget.run();
+                }
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        };
+        dialogBinding.editTextDate.addTextChangedListener(textWatcher);
+        dialogBinding.editTextTime.addTextChangedListener(textWatcher);
+
+        // System DatePicker and TimePicker launchers from text input mode
+        dialogBinding.btnPickCalendar.setOnClickListener(v -> {
+            Calendar target = isEditingStart[0] ? tempStart : tempEnd;
+            DatePickerDialog dpd = new DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
+                target.set(Calendar.YEAR, year);
+                target.set(Calendar.MONTH, month);
+                target.set(Calendar.DAY_OF_MONTH, dayOfMonth);
+                loadIntoPickers.execute(target);
+                updatePreviews.run();
+            }, target.get(Calendar.YEAR), target.get(Calendar.MONTH), target.get(Calendar.DAY_OF_MONTH));
+            dpd.getDatePicker().setMinDate(System.currentTimeMillis() - 60000L);
+            dpd.show();
+        });
+
+        dialogBinding.btnPickClock.setOnClickListener(v -> {
+            Calendar target = isEditingStart[0] ? tempStart : tempEnd;
+            TimePickerDialog tpd = new TimePickerDialog(this, (view, hourOfDay, minute) -> {
+                target.set(Calendar.HOUR_OF_DAY, hourOfDay);
+                target.set(Calendar.MINUTE, minute);
+                target.set(Calendar.SECOND, 0);
+                loadIntoPickers.execute(target);
+                updatePreviews.run();
+            }, target.get(Calendar.HOUR_OF_DAY), target.get(Calendar.MINUTE), true);
+            tpd.show();
+        });
+
+        // "Now" Button: automatically sets the current actual date and time
+        dialogBinding.btnSetNow.setOnClickListener(v -> {
+            Calendar currentActual = Calendar.getInstance();
+            currentActual.set(Calendar.SECOND, 0);
+            currentActual.set(Calendar.MILLISECOND, 0);
+
+            Calendar target = isEditingStart[0] ? tempStart : tempEnd;
+            target.setTimeInMillis(currentActual.getTimeInMillis());
+
+            if (isEditingStart[0] && tempEnd.getTimeInMillis() <= tempStart.getTimeInMillis()) {
+                tempEnd.setTimeInMillis(tempStart.getTimeInMillis() + 7200000L);
+            }
+
+            loadIntoPickers.execute(target);
+            updatePreviews.run();
+        });
+
+        // Switch between Wheels and Text Input modes
+        dialogBinding.radioModeWheels.setOnClickListener(v -> {
+            if (!isWheelsMode[0]) {
+                saveTextToTarget.run();
+                isWheelsMode[0] = true;
+                dialogBinding.layoutWheelsContainer.setVisibility(View.VISIBLE);
+                dialogBinding.layoutTextContainer.setVisibility(View.GONE);
+
+                dialogBinding.radioModeWheels.setChecked(true);
+                dialogBinding.radioModeWheels.setTextColor(ContextCompat.getColor(this, R.color.white));
+                dialogBinding.radioModeWheels.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.chip_bg_selected));
+
+                dialogBinding.radioModeText.setChecked(false);
+                dialogBinding.radioModeText.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
+                dialogBinding.radioModeText.setBackgroundTintList(null);
+
+                loadIntoPickers.execute(isEditingStart[0] ? tempStart : tempEnd);
+            }
+        });
+
+        dialogBinding.radioModeText.setOnClickListener(v -> {
+            if (isWheelsMode[0]) {
+                savePickersToTarget.run();
+                isWheelsMode[0] = false;
+                dialogBinding.layoutWheelsContainer.setVisibility(View.GONE);
+                dialogBinding.layoutTextContainer.setVisibility(View.VISIBLE);
+
+                dialogBinding.radioModeText.setChecked(true);
+                dialogBinding.radioModeText.setTextColor(ContextCompat.getColor(this, R.color.white));
+                dialogBinding.radioModeText.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.chip_bg_selected));
+
+                dialogBinding.radioModeWheels.setChecked(false);
+                dialogBinding.radioModeWheels.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
+                dialogBinding.radioModeWheels.setBackgroundTintList(null);
+
+                loadIntoPickers.execute(isEditingStart[0] ? tempStart : tempEnd);
+            }
+        });
+
         // Switching between Start and End tabs
         dialogBinding.radioStartMode.setOnClickListener(v -> {
             if (!isEditingStart[0]) {
-                savePickersToTarget.run();
+                if (isWheelsMode[0]) {
+                    savePickersToTarget.run();
+                } else {
+                    saveTextToTarget.run();
+                }
                 isEditingStart[0] = true;
                 applyMode.run();
             }
@@ -457,7 +790,11 @@ public class ReservePlaceActivity extends BaseActivity {
 
         dialogBinding.radioEndMode.setOnClickListener(v -> {
             if (isEditingStart[0]) {
-                savePickersToTarget.run();
+                if (isWheelsMode[0]) {
+                    savePickersToTarget.run();
+                } else {
+                    saveTextToTarget.run();
+                }
                 isEditingStart[0] = false;
                 applyMode.run();
             }
@@ -468,7 +805,11 @@ public class ReservePlaceActivity extends BaseActivity {
                 .create();
 
         dialogBinding.btnApplyDialog.setOnClickListener(v -> {
-            savePickersToTarget.run();
+            if (isWheelsMode[0]) {
+                savePickersToTarget.run();
+            } else {
+                saveTextToTarget.run();
+            }
 
             if (tempStart.getTimeInMillis() >= tempEnd.getTimeInMillis()) {
                 Toast.makeText(this, R.string.error_invalid_time_range, Toast.LENGTH_SHORT).show();

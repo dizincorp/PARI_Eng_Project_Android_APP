@@ -146,6 +146,7 @@ public class PlacesAdapter extends RecyclerView.Adapter<PlacesAdapter.PlaceViewH
             } else {
                 binding.textPlaceDescription.setVisibility(View.GONE);
             }
+            binding.textItemBlockedInfo.setVisibility(View.GONE);
 
             // 2. Slider (MaterialSwitch) configuration
             binding.switchSpotActive.setOnCheckedChangeListener(null);

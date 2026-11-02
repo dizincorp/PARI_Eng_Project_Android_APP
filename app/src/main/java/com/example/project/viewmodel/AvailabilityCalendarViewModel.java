@@ -21,8 +21,12 @@ import com.example.project.repository.AppRepository;
 import com.example.project.repository.AvailabilityRepository;
 import com.example.project.repository.SpotRepository;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.TimeZone;
 
 /**
  * ViewModel managing parking spot availability, weekly schedules, and calendar block periods.
@@ -71,6 +75,7 @@ public class AvailabilityCalendarViewModel extends AndroidViewModel {
             if (spotId == null || spotId.trim().isEmpty()) {
                 return new MutableLiveData<>(new ArrayList<>());
             }
+            availabilityRepository.fetchBlockedPeriods(spotId.trim());
             return availabilityRepository.getBlockedPeriodsLiveData(spotId.trim());
         });
 
@@ -88,6 +93,16 @@ public class AvailabilityCalendarViewModel extends AndroidViewModel {
 
     public LiveData<String> getSelectedSpotIdLiveData() {
         return selectedSpotIdLiveData;
+    }
+
+    /**
+     * Refreshes blocked periods for the currently selected spot.
+     */
+    public void refreshBlockedPeriods() {
+        String currentId = selectedSpotIdLiveData.getValue();
+        if (currentId != null && !currentId.trim().isEmpty()) {
+            availabilityRepository.fetchBlockedPeriods(currentId.trim());
+        }
     }
 
     public LiveData<List<Reservation>> getDateReservationsLiveData() {
@@ -165,9 +180,43 @@ public class AvailabilityCalendarViewModel extends AndroidViewModel {
         String to = (timeTo != null && !timeTo.trim().isEmpty()) ? timeTo.trim() : "18:00";
         String blockReason = (reason != null && !reason.trim().isEmpty()) ? reason.trim() : "Blokada właściciela";
 
-        // Build standard ISO-8601 UTC timestamps (e.g. 2026-11-01T12:00:00Z)
-        String startIso = targetDateStr + "T" + (from.length() == 5 ? from + ":00Z" : from);
-        String endIso = targetDateStr + "T" + (to.length() == 5 ? to + ":00Z" : to);
+        // Convert user local date & time to standard ISO-8601 UTC Instant (e.g. 2026-11-01T15:00:00.000Z)
+        SimpleDateFormat localParserSec = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
+        SimpleDateFormat localParserMin = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US);
+        SimpleDateFormat isoUtc = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
+        isoUtc.setTimeZone(TimeZone.getTimeZone("UTC"));
+
+        String startIso;
+        String endIso;
+        long blockStartMs = 0;
+        long blockEndMs = 0;
+        try {
+            Date startDate = null;
+            Date endDate = null;
+            try {
+                startDate = localParserSec.parse(targetDateStr + " " + from);
+            } catch (Exception ignored) {
+                startDate = localParserMin.parse(targetDateStr + " " + from);
+            }
+            try {
+                endDate = localParserSec.parse(targetDateStr + " " + to);
+            } catch (Exception ignored) {
+                endDate = localParserMin.parse(targetDateStr + " " + to);
+            }
+
+            if (startDate != null && endDate != null) {
+                startIso = isoUtc.format(startDate);
+                endIso = isoUtc.format(endDate);
+                blockStartMs = startDate.getTime();
+                blockEndMs = endDate.getTime();
+            } else {
+                startIso = targetDateStr + "T" + (from.length() == 5 ? from + ":00.000Z" : from);
+                endIso = targetDateStr + "T" + (to.length() == 5 ? to + ":00.000Z" : to);
+            }
+        } catch (Exception e) {
+            startIso = targetDateStr + "T" + (from.length() == 5 ? from + ":00.000Z" : from);
+            endIso = targetDateStr + "T" + (to.length() == 5 ? to + ":00.000Z" : to);
+        }
 
         CreateBlockRequest request = new CreateBlockRequest(startIso, endIso, blockReason);
 
@@ -193,8 +242,8 @@ public class AvailabilityCalendarViewModel extends AndroidViewModel {
                 "1",
                 targetDateStr,
                 range,
-                System.currentTimeMillis(),
-                System.currentTimeMillis() + 14400000L,
+                blockStartMs > 0 ? blockStartMs : System.currentTimeMillis(),
+                blockEndMs > 0 ? blockEndMs : (System.currentTimeMillis() + 14400000L),
                 blockReason,
                 "ZABLOKOWANA",
                 0.0,

@@ -110,6 +110,91 @@ public class AvailabilityRepository {
     }
 
     /**
+     * Fetches blocked periods from GET /api/spots/{spotId}/blocked-periods
+     * (falling back to GET /api/spots/{spotId}/calendar/blocks)
+     * and synchronizes them into local Room database cache.
+     *
+     * @param spotId Unique spot identifier
+     * @return LiveData emitting Resource with list of BlockedPeriodEntity
+     */
+    public LiveData<Resource<List<BlockedPeriodEntity>>> fetchBlockedPeriods(@NonNull String spotId) {
+        MutableLiveData<Resource<List<BlockedPeriodEntity>>> result = new MutableLiveData<>();
+        result.postValue(Resource.loading(null));
+
+        if (spotId == null || spotId.trim().isEmpty()) {
+            result.postValue(Resource.error("Spot ID is empty", null));
+            return result;
+        }
+
+        String cleanId = spotId.trim();
+
+        apiService.getBlockedPeriods(cleanId).enqueue(new Callback<List<BlockedPeriodResponse>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<BlockedPeriodResponse>> call,
+                                   @NonNull Response<List<BlockedPeriodResponse>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    Log.d(TAG, "Successfully fetched " + response.body().size() + " blocked periods for spot: " + cleanId);
+                    saveBlockedResponsesToRoom(cleanId, response.body(), result);
+                } else {
+                    Log.d(TAG, "GET blocked-periods returned HTTP " + response.code() + ", falling back to calendar/blocks for spot: " + cleanId);
+                    fetchCalendarBlocksFallback(cleanId, result);
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<BlockedPeriodResponse>> call, @NonNull Throwable t) {
+                Log.e(TAG, "GET blocked-periods failed: " + t.getMessage() + ", falling back to calendar/blocks for spot: " + cleanId);
+                fetchCalendarBlocksFallback(cleanId, result);
+            }
+        });
+
+        return result;
+    }
+
+    private void fetchCalendarBlocksFallback(@NonNull String spotId,
+                                             @NonNull MutableLiveData<Resource<List<BlockedPeriodEntity>>> result) {
+        apiService.getCalendarBlocks(spotId).enqueue(new Callback<List<BlockedPeriodResponse>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<BlockedPeriodResponse>> call,
+                                   @NonNull Response<List<BlockedPeriodResponse>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    Log.d(TAG, "Successfully fetched " + response.body().size() + " calendar blocks for spot: " + spotId);
+                    saveBlockedResponsesToRoom(spotId, response.body(), result);
+                } else {
+                    String msg = "HTTP " + response.code();
+                    Log.e(TAG, "GET calendar/blocks failed with HTTP " + response.code() + " for spot: " + spotId);
+                    result.postValue(Resource.error(msg, null));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<BlockedPeriodResponse>> call, @NonNull Throwable t) {
+                String msg = t.getMessage() != null ? t.getMessage() : "Network error";
+                Log.e(TAG, "GET calendar/blocks network failure: " + msg + " for spot: " + spotId, t);
+                result.postValue(Resource.error(msg, null));
+            }
+        });
+    }
+
+    private void saveBlockedResponsesToRoom(@NonNull String spotId,
+                                            @NonNull List<BlockedPeriodResponse> responses,
+                                            @NonNull MutableLiveData<Resource<List<BlockedPeriodEntity>>> result) {
+        diskExecutor.execute(() -> {
+            List<BlockedPeriodEntity> entities = new ArrayList<>();
+            for (BlockedPeriodResponse resp : responses) {
+                if (resp != null) {
+                    BlockedPeriodEntity entity = mapResponseToEntity(spotId, resp);
+                    if (!entity.isExpired()) {
+                        entities.add(entity);
+                    }
+                }
+            }
+            blockedPeriodDao.replaceBlockedPeriodsForSpot(spotId, entities);
+            result.postValue(Resource.success(entities));
+        });
+    }
+
+    /**
      * Fetches weekly availability rules from GET /api/spots/{spotId}/availability-rules
      * and updates the local Room database cache.
      *
@@ -118,7 +203,7 @@ public class AvailabilityRepository {
      */
     public LiveData<Resource<List<AvailabilityRuleEntity>>> fetchAvailabilityRules(@NonNull String spotId) {
         MutableLiveData<Resource<List<AvailabilityRuleEntity>>> result = new MutableLiveData<>();
-        result.setValue(Resource.loading(null));
+        result.postValue(Resource.loading(null));
 
         apiService.getAvailabilityRules(spotId).enqueue(new Callback<List<AvailabilityRuleResponse>>() {
             @Override
@@ -133,7 +218,7 @@ public class AvailabilityRepository {
                 } else {
                     String errorMsg = "Failed to fetch availability rules: HTTP " + response.code();
                     Log.e(TAG, errorMsg);
-                    result.setValue(Resource.error(errorMsg, null));
+                    result.postValue(Resource.error(errorMsg, null));
                 }
             }
 
@@ -141,7 +226,7 @@ public class AvailabilityRepository {
             public void onFailure(@NonNull Call<List<AvailabilityRuleResponse>> call, @NonNull Throwable t) {
                 String errorMsg = t.getMessage() != null ? t.getMessage() : "Network error fetching rules";
                 Log.e(TAG, errorMsg, t);
-                result.setValue(Resource.error(errorMsg, null));
+                result.postValue(Resource.error(errorMsg, null));
             }
         });
 
@@ -161,7 +246,7 @@ public class AvailabilityRepository {
             @NonNull List<AvailabilityRuleRequest> rules
     ) {
         MutableLiveData<Resource<List<AvailabilityRuleEntity>>> result = new MutableLiveData<>();
-        result.setValue(Resource.loading(null));
+        result.postValue(Resource.loading(null));
 
         apiService.replaceAvailabilityRules(spotId, rules).enqueue(new Callback<List<AvailabilityRuleResponse>>() {
             @Override
@@ -176,7 +261,7 @@ public class AvailabilityRepository {
                 } else {
                     String errorMsg = "Failed to replace availability rules: HTTP " + response.code();
                     Log.e(TAG, errorMsg);
-                    result.setValue(Resource.error(errorMsg, null));
+                    result.postValue(Resource.error(errorMsg, null));
                 }
             }
 
@@ -184,7 +269,7 @@ public class AvailabilityRepository {
             public void onFailure(@NonNull Call<List<AvailabilityRuleResponse>> call, @NonNull Throwable t) {
                 String errorMsg = t.getMessage() != null ? t.getMessage() : "Network error replacing rules";
                 Log.e(TAG, errorMsg, t);
-                result.setValue(Resource.error(errorMsg, null));
+                result.postValue(Resource.error(errorMsg, null));
             }
         });
 
@@ -202,7 +287,7 @@ public class AvailabilityRepository {
     public LiveData<Resource<BlockedPeriodEntity>> createCalendarBlock(@NonNull String spotId,
                                                                       @NonNull CreateBlockRequest request) {
         MutableLiveData<Resource<BlockedPeriodEntity>> result = new MutableLiveData<>();
-        result.setValue(Resource.loading(null));
+        result.postValue(Resource.loading(null));
 
         apiService.createCalendarBlock(spotId, request).enqueue(new Callback<BlockedPeriodResponse>() {
             @Override
@@ -214,10 +299,36 @@ public class AvailabilityRepository {
                         blockedPeriodDao.insert(entity);
                         result.postValue(Resource.success(entity));
                     });
+                } else if (response.code() == 404 || response.code() == 405) {
+                    // Try alternative endpoint POST /api/spots/{spotId}/blocked-periods
+                    apiService.createBlockedPeriod(spotId, request).enqueue(new Callback<BlockedPeriodResponse>() {
+                        @Override
+                        public void onResponse(@NonNull Call<BlockedPeriodResponse> call2,
+                                               @NonNull Response<BlockedPeriodResponse> response2) {
+                            if (response2.isSuccessful() && response2.body() != null) {
+                                BlockedPeriodEntity entity2 = mapResponseToEntity(spotId, response2.body());
+                                diskExecutor.execute(() -> {
+                                    blockedPeriodDao.insert(entity2);
+                                    result.postValue(Resource.success(entity2));
+                                });
+                            } else {
+                                String errorMsg = formatError(response2.code());
+                                Log.e(TAG, errorMsg);
+                                result.postValue(Resource.error(errorMsg, null, response2.code()));
+                            }
+                        }
+
+                        @Override
+                        public void onFailure(@NonNull Call<BlockedPeriodResponse> call2, @NonNull Throwable t2) {
+                            String errorMsg = t2.getMessage() != null ? t2.getMessage() : "Network error";
+                            Log.e(TAG, errorMsg, t2);
+                            result.postValue(Resource.error(errorMsg, null, 0));
+                        }
+                    });
                 } else {
-                    String errorMsg = "Failed to create calendar block: HTTP " + response.code();
+                    String errorMsg = formatError(response.code());
                     Log.e(TAG, errorMsg);
-                    result.setValue(Resource.error(errorMsg, null));
+                    result.postValue(Resource.error(errorMsg, null, response.code()));
                 }
             }
 
@@ -225,7 +336,7 @@ public class AvailabilityRepository {
             public void onFailure(@NonNull Call<BlockedPeriodResponse> call, @NonNull Throwable t) {
                 String errorMsg = t.getMessage() != null ? t.getMessage() : "Network error creating calendar block";
                 Log.e(TAG, errorMsg, t);
-                result.setValue(Resource.error(errorMsg, null));
+                result.postValue(Resource.error(errorMsg, null));
             }
         });
 
@@ -243,7 +354,7 @@ public class AvailabilityRepository {
     public LiveData<Resource<BlockedPeriodEntity>> createBlockedPeriod(@NonNull String spotId,
                                                                       @NonNull CreateBlockRequest request) {
         MutableLiveData<Resource<BlockedPeriodEntity>> result = new MutableLiveData<>();
-        result.setValue(Resource.loading(null));
+        result.postValue(Resource.loading(null));
 
         apiService.createBlockedPeriod(spotId, request).enqueue(new Callback<BlockedPeriodResponse>() {
             @Override
@@ -256,9 +367,9 @@ public class AvailabilityRepository {
                         result.postValue(Resource.success(entity));
                     });
                 } else {
-                    String errorMsg = "Failed to create blocked period: HTTP " + response.code();
+                    String errorMsg = formatError(response.code());
                     Log.e(TAG, errorMsg);
-                    result.setValue(Resource.error(errorMsg, null));
+                    result.postValue(Resource.error(errorMsg, null, response.code()));
                 }
             }
 
@@ -266,11 +377,21 @@ public class AvailabilityRepository {
             public void onFailure(@NonNull Call<BlockedPeriodResponse> call, @NonNull Throwable t) {
                 String errorMsg = t.getMessage() != null ? t.getMessage() : "Network error creating blocked period";
                 Log.e(TAG, errorMsg, t);
-                result.setValue(Resource.error(errorMsg, null));
+                result.postValue(Resource.error(errorMsg, null, 0));
             }
         });
 
         return result;
+    }
+
+    private String formatError(int code) {
+        if (code == 401) {
+            return "Twoja sesja wygasła (HTTP 401). Zaloguj się ponownie.";
+        } else if (code == 403) {
+            return "Brak uprawnień (HTTP 403). Nie jesteś właścicielem tego miejsca.";
+        } else {
+            return "Błąd serwera: HTTP " + code;
+        }
     }
 
     /**
@@ -283,7 +404,7 @@ public class AvailabilityRepository {
      */
     public LiveData<Resource<Void>> deleteCalendarBlock(@NonNull String spotId, @NonNull String periodId) {
         MutableLiveData<Resource<Void>> result = new MutableLiveData<>();
-        result.setValue(Resource.loading(null));
+        result.postValue(Resource.loading(null));
 
         apiService.deleteCalendarBlock(spotId, periodId).enqueue(new Callback<Void>() {
             @Override
@@ -296,7 +417,7 @@ public class AvailabilityRepository {
                 } else {
                     String errorMsg = "Failed to delete calendar block: HTTP " + response.code();
                     Log.e(TAG, errorMsg);
-                    result.setValue(Resource.error(errorMsg, null));
+                    result.postValue(Resource.error(errorMsg, null));
                 }
             }
 
@@ -304,7 +425,7 @@ public class AvailabilityRepository {
             public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
                 String errorMsg = t.getMessage() != null ? t.getMessage() : "Network error deleting calendar block";
                 Log.e(TAG, errorMsg, t);
-                result.setValue(Resource.error(errorMsg, null));
+                result.postValue(Resource.error(errorMsg, null));
             }
         });
 
@@ -321,7 +442,7 @@ public class AvailabilityRepository {
      */
     public LiveData<Resource<Void>> deleteBlockedPeriod(@NonNull String spotId, @NonNull String periodId) {
         MutableLiveData<Resource<Void>> result = new MutableLiveData<>();
-        result.setValue(Resource.loading(null));
+        result.postValue(Resource.loading(null));
 
         apiService.deleteBlockedPeriod(spotId, periodId).enqueue(new Callback<Void>() {
             @Override
@@ -334,7 +455,7 @@ public class AvailabilityRepository {
                 } else {
                     String errorMsg = "Failed to delete blocked period: HTTP " + response.code();
                     Log.e(TAG, errorMsg);
-                    result.setValue(Resource.error(errorMsg, null));
+                    result.postValue(Resource.error(errorMsg, null));
                 }
             }
 
@@ -342,7 +463,7 @@ public class AvailabilityRepository {
             public void onFailure(@NonNull Call<Void> call, @NonNull Throwable t) {
                 String errorMsg = t.getMessage() != null ? t.getMessage() : "Network error deleting blocked period";
                 Log.e(TAG, errorMsg, t);
-                result.setValue(Resource.error(errorMsg, null));
+                result.postValue(Resource.error(errorMsg, null));
             }
         });
 

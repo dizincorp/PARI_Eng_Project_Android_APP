@@ -142,6 +142,22 @@
                 android:textSize="13sp"
                 android:visibility="gone" />
 
+            <TextView
+                android:id="@+id/text_preview_blocked_info"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:background="@drawable/bg_dialog_rounded"
+                android:backgroundTint="@color/status_cancelled_bg"
+                android:drawableStart="@drawable/ic_block"
+                android:drawablePadding="8dp"
+                android:drawableTint="@color/delete_btn_bg"
+                android:padding="10dp"
+                android:textColor="@color/delete_btn_bg"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_reserve_now"
                 android:layout_width="match_parent"

@@ -14,6 +14,8 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.project.R;
+import com.example.project.database.AppDatabase;
+import com.example.project.database.entity.BlockedPeriodEntity;
 import com.example.project.database.entity.ParkingPlaceEntity;
 import com.example.project.network.Resource;
 import com.example.project.repository.SpotRepository;
@@ -26,8 +28,8 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * ViewModel for map search screen backed by {@link SpotRepository} (Room Database SSOT)
- * and asynchronous Geocoder search operations.
+ * ViewModel for map search screen backed by {@link SpotRepository} (Room Database SSOT),
+ * calendar blocked periods observation, and asynchronous Geocoder search operations.
  */
 public class SearchViewModel extends AndroidViewModel {
 
@@ -71,6 +73,7 @@ public class SearchViewModel extends AndroidViewModel {
     private final SpotRepository spotRepository;
     private final MutableLiveData<SearchResult> searchResultLiveData = new MutableLiveData<>();
     private final LiveData<List<ParkingPlaceEntity>> spotsLiveData;
+    private final LiveData<List<BlockedPeriodEntity>> blockedPeriodsLiveData;
 
     private final ExecutorService executorService = Executors.newSingleThreadExecutor();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -95,6 +98,7 @@ public class SearchViewModel extends AndroidViewModel {
         this.spotRepository = spotRepository;
         // Single Source of Truth: spots are observed directly from local Room Database
         this.spotsLiveData = this.spotRepository.getSpotsFromRoom();
+        this.blockedPeriodsLiveData = AppDatabase.getInstance(application).blockedPeriodDao().getAllBlockedPeriodsLiveData();
     }
 
     /**
@@ -113,6 +117,15 @@ public class SearchViewModel extends AndroidViewModel {
      */
     public LiveData<List<ParkingPlaceEntity>> getSpotsLiveData() {
         return spotsLiveData;
+    }
+
+    /**
+     * Gets reactive LiveData stream of all blocked periods from local Room DB cache.
+     *
+     * @return LiveData emitting list of BlockedPeriodEntity
+     */
+    public LiveData<List<BlockedPeriodEntity>> getBlockedPeriodsLiveData() {
+        return blockedPeriodsLiveData;
     }
 
     /**

@@ -210,6 +210,29 @@
     <string name="error_reservation_after_allowed">Nie możesz zarezerwować po czasie dostępności miejsca (%1$s)!</string>
     <string name="error_invalid_time_range">Czas rozpoczęcia musi być wcześniejszy niż czas zakończenia!</string>
     <string name="label_allowed_access_hours">Godziny dostępności: %1$s</string>
+    <string name="mode_picker_wheels">Pokrętła</string>
+    <string name="mode_picker_text">Wpisywanie</string>
+    <string name="btn_set_current_time">🕒 Teraz (aktualny czas)</string>
+    <string name="label_enter_date">Data (RRRR-MM-DD)</string>
+    <string name="label_enter_time">Godzina (GG:MM:SS)</string>
+    <string name="hint_enter_date">2026-11-01</string>
+    <string name="hint_enter_time">17:00:00</string>
+    <string name="error_spot_blocked_interval">To miejsce jest zablokowane w wybranym terminie: %1$s!</string>
+    <string name="warning_spot_blocked_period">⛔ Miejsce zablokowane w wybranym terminie: %1$s</string>
+    <string name="badge_spot_blocked">⛔ Zablokowane: %1$s</string>
+    <string name="error_date_format_invalid">Niepoprawny format daty lub godziny (np. 2026-11-01 17:00:00)</string>
+    <string name="btn_pick_calendar">Kalendarz</string>
+    <string name="btn_pick_clock">Zegar</string>
+    <string name="btn_spot_currently_blocked">Miejsce zablokowane</string>
+    <string name="header_block_time_range">GODZINY BLOKADY</string>
+    <string name="btn_select_time_range">Wybierz godziny (pokrętła / tekst)</string>
+    <string name="format_blocked_item_simple">⛔ %1$s</string>
+    <string name="format_blocked_item_with_reason">⛔ %1$s (%2$s)</string>
+    <string name="text_blocked_suffix">zablokowane</string>
+    <string name="error_session_expired_401">Twoja sesja wygasła (HTTP 401). Zaloguj się ponownie.</string>
+    <string name="error_forbidden_403">Brak uprawnień do modyfikacji tego miejsca (HTTP 403).</string>
+    <string name="btn_relogin">Zaloguj ponownie</string>
+    <string name="title_session_expired">Wygasła sesja</string>
 
     <!-- Add Vehicle Dialog Strings -->
     <string name="title_add_vehicle">Dodaj pojazd</string>
@@ -314,6 +337,14 @@
     <string name="error_owner_cannot_reserve">Nie możesz zarezerwować własnego miejsca parkingowego!</string>
     <string name="error_spot_already_reserved">To miejsce jest już zarezerwowane w wybranym terminie!</string>
     <string name="title_reservation_conflict">Miejsce niedostępne</string>
+    <string name="title_spot_blocked">⛔ Miejsce zablokowane</string>
+    <string name="title_spot_occupied">🚗 Miejsce zajęte</string>
+    <string name="title_out_of_hours">⏰ Poza godzinami dostępności</string>
+    <string name="msg_spot_blocked_by_owner">Właściciel zablokował to miejsce parkingowe w wybranym terminie. Proszę wybrać inny termin lub inne miejsce.</string>
+    <string name="msg_spot_occupied_by_driver">To miejsce jest już zajęte przez innego kierowcę w wybranym terminie. Proszę wybrać inny termin lub inne miejsce.</string>
+    <string name="msg_spot_out_of_hours">Wybrany termin wykracza poza godziny udostępnienia miejsca przez właściciela (%1$s - %2$s).</string>
+    <string name="warning_spot_currently_occupied">🚗 To miejsce jest obecnie zajęte przez inny pojazd.</string>
+    <string name="warning_spot_currently_blocked">⛔ To miejsce jest obecnie zablokowane przez właściciela.</string>
     <string name="btn_ok">OK</string>
     <string name="error_booking_failed">Błąd rezerwacji: %1$s</string>
     <string name="error_payment_failed">Płatność została odrzucona.</string>

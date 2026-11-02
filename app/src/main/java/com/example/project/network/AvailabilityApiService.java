@@ -44,6 +44,24 @@ public interface AvailabilityApiService {
     );
 
     /**
+     * Retrieves active blocked periods for a spot via GET /api/spots/{spotId}/blocked-periods.
+     *
+     * @param spotId Unique spot identifier
+     * @return Call delivering list of {@link BlockedPeriodResponse}
+     */
+    @GET("api/spots/{spotId}/blocked-periods")
+    Call<List<BlockedPeriodResponse>> getBlockedPeriods(@Path("spotId") String spotId);
+
+    /**
+     * Retrieves calendar blocked blocks for a spot via GET /api/spots/{spotId}/calendar/blocks.
+     *
+     * @param spotId Unique spot identifier
+     * @return Call delivering list of {@link BlockedPeriodResponse}
+     */
+    @GET("api/spots/{spotId}/calendar/blocks")
+    Call<List<BlockedPeriodResponse>> getCalendarBlocks(@Path("spotId") String spotId);
+
+    /**
      * Blocks a period in the spot calendar via POST /api/spots/{spotId}/calendar/blocks.
      *
      * @param spotId  Unique spot identifier

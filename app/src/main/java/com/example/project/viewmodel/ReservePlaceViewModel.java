@@ -1,6 +1,7 @@
 package com.example.project.viewmodel;
 
 import android.app.Application;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -9,10 +10,14 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 
+import com.example.project.database.AppDatabase;
+import com.example.project.database.entity.BlockedPeriodEntity;
 import com.example.project.model.ParkingPlace;
 import com.example.project.model.Vehicle;
 import com.example.project.network.Resource;
 import com.example.project.network.model.CreateVehicleRequest;
+import com.example.project.network.model.QuoteRequest;
+import com.example.project.network.model.QuoteResponse;
 import com.example.project.network.model.ReservationRequest;
 import com.example.project.network.model.ReservationResponse;
 import com.example.project.repository.AppRepository;
@@ -26,17 +31,20 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 /**
- * ViewModel managing the reservation booking screen state and dispatching
- * booking requests to {@link ReservationRepository} and vehicle management to {@link VehicleRepository}.
+ * ViewModel managing the reservation booking screen state, calculating price quotes,
+ * validating calendar blocked periods, and dispatching booking requests to {@link ReservationRepository}.
  * Handles HTTP 409 Conflict errors specifically to alert the user about spot unavailability.
  */
 public class ReservePlaceViewModel extends AndroidViewModel {
+
+    private static final String TAG = "ReservePlaceViewModel";
 
     private final ReservationRepository reservationRepository;
     private final VehicleRepository vehicleRepository;
     private final AppRepository appRepository;
 
     private final MediatorLiveData<Resource<ReservationResponse>> reservationStatusLiveData = new MediatorLiveData<>();
+    private final MediatorLiveData<Resource<QuoteResponse>> quoteLiveData = new MediatorLiveData<>();
     private final MutableLiveData<String> conflictErrorLiveData = new MutableLiveData<>();
 
     /**
@@ -79,6 +87,15 @@ public class ReservePlaceViewModel extends AndroidViewModel {
     }
 
     /**
+     * Gets the LiveData stream emitting calculated pricing quotes from the server via POST /api/reservations/quote.
+     *
+     * @return LiveData containing Resource with QuoteResponse
+     */
+    public LiveData<Resource<QuoteResponse>> getQuoteLiveData() {
+        return quoteLiveData;
+    }
+
+    /**
      * Gets dedicated LiveData emitting conflict error messages when a 409 Conflict HTTP status is received.
      *
      * @return LiveData containing conflict description message
@@ -113,6 +130,66 @@ public class ReservePlaceViewModel extends AndroidViewModel {
      */
     public ParkingPlace getPlaceById(String placeId) {
         return appRepository.getPlaceById(placeId);
+    }
+
+    /**
+     * Observes blocked periods for a specific parking spot from Room DB.
+     *
+     * @param spotId Unique spot identifier
+     * @return LiveData list of {@link BlockedPeriodEntity}
+     */
+    public LiveData<List<BlockedPeriodEntity>> getBlockedPeriodsLiveData(@NonNull String spotId) {
+        return AppDatabase.getInstance(getApplication())
+                .blockedPeriodDao()
+                .getBlockedPeriodsForSpotLiveData(spotId);
+    }
+
+    /**
+     * Synchronously checks whether the requested time window overlaps with any blocked period for the spot.
+     *
+     * @param spotId  Spot identifier
+     * @param startMs Start time in milliseconds
+     * @param endMs   End time in milliseconds
+     * @return Conflicting BlockedPeriodEntity if found, null otherwise
+     */
+    @Nullable
+    public BlockedPeriodEntity findConflictingBlockedPeriod(@NonNull String spotId, long startMs, long endMs) {
+        if (spotId.trim().isEmpty()) return null;
+        try {
+            List<BlockedPeriodEntity> blocks = AppDatabase.getInstance(getApplication())
+                    .blockedPeriodDao()
+                    .getBlockedPeriodsForSpotSync(spotId);
+            if (blocks != null) {
+                for (BlockedPeriodEntity b : blocks) {
+                    if (b != null && !b.isExpired() && b.isOverlapping(startMs, endMs)) {
+                        return b;
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error checking blocked periods for spot: " + spotId, e);
+        }
+        return null;
+    }
+
+    /**
+     * Requests preliminary pricing breakdown from POST /api/reservations/quote.
+     *
+     * @param spotId  Target spot ID
+     * @param startMs Start timestamp in milliseconds
+     * @param endMs   End timestamp in milliseconds
+     */
+    public void fetchQuote(@NonNull String spotId, long startMs, long endMs) {
+        if (spotId.trim().isEmpty() || startMs >= endMs) return;
+
+        QuoteRequest request = new QuoteRequest(spotId, startMs, endMs);
+        LiveData<Resource<QuoteResponse>> source = reservationRepository.calculateQuote(request);
+        quoteLiveData.addSource(source, resource -> {
+            quoteLiveData.setValue(resource);
+            if (resource != null && !resource.isLoading()) {
+                quoteLiveData.removeSource(source);
+            }
+        });
     }
 
     /**
@@ -170,7 +247,7 @@ public class ReservePlaceViewModel extends AndroidViewModel {
                     if (resource.getCode() == 409 || (resource.getMessage() != null && resource.getMessage().toLowerCase().contains("zajęte"))) {
                         String conflictMsg = resource.getMessage() != null && !resource.getMessage().isEmpty()
                                 ? resource.getMessage()
-                                : "To miejsce jest już zajęte w wybranym terminie!";
+                                : "To miejsce jest już zajęte lub zablokowane w wybranym terminie!";
                         conflictErrorLiveData.setValue(conflictMsg);
                     }
                 }
