@@ -33,6 +33,7 @@ public class ReservationEntity {
     private String pinCode;
     private int photoResId;
     private String imageUri;
+    private boolean isOwnerIncoming;
 
     public ReservationEntity() {
         this.id = "r_" + System.currentTimeMillis();
@@ -206,6 +207,14 @@ public class ReservationEntity {
 
     public String getImageUri() {
         return imageUri != null ? imageUri : "";
+    }
+
+    public boolean isOwnerIncoming() {
+        return isOwnerIncoming;
+    }
+
+    public void setOwnerIncoming(boolean ownerIncoming) {
+        this.isOwnerIncoming = ownerIncoming;
     }
 
     public void setImageUri(String imageUri) {

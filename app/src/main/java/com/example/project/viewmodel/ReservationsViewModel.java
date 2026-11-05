@@ -162,39 +162,16 @@ public class ReservationsViewModel extends AndroidViewModel {
         isLoadingLiveData.setValue(true);
         errorMessageLiveData.setValue(null);
 
-        final int[] remainingCalls = new int[]{2};
-
-        // 1. Fetch incoming reservations
-        LiveData<Resource<List<ReservationResponse>>> incomingSource = reservationRepository.fetchIncomingReservations(currentEmail);
-        incomingSource.observeForever(new Observer<Resource<List<ReservationResponse>>>() {
-            @Override
-            public void onChanged(Resource<List<ReservationResponse>> resource) {
-                if (resource != null && !resource.isLoading()) {
-                    incomingSource.removeObserver(this);
-                    if (resource.isError() && resource.getMessage() != null) {
-                        errorMessageLiveData.setValue(resource.getMessage());
-                    }
-                    remainingCalls[0]--;
-                    if (remainingCalls[0] <= 0) {
-                        isLoadingLiveData.setValue(false);
-                    }
-                }
-            }
-        });
-
-        // 2. Fetch all reservations (history)
+        // Fetch exclusively driver reservations (GET /api/reservations)
         LiveData<Resource<List<ReservationResponse>>> allSource = reservationRepository.fetchReservations(currentEmail);
         allSource.observeForever(new Observer<Resource<List<ReservationResponse>>>() {
             @Override
             public void onChanged(Resource<List<ReservationResponse>> resource) {
                 if (resource != null && !resource.isLoading()) {
                     allSource.removeObserver(this);
+                    isLoadingLiveData.setValue(false);
                     if (resource.isError() && resource.getMessage() != null) {
                         errorMessageLiveData.setValue(resource.getMessage());
-                    }
-                    remainingCalls[0]--;
-                    if (remainingCalls[0] <= 0) {
-                        isLoadingLiveData.setValue(false);
                     }
                 }
             }

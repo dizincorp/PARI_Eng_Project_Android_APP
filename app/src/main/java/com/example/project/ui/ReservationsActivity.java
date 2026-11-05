@@ -177,9 +177,12 @@ public class ReservationsActivity extends BaseActivity implements ReservationsAd
         if (binding == null) return;
 
         binding.btnRefreshReservations.setOnClickListener(v -> {
-            if (viewModel != null) {
-                viewModel.refreshReservations();
-            }
+            com.example.project.utils.ViewAnimationUtils.playRotateAnimation(v, () -> {
+                if (viewModel != null) {
+                    viewModel.refreshReservations();
+                }
+            });
+            Toast.makeText(this, R.string.msg_refreshing_reservations, Toast.LENGTH_SHORT).show();
         });
 
         binding.btnSearchOnMap.setOnClickListener(v -> {

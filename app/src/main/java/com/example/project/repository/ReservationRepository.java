@@ -130,6 +130,10 @@ public class ReservationRepository {
         return reservationDao.getAllReservationsListLiveData(userEmail != null ? userEmail : "");
     }
 
+    public LiveData<List<ReservationEntity>> getOwnerIncomingReservationsLiveData(@Nullable String ownerEmail) {
+        return reservationDao.getAllOwnerIncomingReservationsLiveData(ownerEmail != null ? ownerEmail : "");
+    }
+
     /**
      * Gets a reactive LiveData stream for a single reservation by ID from the Room database cache.
      *
@@ -216,7 +220,7 @@ public class ReservationRepository {
                         for (ReservationResponse res : body) {
                             if (res == null) continue;
                             ParkingPlaceEntity place = parkingPlaceDao.getPlaceById(res.getSpotId());
-                            ReservationEntity entity = toEntity(res, userEmail, place);
+                            ReservationEntity entity = toEntity(res, userEmail, place, false);
                             reservationDao.insertOrUpdate(entity);
                         }
                         resultLiveData.postValue(Resource.success(body));
@@ -259,7 +263,7 @@ public class ReservationRepository {
                         for (ReservationResponse res : body) {
                             if (res == null) continue;
                             ParkingPlaceEntity place = parkingPlaceDao.getPlaceById(res.getSpotId());
-                            ReservationEntity entity = toEntity(res, userEmail, place);
+                            ReservationEntity entity = toEntity(res, userEmail, place, true);
                             if (res.getStatus() != null && !res.getStatus().isEmpty()) {
                                 entity.setStatus(res.getStatus());
                             } else if (entity.getStatus() == null || entity.getStatus().isEmpty() || entity.getStatus().equalsIgnoreCase("PENDING_PAYMENT")) {
@@ -987,11 +991,16 @@ public class ReservationRepository {
      * @return Converted ReservationEntity
      */
     public static ReservationEntity toEntity(ReservationResponse res, String userEmail, ParkingPlaceEntity place) {
+        return toEntity(res, userEmail, place, false);
+    }
+
+    public static ReservationEntity toEntity(ReservationResponse res, String userEmail, ParkingPlaceEntity place, boolean isOwnerIncoming) {
         ReservationEntity entity = new ReservationEntity();
         if (res.getId() != null && !res.getId().isEmpty()) {
             entity.setId(res.getId());
         }
         entity.setUserEmail(userEmail != null ? userEmail : "");
+        entity.setOwnerIncoming(isOwnerIncoming);
         entity.setPlaceId(res.getSpotId());
         entity.setPlaceName(res.getSpotName() != null && !res.getSpotName().isEmpty()
                 ? res.getSpotName() : (place != null ? place.getTitle() : "Miejsce parkingowe"));

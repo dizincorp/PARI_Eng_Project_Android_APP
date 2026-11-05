@@ -79,7 +79,12 @@ public class ProfileActivity extends BaseActivity {
             startActivity(intent);
         });
 
-        binding.cardMyVehicles.setOnClickListener(v -> showVehiclesDialog());
+        binding.cardMyVehicles.setOnClickListener(v -> {
+            if (viewModel != null) {
+                viewModel.refreshVehicles();
+            }
+            showVehiclesDialog();
+        });
 
         binding.cardPaymentMethods.setOnClickListener(v -> {
             Intent intent = new Intent(ProfileActivity.this, PaymentMethodsActivity.class);
@@ -207,7 +212,15 @@ public class ProfileActivity extends BaseActivity {
         dialog.show();
     }
 
+
     @Override
+    protected void onResume() {
+        super.onResume();
+        if (viewModel != null) {
+            viewModel.refreshVehicles();
+        }
+    }
+
     protected void onDestroy() {
         super.onDestroy();
         binding = null;

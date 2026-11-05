@@ -2,6 +2,8 @@ package com.example.project.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -12,7 +14,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.widget.SearchView;
-import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -28,8 +29,6 @@ import com.example.project.databinding.DialogSpotReviewsBinding;
 import com.example.project.network.Resource;
 import com.example.project.repository.AvailabilityRepository;
 import com.example.project.repository.ReviewRepository;
-import com.example.project.utils.AmenityUtils;
-import com.example.project.utils.ImageLoader;
 import com.example.project.viewmodel.SearchViewModel;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -39,7 +38,6 @@ import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 
 import java.util.ArrayList;
@@ -51,7 +49,7 @@ import java.util.Map;
 /**
  * Main Activity hosting the Google Maps search fragment with reactive parking spot discovery
  * backed by Room Database as the Single Source of Truth, displaying dynamic pricing, amenities,
- * spot preview cards, popular Polish city filter pills, and active/upcoming calendar blocked period annotations.
+ * and active/upcoming calendar blocked period annotations on map markers and preview cards.
  */
 public class MainActivity extends BaseActivity implements OnMapReadyCallback {
 
@@ -64,6 +62,20 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
     private final Map<String, ParkingPlaceEntity> markerSpotMap = new HashMap<>();
     private final Map<String, List<BlockedPeriodEntity>> spotBlockedMap = new HashMap<>();
     private ParkingPlaceEntity selectedSpotForBooking = null;
+
+    private final Handler timeCheckHandler = new Handler(Looper.getMainLooper());
+    private final Runnable timeCheckRunnable = new Runnable() {
+        @Override
+        public void run() {
+            if (googleMap != null && viewModel != null) {
+                List<ParkingPlaceEntity> currentSpots = viewModel.getSpotsLiveData().getValue();
+                if (currentSpots != null) {
+                    displaySpotsOnMap(currentSpots);
+                }
+            }
+            timeCheckHandler.postDelayed(this, 15000);
+        }
+    };
 
     @Override
     protected void onResume() {
@@ -81,6 +93,18 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
         if (selectedSpotForBooking != null) {
             showSpotPreviewCard(selectedSpotForBooking);
         }
+        timeCheckHandler.removeCallbacks(timeCheckRunnable);
+        timeCheckHandler.postDelayed(timeCheckRunnable, 15000);
+        com.example.project.utils.SessionManager sessionManager = com.example.project.utils.SessionManager.getInstance(this);
+        if (sessionManager != null && sessionManager.isLoggedIn()) {
+            com.example.project.repository.VehicleRepository.getInstance(this).fetchVehicles(sessionManager.getUserEmail());
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        timeCheckHandler.removeCallbacks(timeCheckRunnable);
     }
 
     @Override
@@ -108,65 +132,22 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
         }
 
         setupSearchView();
-        setupCityFilterPills();
         setupClickListeners();
         observeViewModel();
     }
 
-    /**
-     * Wires up click listeners for the main screen buttons (Booking, Preview dismiss, Reviews, Recenter).
-     */
     private void setupClickListeners() {
         if (binding == null) return;
 
-        // Dismiss preview card
-        binding.btnClosePreview.setOnClickListener(v -> {
-            binding.cardPlacePreview.setVisibility(View.GONE);
-            selectedSpotForBooking = null;
-        });
-
-        // Open reviews modal for the currently selected spot
-        binding.btnPreviewReviews.setOnClickListener(v -> {
-            if (selectedSpotForBooking != null && selectedSpotForBooking.getId() != null) {
-                showSpotReviewsDialog(
-                        selectedSpotForBooking.getId(),
-                        selectedSpotForBooking.getTitle(),
-                        selectedSpotForBooking.getRating(),
-                        selectedSpotForBooking.getRatingCount()
-                );
-            }
-        });
-
-        // Recenter map on Warsaw center
-        binding.cardRecenterMap.setOnClickListener(v -> {
-            if (googleMap != null) {
-                LatLng center = new LatLng(52.2297, 21.0122);
-                googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(center, 13f));
-                viewModel.loadNearbySpots(center.latitude, center.longitude, 5000.0);
-            }
-        });
-
-        // Booking CTA
         binding.btnReserveNow.setOnClickListener(v -> {
             if (selectedSpotForBooking != null) {
-                if (!selectedSpotForBooking.isActive()) {
+                if (!isSpotActiveAtCurrentMoment(selectedSpotForBooking)) {
                     Toast.makeText(this, R.string.error_spot_inactive, Toast.LENGTH_SHORT).show();
-                    return;
-                }
-                if (selectedSpotForBooking.isOccupied()) {
-                    Toast.makeText(this, "To miejsce jest obecnie zajęte!", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                // Check if currently blocked
-                List<BlockedPeriodEntity> blocks = spotBlockedMap.get(selectedSpotForBooking.getId());
-                if (blocks != null) {
-                    for (BlockedPeriodEntity b : blocks) {
-                        if (b != null && b.isCurrentlyActive()) {
-                            Toast.makeText(this, getString(R.string.badge_spot_blocked, b.getFormattedRange()), Toast.LENGTH_LONG).show();
-                            return;
-                        }
+                    if (binding.cardPlacePreview != null) {
+                        binding.cardPlacePreview.setVisibility(View.GONE);
                     }
+                    selectedSpotForBooking = null;
+                    return;
                 }
 
                 Intent intent = new Intent(MainActivity.this, ReservePlaceActivity.class);
@@ -174,61 +155,6 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
                 startActivity(intent);
             }
         });
-    }
-
-    /**
-     * Configures popular Polish city filter pills above the map (ParkShare Web Style).
-     */
-    private void setupCityFilterPills() {
-        if (binding == null) return;
-
-        MaterialButton[] cityButtons = new MaterialButton[] {
-                binding.chipCityAll,
-                binding.chipCityWarszawa,
-                binding.chipCityKrakow,
-                binding.chipCityLublin,
-                binding.chipCityWroclaw,
-                binding.chipCityPoznan,
-                binding.chipCityGdansk
-        };
-
-        for (MaterialButton btn : cityButtons) {
-            btn.setOnClickListener(v -> {
-                // Update visual active state across all pills
-                for (MaterialButton other : cityButtons) {
-                    boolean isActive = (other == btn);
-                    if (isActive) {
-                        other.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.brand_slate_950));
-                        other.setTextColor(ContextCompat.getColor(this, R.color.white));
-                        other.setStrokeColor(ContextCompat.getColorStateList(this, R.color.brand_slate_950));
-                    } else {
-                        other.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.card_background));
-                        other.setTextColor(ContextCompat.getColor(this, R.color.brand_slate_700));
-                        other.setStrokeColor(ContextCompat.getColorStateList(this, R.color.brand_slate_200));
-                    }
-                }
-
-                // Execute city search / recenter action
-                String cityName = btn.getText().toString();
-                if (btn == binding.chipCityAll) {
-                    if (binding.searchView != null) {
-                        binding.searchView.setQuery("", false);
-                        binding.searchView.clearFocus();
-                    }
-                    if (googleMap != null) {
-                        LatLng center = new LatLng(52.2297, 21.0122);
-                        googleMap.animateCamera(CameraUpdateFactory.newLatLngZoom(center, 12f));
-                        viewModel.loadNearbySpots(center.latitude, center.longitude, 5000.0);
-                    }
-                } else {
-                    if (binding.searchView != null) {
-                        binding.searchView.setQuery(cityName, false);
-                        binding.searchView.clearFocus();
-                    }
-                    viewModel.searchLocation(getApplicationContext(), cityName);
-                }
-            });
-        }
     }
 
     private void setupSearchView() {
@@ -307,6 +233,8 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
 
     /**
      * Renders parking spot markers dynamically onto Google Map with blocked periods annotations.
+     * Displays strictly spots that are active and available at the current moment.
+     * Non-active, currently blocked, and occupied/reserved spots are filtered out.
      *
      * @param spots List of parking spots from Room Database
      */
@@ -316,7 +244,8 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
         googleMap.clear();
         markerSpotMap.clear();
 
-        if (selectedSpotForBooking != null && !selectedSpotForBooking.isActive()) {
+        // Dismiss preview card if the selected spot is no longer active at the current moment
+        if (selectedSpotForBooking != null && !isSpotActiveAtCurrentMoment(selectedSpotForBooking)) {
             if (binding != null && binding.cardPlacePreview != null) {
                 binding.cardPlacePreview.setVisibility(View.GONE);
             }
@@ -324,42 +253,28 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
         }
 
         for (ParkingPlaceEntity spot : spots) {
-            if (spot == null || spot.isDraft() || spot.isArchived() || "INACTIVE".equalsIgnoreCase(spot.getStatus())) continue;
+            if (!isSpotActiveAtCurrentMoment(spot)) {
+                continue;
+            }
 
+            // Identify any upcoming calendar blocks for informative snippet text
             List<BlockedPeriodEntity> spotBlocks = spotBlockedMap.get(spot.getId());
-            BlockedPeriodEntity activeBlock = null;
             BlockedPeriodEntity upcomingBlock = null;
             if (spotBlocks != null) {
                 for (BlockedPeriodEntity b : spotBlocks) {
-                    if (b != null && !b.isExpired()) {
-                        if (b.isCurrentlyActive()) {
-                            activeBlock = b;
-                            break;
-                        } else if (upcomingBlock == null) {
-                            upcomingBlock = b;
-                        }
+                    if (b != null && !b.isExpired() && !b.isCurrentlyActive()) {
+                        upcomingBlock = b;
+                        break;
                     }
                 }
             }
 
-            float markerColor;
+            float markerColor = BitmapDescriptorFactory.HUE_GREEN;  // Green: free / available to reserve
             String snippetText;
-            if (spot.isCheckedIn()) {
-                markerColor = BitmapDescriptorFactory.HUE_RED;    // Red: occupied (checked in / parking in progress)
-                snippetText = getString(R.string.status_occupied);
-            } else if (spot.isBlocked() || activeBlock != null) {
-                markerColor = BitmapDescriptorFactory.HUE_RED;    // Red: blocked by owner
-                snippetText = activeBlock != null ? ("⛔ " + activeBlock.getFormattedBlockedNotice()) : "⛔ Zablokowane";
-            } else if (spot.isReserved() || spot.isOccupied()) {
-                markerColor = BitmapDescriptorFactory.HUE_YELLOW; // Yellow: reserved (booked, awaiting driver check-in)
-                snippetText = getString(R.string.status_reserved);
+            if (upcomingBlock != null) {
+                snippetText = String.format(Locale.getDefault(), "%.2f zł/h • ⛔ %s", spot.getPrice(), upcomingBlock.getFormattedBlockedNotice());
             } else {
-                markerColor = BitmapDescriptorFactory.HUE_GREEN;  // Green: free / available to reserve
-                if (upcomingBlock != null) {
-                    snippetText = String.format(Locale.getDefault(), "%.2f zł/h • ⛔ %s", spot.getPrice(), upcomingBlock.getFormattedBlockedNotice());
-                } else {
-                    snippetText = String.format(Locale.getDefault(), "%.2f zł/h", spot.getPrice());
-                }
+                snippetText = String.format(Locale.getDefault(), "%.2f zł/h", spot.getPrice());
             }
 
             LatLng pos = new LatLng(spot.getLatitude(), spot.getLongitude());
@@ -373,6 +288,42 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
                 markerSpotMap.put(marker.getId(), spot);
             }
         }
+    }
+
+    /**
+     * Evaluates whether a parking spot is active and free at the current moment of time.
+     * On the map, only spots that are ACTIVE (not deactivated by owner) and FREE
+     * (not occupied, not checked-in, not currently blocked by calendar block) are displayed.
+     *
+     * @param spot Parking spot entity to check
+     * @return True if spot is active and free right now, false otherwise
+     */
+    private boolean isSpotActiveAtCurrentMoment(@Nullable ParkingPlaceEntity spot) {
+        if (spot == null) return false;
+
+        // 1. Lifecycle status filter: owner deactivated (INACTIVE), archived, or blocked spots are excluded
+        String status = spot.getStatus();
+        if ("INACTIVE".equalsIgnoreCase(status) || "ARCHIVED".equalsIgnoreCase(status)
+                || "BLOCKED".equalsIgnoreCase(status) || spot.isBlocked()) {
+            return false;
+        }
+
+        // 2. Occupancy filter: spot must be FREE right now (not currently checked-in or occupied)
+        if (spot.isCheckedIn() || spot.isOccupied()) {
+            return false;
+        }
+
+        // 3. Calendar block filter: spot must not have a calendar block active at the current moment of time
+        List<BlockedPeriodEntity> spotBlocks = spotBlockedMap.get(spot.getId());
+        if (spotBlocks != null) {
+            for (BlockedPeriodEntity b : spotBlocks) {
+                if (b != null && !b.isExpired() && b.isCurrentlyActive()) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 
     @Override
@@ -422,7 +373,7 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
 
     /**
      * Displays the preview card overlay for a clicked parking spot marker,
-     * including image preview, amenities, description, and blocked intervals notice.
+     * including amenities, description, and blocked intervals notice.
      *
      * @param spot Selected parking spot from Room Database
      */
@@ -430,22 +381,6 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
         if (binding == null || spot == null) return;
 
         selectedSpotForBooking = spot;
-
-        // Spot photo preview
-        if (spot.getImageUri() != null && !spot.getImageUri().trim().isEmpty()) {
-            binding.imagePreviewSpot.setImageTintList(null);
-            ImageLoader.getInstance(this).loadImage(
-                    binding.imagePreviewSpot,
-                    spot.getImageUri(),
-                    spot.getPhotoResId() != 0 ? spot.getPhotoResId() : R.drawable.ic_places
-            );
-        } else if (spot.getPhotoResId() != 0) {
-            binding.imagePreviewSpot.setImageTintList(null);
-            binding.imagePreviewSpot.setImageResource(spot.getPhotoResId());
-        } else {
-            binding.imagePreviewSpot.setImageResource(R.drawable.ic_places);
-            binding.imagePreviewSpot.setImageTintList(ContextCompat.getColorStateList(this, R.color.brand_slate_400));
-        }
 
         binding.textPreviewTitle.setText(spot.getTitle());
         String locationStr = String.format("%s, %s",
@@ -467,30 +402,24 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
         }
         binding.textPreviewPriceValue.setText(String.format(Locale.getDefault(), "%.0f", spot.getPrice()));
 
-        // Make rating text clickable to inspect spot reviews
+        // Make rating clickable to inspect spot reviews
         binding.textPreviewRating.setOnClickListener(v -> {
             if (spot.getId() != null) {
                 showSpotReviewsDialog(spot.getId(), spot.getTitle(), spot.getRating(), spot.getRatingCount());
             }
         });
 
-        // Render amenities chips with modern slate styling
         binding.chipGroupPreviewAmenities.removeAllViews();
         boolean hasAmenities = false;
         if (spot.getAmenitiesCsv() != null && !spot.getAmenitiesCsv().trim().isEmpty()) {
             String[] amenities = spot.getAmenitiesCsv().split(",");
             for (String amenity : amenities) {
-                String label = AmenityUtils.formatAmenity(amenity);
+                String label = com.example.project.utils.AmenityUtils.formatAmenity(amenity);
                 if (!label.isEmpty()) {
                     Chip chip = new Chip(this);
                     chip.setText(label);
-                    chip.setTextSize(11f);
                     chip.setClickable(false);
                     chip.setCheckable(false);
-                    chip.setChipBackgroundColorResource(R.color.brand_slate_100);
-                    chip.setChipStrokeColorResource(R.color.brand_slate_200);
-                    chip.setChipStrokeWidth(1f);
-                    chip.setTextColor(ContextCompat.getColor(this, R.color.brand_slate_700));
                     binding.chipGroupPreviewAmenities.addView(chip);
                     hasAmenities = true;
                 }
@@ -529,9 +458,6 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
 
         if (spot.isBlocked() || hasActiveBlock) {
             binding.btnReserveNow.setEnabled(false);
-            binding.btnReserveNow.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.brand_slate_200));
-            binding.btnReserveNow.setTextColor(ContextCompat.getColor(this, R.color.brand_slate_400));
-            binding.btnReserveNow.setIcon(null);
             binding.btnReserveNow.setText(R.string.btn_spot_currently_blocked);
             if (sb.length() > 0) {
                 binding.textPreviewBlockedInfo.setText(sb.toString());
@@ -541,9 +467,6 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
             binding.textPreviewBlockedInfo.setVisibility(View.VISIBLE);
         } else if (spot.isOccupied() || spot.isReserved()) {
             binding.btnReserveNow.setEnabled(false);
-            binding.btnReserveNow.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.brand_slate_200));
-            binding.btnReserveNow.setTextColor(ContextCompat.getColor(this, R.color.brand_slate_400));
-            binding.btnReserveNow.setIcon(null);
             binding.btnReserveNow.setText(R.string.status_occupied);
             binding.textPreviewBlockedInfo.setText(R.string.warning_spot_currently_occupied);
             binding.textPreviewBlockedInfo.setVisibility(View.VISIBLE);
@@ -555,10 +478,6 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
                 binding.textPreviewBlockedInfo.setVisibility(View.GONE);
             }
             binding.btnReserveNow.setEnabled(true);
-            binding.btnReserveNow.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.brand_slate_950));
-            binding.btnReserveNow.setTextColor(ContextCompat.getColor(this, R.color.white));
-            binding.btnReserveNow.setIconResource(R.drawable.ic_arrow_forward);
-            binding.btnReserveNow.setIconTint(ContextCompat.getColorStateList(this, R.color.brand_emerald_400));
             binding.btnReserveNow.setText(R.string.btn_reserve_now);
         }
 
@@ -627,6 +546,7 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        timeCheckHandler.removeCallbacksAndMessages(null);
         googleMap = null;
         binding = null;
     }

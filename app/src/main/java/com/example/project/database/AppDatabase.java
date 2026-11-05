@@ -44,7 +44,7 @@ import com.example.project.database.entity.VehicleEntity;
                 BlockedPeriodEntity.class,
                 SpotPhotoEntity.class
         },
-        version = 10,
+        version = 11,
         exportSchema = false
 )
 @TypeConverters({Converters.class})

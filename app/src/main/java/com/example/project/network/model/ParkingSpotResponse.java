@@ -529,7 +529,7 @@ public class ParkingSpotResponse {
      * @return True if occupancy is "FREE"
      */
     public boolean isFree() {
-        return "FREE".equalsIgnoreCase(occupancy);
+        return occupancy == null || occupancy.isEmpty() || "FREE".equalsIgnoreCase(occupancy) || "AVAILABLE".equalsIgnoreCase(occupancy);
     }
 
     /**
@@ -538,7 +538,7 @@ public class ParkingSpotResponse {
      * @return Lifecycle status string
      */
     public String getStatus() {
-        return status != null ? status : "DRAFT";
+        return (status != null && !status.isEmpty()) ? status : "ACTIVE";
     }
 
     /**

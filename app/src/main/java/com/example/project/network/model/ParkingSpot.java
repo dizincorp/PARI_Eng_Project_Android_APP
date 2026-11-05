@@ -102,7 +102,7 @@ public class ParkingSpot {
      */
     public ParkingSpot() {
         this.occupancy = "FREE";
-        this.status = "DRAFT";
+        this.status = "ACTIVE";
         this.currency = "PLN";
         this.amenities = new ArrayList<>();
         this.photoKeys = new ArrayList<>();
@@ -149,8 +149,8 @@ public class ParkingSpot {
         this.accessInstructions = accessInstructions;
         this.autoAccept = autoAccept != null ? autoAccept : true;
         this.realtimeStatusEnabled = realtimeStatusEnabled != null ? realtimeStatusEnabled : false;
-        this.occupancy = occupancy != null ? occupancy : "FREE";
-        this.status = status != null ? status : "DRAFT";
+        this.occupancy = (occupancy != null && !occupancy.isEmpty()) ? occupancy : "FREE";
+        this.status = (status != null && !status.isEmpty()) ? status : "ACTIVE";
         this.verified = verified != null ? verified : false;
         this.avgRating = avgRating != null ? avgRating : 0.0;
         this.reviewCount = reviewCount != null ? reviewCount : 0;
@@ -358,8 +358,11 @@ public class ParkingSpot {
     }
 
     public String getOccupancy() {
-        if (occupancy != null) return occupancy;
-        return spot != null ? spot.getOccupancy() : "FREE";
+        if (occupancy != null && !occupancy.isEmpty()) return occupancy;
+        if (spot != null && spot.getOccupancy() != null && !spot.getOccupancy().isEmpty()) {
+            return spot.getOccupancy();
+        }
+        return "FREE";
     }
 
     public void setOccupancy(String occupancy) {
@@ -368,12 +371,16 @@ public class ParkingSpot {
     }
 
     public boolean isFree() {
-        return "FREE".equalsIgnoreCase(getOccupancy());
+        String occ = getOccupancy();
+        return occ == null || occ.isEmpty() || "FREE".equalsIgnoreCase(occ) || "AVAILABLE".equalsIgnoreCase(occ);
     }
 
     public String getStatus() {
-        if (status != null) return status;
-        return spot != null ? spot.getStatus() : "DRAFT";
+        if (status != null && !status.isEmpty()) return status;
+        if (spot != null && spot.getStatus() != null && !spot.getStatus().isEmpty()) {
+            return spot.getStatus();
+        }
+        return "ACTIVE";
     }
 
     public void setStatus(String status) {

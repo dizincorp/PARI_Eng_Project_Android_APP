@@ -115,6 +115,7 @@ public class LoginActivity extends AppCompatActivity {
 
                         sessionManager.createLoginSession(token, userId, email, name, role);
                         AppRepository.getInstance().loginUser(email, name, userId);
+                        com.example.project.repository.VehicleRepository.getInstance(this).fetchVehicles(email);
 
                         Toast.makeText(this, R.string.msg_login_success, Toast.LENGTH_SHORT).show();
                         Intent intent = new Intent(LoginActivity.this, MainActivity.class);

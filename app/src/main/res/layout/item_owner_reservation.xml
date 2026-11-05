@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="14dp"
+    app:cardBackgroundColor="@color/card_background"
+    app:cardCornerRadius="20dp"
+    app:cardElevation="1dp"
+    app:strokeColor="@color/brand_slate_200"
+    app:strokeWidth="1dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="18dp">
+
+        <!-- Header: Spot Name & Status Badge -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:layout_toStartOf="@id/text_reservation_status"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/text_spot_name"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:maxLines="1"
+                    android:textColor="@color/brand_slate_950"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    tools:text="Garaż Podziemny Lubartowska" />
+
+                <TextView
+                    android:id="@+id/text_spot_address"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textColor="@color/brand_slate_500"
+                    android:textSize="13sp"
+                    tools:text="ul. Lubartowska 12 • Lublin" />
+            </LinearLayout>
+
+            <!-- Status Pill Badge -->
+            <TextView
+                android:id="@+id/text_reservation_status"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:background="@drawable/bg_badge_amber"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:textColor="@color/brand_amber_700"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                tools:text="OCZEKUJE" />
+        </RelativeLayout>
+
+        <!-- Details Box (Slate 50 Background) -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:background="@drawable/bg_input_rounded"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <!-- Date & Time Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_calendar"
+                    app:tint="@color/brand_slate_600" />
+
+                <TextView
+                    android:id="@+id/text_date_time_range"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:textColor="@color/brand_slate_800"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    tools:text="Dziś, 14:00 - 18:00" />
+            </LinearLayout>
+
+            <!-- Driver & Vehicle Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_card_vehicles"
+                    app:tint="@color/brand_slate_600" />
+
+                <TextView
+                    android:id="@+id/text_driver_info"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:textColor="@color/brand_slate_700"
+                    android:textSize="13sp"
+                    tools:text="Kierowca: Jan Driver • LU 12345" />
+            </LinearLayout>
+
+            <!-- Price & PIN Row -->
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp">
+
+                <TextView
+                    android:id="@+id/text_price"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:textColor="@color/brand_slate_950"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    tools:text="Koszt: 36,00 zł" />
+
+                <TextView
+                    android:id="@+id/text_pin_code"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:textColor="@color/brand_emerald_700"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    tools:text="PIN: 4829" />
+            </RelativeLayout>
+        </LinearLayout>
+
+        <!-- Actions Row for PENDING_APPROVAL: Accept and Reject -->
+        <LinearLayout
+            android:id="@+id/layout_actions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:orientation="horizontal"
+            android:visibility="visible">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_reject"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:backgroundTint="@color/card_background"
+                android:elevation="0dp"
+                android:text="@string/btn_reject_reservation"
+                android:textAllCaps="false"
+                android:textColor="@color/brand_rose_600"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/ic_close"
+                app:iconGravity="textStart"
+                app:iconSize="14dp"
+                app:iconTint="@color/brand_rose_600"
+                app:strokeColor="@color/brand_rose_500"
+                app:strokeWidth="1dp" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_accept"
+                android:layout_width="0dp"
+                android:layout_height="44dp"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:backgroundTint="@color/brand_emerald_600"
+                android:elevation="1dp"
+                android:text="@string/btn_accept_reservation"
+                android:textAllCaps="false"
+                android:textColor="@color/white"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/ic_check_circle"
+                app:iconGravity="textStart"
+                app:iconSize="14dp"
+                app:iconTint="@color/white" />
+        </LinearLayout>
+
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

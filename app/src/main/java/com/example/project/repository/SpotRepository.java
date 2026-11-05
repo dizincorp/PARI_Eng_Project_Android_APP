@@ -25,7 +25,9 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -51,6 +53,7 @@ public class SpotRepository {
     private final Context appContext;
 
     private final MutableLiveData<Resource<Void>> syncStatusLiveData = new MutableLiveData<>();
+    private final Map<String, Long> lastBlockedFetchTimestamps = new ConcurrentHashMap<>();
 
     /**
      * Private constructor initializing dependencies from application context.
@@ -447,7 +450,9 @@ public class SpotRepository {
                         for (ParkingSpot spot : remoteSpots) {
                             if (spot != null) {
                                 ParkingPlaceEntity entity = toEntity(spot);
-                                entity.setStatus("ACTIVE");
+                                if (entity.getStatus() == null || entity.getStatus().isEmpty() || "DRAFT".equalsIgnoreCase(entity.getStatus())) {
+                                    entity.setStatus("ACTIVE");
+                                }
                                 if (currentUserId != null && !currentUserId.isEmpty() && currentUserId.equals(spot.getOwnerId())) {
                                     if (currentEmail != null && !currentEmail.isEmpty()) {
                                         entity.setOwnerEmail(currentEmail);
@@ -471,27 +476,12 @@ public class SpotRepository {
                                 }
                                 if (reservationDao != null) {
                                     ReservationEntity activeRes = reservationDao.getActiveReservationForSpotSync(entity.getId());
-                                    if (spot.isFree() || (spot.getOccupancy() != null && "FREE".equalsIgnoreCase(spot.getOccupancy()))) {
-                                        // Spot is free on backend: clear any occupied/reserved state
-                                        entity.setOccupied(false);
-                                        entity.setCheckedIn(false);
-                                        entity.setDriverName("");
-                                        entity.setDriverVehicle("");
-                                        if (activeRes != null && "IN_PROGRESS".equalsIgnoreCase(activeRes.getStatus())) {
-                                            activeRes.setStatus("COMPLETED");
-                                            reservationDao.insertOrUpdate(activeRes);
-                                        }
-                                    } else if (activeRes != null) {
-                                        if ("IN_PROGRESS".equalsIgnoreCase(activeRes.getStatus())) {
-                                            entity.setCheckedIn(true);
-                                            entity.setOccupied(true);
-                                        } else if ("CONFIRMED".equalsIgnoreCase(activeRes.getStatus())
-                                                || "PENDING_APPROVAL".equalsIgnoreCase(activeRes.getStatus())
-                                                || "PENDING_PAYMENT".equalsIgnoreCase(activeRes.getStatus())
-                                                || "AKTYWNA".equalsIgnoreCase(activeRes.getStatus())) {
-                                            entity.setCheckedIn(false);
-                                            entity.setOccupied(true);
-                                        }
+                                    if (activeRes != null && ("IN_PROGRESS".equalsIgnoreCase(activeRes.getStatus())
+                                            || "CONFIRMED".equalsIgnoreCase(activeRes.getStatus())
+                                            || "AKTYWNA".equalsIgnoreCase(activeRes.getStatus()))) {
+                                        boolean inProgress = "IN_PROGRESS".equalsIgnoreCase(activeRes.getStatus());
+                                        entity.setCheckedIn(inProgress);
+                                        entity.setOccupied(true);
                                         if (activeRes.getCarPlate() != null && !activeRes.getCarPlate().isEmpty()) {
                                             entity.setDriverVehicle(activeRes.getCarPlate());
                                         }
@@ -502,14 +492,19 @@ public class SpotRepository {
                                             entity.setPinCode(activeRes.getPinCode());
                                         }
                                     } else {
-                                        // Spot is not free on backend, preserve existing driver info if present
-                                        if (existing != null) {
-                                            entity.setDriverVehicle(existing.getDriverVehicle());
-                                            entity.setDriverName(existing.getDriverName());
+                                        // No active reservation locally: follow backend spot status and occupancy
+                                        if (spot.isFree()) {
+                                            entity.setOccupied(false);
+                                            entity.setCheckedIn(false);
+                                            entity.setDriverName("");
+                                            entity.setDriverVehicle("");
                                         }
                                     }
                                 }
                                 entities.add(entity);
+                                if (entity.getId() != null) {
+                                    fetchBlockedPeriodsThrottled(entity.getId().trim());
+                                }
                             }
                         }
                         if (!entities.isEmpty()) {
@@ -531,6 +526,21 @@ public class SpotRepository {
                 syncStatusLiveData.postValue(Resource.error(errorMsg, null, 0));
             }
         });
+    }
+
+    /**
+     * Throttled fetch of calendar blocked periods for a spot to keep Room DB updated.
+     *
+     * @param spotId Unique spot identifier
+     */
+    private void fetchBlockedPeriodsThrottled(@NonNull String spotId) {
+        if (appContext == null) return;
+        long now = System.currentTimeMillis();
+        Long last = lastBlockedFetchTimestamps.get(spotId);
+        if (last == null || (now - last) > 30000L) {
+            lastBlockedFetchTimestamps.put(spotId, now);
+            AvailabilityRepository.getInstance(appContext).fetchBlockedPeriods(spotId);
+        }
     }
 
     /**
@@ -650,7 +660,7 @@ public class SpotRepository {
         entity.setOccupied(!spot.isFree());
         entity.setRating(spot.getAvgRating());
         entity.setRatingCount(spot.getReviewCount());
-                String desc = spot.getDescription();
+        String desc = spot.getDescription();
         if ((desc == null || desc.trim().isEmpty()) && spot.getAccessInstructions() != null && !spot.getAccessInstructions().trim().isEmpty()) {
             desc = spot.getAccessInstructions();
         }
@@ -658,9 +668,15 @@ public class SpotRepository {
         entity.setAccessInstructions(spot.getAccessInstructions());
         entity.setAccessTime("24/7");
         entity.setOwnerEmail(spot.getOwnerId());
-        entity.setStatus(spot.getStatus() != null && !spot.getStatus().isEmpty() ? spot.getStatus().toUpperCase(Locale.ROOT) : "ACTIVE");
 
-        if (spot.getOccupancy() != null) {
+        String rawStatus = spot.getStatus();
+        if (rawStatus == null || rawStatus.isEmpty() || "DRAFT".equalsIgnoreCase(rawStatus)) {
+            entity.setStatus("ACTIVE");
+        } else {
+            entity.setStatus(rawStatus.toUpperCase(Locale.ROOT));
+        }
+
+        if (spot.getOccupancy() != null && !spot.getOccupancy().isEmpty()) {
             boolean isOcc = "OCCUPIED".equalsIgnoreCase(spot.getOccupancy());
             boolean isRes = "RESERVED".equalsIgnoreCase(spot.getOccupancy());
             boolean isBlk = "BLOCKED".equalsIgnoreCase(spot.getOccupancy());
@@ -669,6 +685,9 @@ public class SpotRepository {
             if (isBlk) {
                 entity.setStatus("BLOCKED");
             }
+        } else {
+            entity.setOccupied(false);
+            entity.setCheckedIn(false);
         }
 
         if (spot.getAmenities() != null && !spot.getAmenities().isEmpty()) {

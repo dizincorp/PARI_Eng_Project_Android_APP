@@ -514,4 +514,27 @@
     <string name="subtitle_payment_methods">Zarządzaj kartami płatniczymi i rozliczeniami</string>
     <string name="badge_default_payment">Domyślna</string>
     <string name="label_saved_cards">Zapisane karty</string>
+
+    <!-- Owner Incoming Reservations Screen Strings -->
+    <string name="btn_owner_reservations">Rezerwacje gości</string>
+    <string name="title_owner_reservations">Rezerwacje gości</string>
+    <string name="subtitle_owner_reservations">Wnioski i historia rezerwacji Twoich miejsc</string>
+    <string name="tab_all">Wszystkie</string>
+    <string name="tab_pending">Oczekujące</string>
+    <string name="tab_confirmed">Potwierdzone</string>
+    <string name="tab_in_progress">W trakcie</string>
+    <string name="btn_accept_reservation">Zatwierdź</string>
+    <string name="btn_reject_reservation">Odrzuć</string>
+    <string name="dialog_reject_title">Odrzucenie rezerwacji</string>
+    <string name="dialog_reject_message">Podaj powód odrzucenia rezerwacji. Kierowca otrzyma natychmiastowy zwrot 100% środków:</string>
+    <string name="hint_reject_reason">Powód odrzucenia (opcjonalnie)</string>
+    <string name="dialog_accept_title">Zatwierdzenie rezerwacji</string>
+    <string name="dialog_accept_message">Czy chcesz zatwierdzić tę rezerwację miejsca? Kierowca otrzyma potwierdzenie i kod dostępu.</string>
+    <string name="toast_accept_success">Rezerwacja została pomyślnie zatwierdzona.</string>
+    <string name="toast_accept_failed">Nie udało się zatwierdzić rezerwacji.</string>
+    <string name="toast_reject_success">Rezerwacja została odrzucona.</string>
+    <string name="toast_reject_failed">Nie udało się odrzucić rezerwacji.</string>
+    <string name="msg_no_owner_reservations">Brak rezerwacji dla Twoich miejsc w tej kategorii.</string>
+    <string name="label_driver">Kierowca</string>
+    <string name="msg_refreshing_reservations">Odświeżanie rezerwacji…</string>
 </resources>

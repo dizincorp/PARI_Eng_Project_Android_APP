@@ -75,6 +75,21 @@ public class ReservePlaceViewModel extends AndroidViewModel {
         this.reservationRepository = reservationRepository;
         this.vehicleRepository = vehicleRepository;
         this.appRepository = appRepository;
+        refreshVehicles();
+    }
+
+    /**
+     * Refreshes the driver's vehicles from the backend REST API via GET /api/vehicles
+     * and persists them in the Room database.
+     */
+    public void refreshVehicles() {
+        String currentEmail = appRepository.getUserEmailLiveData().getValue();
+        if (currentEmail == null || currentEmail.isEmpty()) {
+            if (com.example.project.utils.SessionManager.getInstance() != null) {
+                currentEmail = com.example.project.utils.SessionManager.getInstance().getUserEmail();
+            }
+        }
+        vehicleRepository.fetchVehicles(currentEmail);
     }
 
     /**

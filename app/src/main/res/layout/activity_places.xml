@@ -219,6 +219,26 @@
                     app:strokeWidth="1dp" />
             </LinearLayout>
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_owner_reservations"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:layout_marginTop="8dp"
+                android:backgroundTint="@color/card_background"
+                android:elevation="1dp"
+                android:text="@string/btn_owner_reservations"
+                android:textAllCaps="false"
+                android:textColor="@color/brand_slate_900"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                app:cornerRadius="14dp"
+                app:icon="@drawable/ic_reservations"
+                app:iconGravity="textStart"
+                app:iconSize="16dp"
+                app:iconTint="@color/brand_emerald_600"
+                app:strokeColor="@color/brand_slate_200"
+                app:strokeWidth="1dp" />
+
             <!-- Section Moje Miejsca Header -->
             <RelativeLayout
                 android:layout_width="match_parent"

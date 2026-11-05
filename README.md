@@ -7,7 +7,10 @@ ParkShare is a modern Android application written in **Java** following the **MV
 ## 🚀 Key Features
 
 ### 1. 🔍 Search & Interactive Map (`MainActivity`)
-* **Google Maps Integration**: Displays available parking spots as interactive markers.
+* **Google Maps Integration**: Displays strictly active and free parking spots at the current moment of time.
+* **Real-Time Active & Free Spot Filtering**: Automatically excludes deactivated (`INACTIVE`), archived, occupied/checked-in, and currently blocked spots (`b.isCurrentlyActive()`).
+* **Upcoming Block Notices**: Spots with future scheduled blocks remain visible with green markers and informative upcoming maintenance badges.
+* **Dynamic Periodic Refresh**: Automatically re-evaluates spot availability every 15 seconds to instantly show or hide spots as blocks start or expire.
 * **Geocoding & Location Search**: Asynchronous location search via `Geocoder` on a background thread.
 * **Spot Preview Card**: Clicking a spot marker displays spot details (title, hourly rate, rating, tags/amenities, and a **Rezerwuj teraz** button).
 

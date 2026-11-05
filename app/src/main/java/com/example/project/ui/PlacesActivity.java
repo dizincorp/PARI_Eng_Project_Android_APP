@@ -87,6 +87,11 @@ public class PlacesActivity extends BaseActivity {
             Intent intent = new Intent(PlacesActivity.this, AvailabilityCalendarActivity.class);
             startActivity(intent);
         });
+
+        binding.btnOwnerReservations.setOnClickListener(v -> {
+            Intent intent = new Intent(PlacesActivity.this, OwnerReservationsActivity.class);
+            startActivity(intent);
+        });
     }
 
     private void observeViewModel() {

@@ -22,6 +22,7 @@ public class SessionManager {
 
     private static volatile SessionManager instance;
 
+    private final Context context;
     private final SharedPreferences pref;
     private final SharedPreferences.Editor editor;
 
@@ -53,7 +54,8 @@ public class SessionManager {
      * @param context Application context
      */
     public SessionManager(Context context) {
-        pref = context.getApplicationContext().getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
+        this.context = context != null ? context.getApplicationContext() : null;
+        pref = (this.context != null ? this.context : context).getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE);
         editor = pref.edit();
         instance = this;
     }
@@ -209,5 +211,14 @@ public class SessionManager {
     public void logoutUser() {
         editor.clear();
         editor.apply();
+        if (context != null) {
+            java.util.concurrent.Executors.newSingleThreadExecutor().execute(() -> {
+                try {
+                    com.example.project.database.AppDatabase.getInstance(context).clearAllTables();
+                } catch (Exception e) {
+                    android.util.Log.e("SessionManager", "Error clearing Room tables on logout", e);
+                }
+            });
+        }
     }
 }

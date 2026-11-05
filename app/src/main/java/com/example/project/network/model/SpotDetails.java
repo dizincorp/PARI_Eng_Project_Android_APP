@@ -96,7 +96,7 @@ public class SpotDetails {
         this.amenities = new ArrayList<>();
         this.photoKeys = new ArrayList<>();
         this.occupancy = "FREE";
-        this.status = "DRAFT";
+        this.status = "ACTIVE";
         this.currency = "PLN";
     }
 
@@ -333,11 +333,11 @@ public class SpotDetails {
     }
 
     public boolean isFree() {
-        return "FREE".equalsIgnoreCase(occupancy);
+        return occupancy == null || occupancy.isEmpty() || "FREE".equalsIgnoreCase(occupancy) || "AVAILABLE".equalsIgnoreCase(occupancy);
     }
 
     public String getStatus() {
-        return status != null ? status : "DRAFT";
+        return (status != null && !status.isEmpty()) ? status : "ACTIVE";
     }
 
     public void setStatus(String status) {

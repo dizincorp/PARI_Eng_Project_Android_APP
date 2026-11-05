@@ -65,12 +65,17 @@ public class EarningsActivity extends AppCompatActivity {
     private void setupClickListeners() {
         if (binding == null) return;
 
-        binding.btnBack.setOnClickListener(v -> finish());
+        binding.btnBack.setOnClickListener(v -> {
+            com.example.project.utils.ViewAnimationUtils.playBounceAnimation(v, this::finish);
+        });
 
         binding.btnRefreshAnalytics.setOnClickListener(v -> {
-            if (viewModel != null) {
-                viewModel.refreshAnalytics();
-            }
+            com.example.project.utils.ViewAnimationUtils.playRotateAnimation(v, () -> {
+                if (viewModel != null) {
+                    viewModel.refreshAnalytics();
+                }
+            });
+            android.widget.Toast.makeText(this, R.string.msg_refreshing_reservations, android.widget.Toast.LENGTH_SHORT).show();
         });
     }
 
