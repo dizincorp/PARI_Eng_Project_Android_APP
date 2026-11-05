@@ -56,7 +56,9 @@ public class AddPlaceViewModel extends AndroidViewModel {
     private final MutableLiveData<Integer> errorMessageResId = new MutableLiveData<>();
     private final MutableLiveData<String> toastMessageLiveData = new MutableLiveData<>();
     private final MutableLiveData<Resource<ParkingSpot>> createSpotStatusLiveData = new MutableLiveData<>();
-    private final MutableLiveData<String> accessTimeLiveData = new MutableLiveData<>("08:00 - 20:00");
+    private final MutableLiveData<String> accessTimeLiveData = new MutableLiveData<>("24/7");
+    private final MutableLiveData<Boolean> is247LiveData = new MutableLiveData<>(true);
+    private final MutableLiveData<List<AvailabilityRuleRequest>> availabilityRulesLiveData = new MutableLiveData<>(new ArrayList<>());
 
     /**
      * Public constructor initializing dependencies with Android Application context.
@@ -124,6 +126,20 @@ public class AddPlaceViewModel extends AndroidViewModel {
         }
     }
 
+    public LiveData<Boolean> getIs247LiveData() {
+        return is247LiveData;
+    }
+
+    public LiveData<List<AvailabilityRuleRequest>> getAvailabilityRulesLiveData() {
+        return availabilityRulesLiveData;
+    }
+
+    public void setAvailabilitySchedule(boolean is247, @Nullable List<AvailabilityRuleRequest> rules, @NonNull String summary) {
+        this.is247LiveData.setValue(is247);
+        this.availabilityRulesLiveData.setValue(rules != null ? rules : new ArrayList<>());
+        this.accessTimeLiveData.setValue(summary);
+    }
+
     /**
      * Loads a place from repository for editing if ID is provided.
      *
@@ -135,9 +151,37 @@ public class AddPlaceViewModel extends AndroidViewModel {
             if (place != null) {
                 editingPlaceLiveData.setValue(place);
                 if (place.getAccessTime() != null && !place.getAccessTime().trim().isEmpty()) {
-                    accessTimeLiveData.setValue(place.getAccessTime().trim());
+                    String timeStr = place.getAccessTime().trim();
+                    accessTimeLiveData.setValue(timeStr);
+                    if ("24/7".equalsIgnoreCase(timeStr) || "Dostęp 24/7".equalsIgnoreCase(timeStr)) {
+                        is247LiveData.setValue(true);
+                    }
                 }
             }
+
+            availabilityRepository.fetchAvailabilityRules(placeId.trim());
+            LiveData<List<com.example.project.database.entity.AvailabilityRuleEntity>> rulesSource =
+                    availabilityRepository.getRulesLiveData(placeId.trim());
+            rulesSource.observeForever(new Observer<List<com.example.project.database.entity.AvailabilityRuleEntity>>() {
+                @Override
+                public void onChanged(List<com.example.project.database.entity.AvailabilityRuleEntity> entities) {
+                    if (entities != null && !entities.isEmpty()) {
+                        rulesSource.removeObserver(this);
+                        List<AvailabilityRuleRequest> requests = new ArrayList<>();
+                        for (com.example.project.database.entity.AvailabilityRuleEntity e : entities) {
+                            requests.add(new AvailabilityRuleRequest(
+                                    e.getDayOfWeek(),
+                                    e.getStartTime(),
+                                    e.getEndTime(),
+                                    e.getValidFrom(),
+                                    e.getValidTo()
+                            ));
+                        }
+                        is247LiveData.setValue(false);
+                        availabilityRulesLiveData.setValue(requests);
+                    }
+                }
+            });
         }
     }
 
@@ -499,7 +543,7 @@ public class AddPlaceViewModel extends AndroidViewModel {
                                             });
                                 }
 
-                                syncAvailabilityRules(placeId.trim(), accessTime);
+                                syncAvailabilityRules(placeId.trim());
 
                                 toastMessageLiveData.setValue(getApplication().getString(R.string.toast_spot_updated));
                                 saveSuccess.setValue(true);
@@ -557,7 +601,7 @@ public class AddPlaceViewModel extends AndroidViewModel {
                                             });
                                 }
 
-                                syncAvailabilityRules(finalId, accessTime);
+                                syncAvailabilityRules(finalId);
 
                                 toastMessageLiveData.setValue(getApplication().getString(R.string.toast_spot_updated));
                                 saveSuccess.setValue(true);
@@ -578,19 +622,17 @@ public class AddPlaceViewModel extends AndroidViewModel {
      * @param spotId     Target parking spot identifier
      * @param accessTime String access time (e.g. "08:00 - 20:00" or "24/7")
      */
-    private void syncAvailabilityRules(@NonNull String spotId, @Nullable String accessTime) {
+    private void syncAvailabilityRules(@NonNull String spotId) {
         if (spotId.trim().isEmpty()) {
             return;
         }
-        List<AvailabilityRuleRequest> rules = new ArrayList<>();
-        if (accessTime != null && !accessTime.contains("24/7") && !accessTime.equalsIgnoreCase("Dostęp 24/7")) {
-            String startTime = AccessTimeParser.getStartFormatted(accessTime);
-            String endTime = AccessTimeParser.getEndFormatted(accessTime);
-            for (int day = 1; day <= 7; day++) {
-                rules.add(new AvailabilityRuleRequest(day, startTime, endTime, null, null));
-            }
+        Boolean is247 = is247LiveData.getValue();
+        if (Boolean.TRUE.equals(is247)) {
+            availabilityRepository.replaceAvailabilityRules(spotId.trim(), java.util.Collections.emptyList());
+        } else {
+            List<AvailabilityRuleRequest> rules = availabilityRulesLiveData.getValue();
+            availabilityRepository.replaceAvailabilityRules(spotId.trim(), rules != null ? rules : java.util.Collections.emptyList());
         }
-        availabilityRepository.replaceAvailabilityRules(spotId.trim(), rules);
     }
 
     @Override

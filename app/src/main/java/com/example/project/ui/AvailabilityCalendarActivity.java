@@ -30,10 +30,15 @@ import com.example.project.database.entity.AvailabilityRuleEntity;
 import com.example.project.database.entity.BlockedPeriodEntity;
 import com.example.project.databinding.ActivityAvailabilityCalendarBinding;
 import com.example.project.databinding.DialogDateTimePickerBinding;
+import com.example.project.databinding.DialogEditWeeklyAvailabilityBinding;
+import com.example.project.databinding.ItemWeeklyScheduleDayBinding;
+import com.example.project.model.DayScheduleConfig;
+import com.example.project.network.model.AvailabilityRuleRequest;
 import com.example.project.databinding.ItemCalendarReservationBinding;
 import com.example.project.model.ParkingPlace;
 import com.example.project.model.Reservation;
 import com.example.project.viewmodel.AvailabilityCalendarViewModel;
+import com.example.project.utils.ViewAnimationUtils;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.text.SimpleDateFormat;
@@ -150,6 +155,18 @@ public class AvailabilityCalendarActivity extends BaseActivity {
         binding.cardStartDatetime.setOnClickListener(v -> showTimeRangePickerDialog(true));
         binding.cardEndDatetime.setOnClickListener(v -> showTimeRangePickerDialog(false));
         binding.btnChangeTime.setOnClickListener(v -> showTimeRangePickerDialog(true));
+                binding.btnEditWeeklyRules.setOnClickListener(v -> {
+            ViewAnimationUtils.playBounceAnimation(v, () -> {
+                String spotId = viewModel.getSelectedSpotId();
+                if (spotId == null || spotId.trim().isEmpty()) {
+                    Toast.makeText(this, "Wybierz najpierw miejsce parkingowe", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                Intent intent = new Intent(AvailabilityCalendarActivity.this, SpotAvailabilityActivity.class);
+                intent.putExtra(SpotAvailabilityActivity.EXTRA_SPOT_ID, spotId);
+                startActivity(intent);
+            });
+        });
 
         // Quick action: set to actual current time
         binding.btnQuickSetNow.setOnClickListener(v -> {
@@ -743,6 +760,232 @@ public class AvailabilityCalendarActivity extends BaseActivity {
             itemBinding.textCarDetails.setText(getString(R.string.format_sub_details, carModel, carPlate));
 
             binding.containerDateReservations.addView(itemBinding.getRoot());
+        }
+    }
+
+    private void showEditWeeklyRulesDialog() {
+        if (binding == null) return;
+        String spotId = viewModel.getSelectedSpotId();
+        if (spotId == null || spotId.trim().isEmpty()) {
+            Toast.makeText(this, "Wybierz najpierw miejsce parkingowe", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        List<DayScheduleConfig> dialogDays = DayScheduleConfig.createDefaultWeek();
+        List<AvailabilityRuleEntity> currentEntities = viewModel.getRulesLiveData().getValue();
+        final boolean[] isDialog247 = new boolean[]{currentEntities == null || currentEntities.isEmpty()};
+
+        if (currentEntities != null && !currentEntities.isEmpty()) {
+            for (DayScheduleConfig d : dialogDays) {
+                d.setEnabled(false);
+            }
+            for (AvailabilityRuleEntity entity : currentEntities) {
+                for (DayScheduleConfig d : dialogDays) {
+                    if (d.getDayOfWeek() == entity.getDayOfWeek()) {
+                        d.applyRuleRequest(new AvailabilityRuleRequest(
+                                entity.getDayOfWeek(),
+                                entity.getStartTime(),
+                                entity.getEndTime(),
+                                entity.getValidFrom(),
+                                entity.getValidTo()
+                        ));
+                        break;
+                    }
+                }
+            }
+        }
+
+        DialogEditWeeklyAvailabilityBinding dialogBinding = DialogEditWeeklyAvailabilityBinding.inflate(getLayoutInflater());
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
+                .setView(dialogBinding.getRoot())
+                .setCancelable(true)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        final boolean[] isDialogUpdatingUI = new boolean[]{false};
+        final List<ItemWeeklyScheduleDayBinding> dialogRowBindings = new ArrayList<>();
+
+        Runnable updateDialogModeUI = () -> {
+            boolean prev = isDialogUpdatingUI[0];
+            isDialogUpdatingUI[0] = true;
+            try {
+                if (isDialog247[0]) {
+                    dialogBinding.radioDialog247.setChecked(true);
+                    dialogBinding.radioDialogCustom.setChecked(false);
+                    dialogBinding.layoutDialogCustomSchedule.setVisibility(View.GONE);
+                } else {
+                    dialogBinding.radioDialog247.setChecked(false);
+                    dialogBinding.radioDialogCustom.setChecked(true);
+                    dialogBinding.layoutDialogCustomSchedule.setVisibility(View.VISIBLE);
+                }
+            } finally {
+                isDialogUpdatingUI[0] = prev;
+            }
+        };
+
+        View.OnClickListener click247 = v -> {
+            isDialog247[0] = true;
+            updateDialogModeUI.run();
+        };
+        dialogBinding.containerDialogOpt247.setOnClickListener(click247);
+        dialogBinding.radioDialog247.setOnClickListener(click247);
+
+        View.OnClickListener clickCustom = v -> {
+            isDialog247[0] = false;
+            boolean any = false;
+            for (DayScheduleConfig d : dialogDays) {
+                if (d.isEnabled()) {
+                    any = true;
+                    break;
+                }
+            }
+            if (!any) {
+                for (DayScheduleConfig d : dialogDays) {
+                    d.setEnabled(d.getDayOfWeek() >= 1 && d.getDayOfWeek() <= 5);
+                }
+            }
+            updateDialogModeUI.run();
+            for (int i = 0; i < dialogDays.size() && i < dialogRowBindings.size(); i++) {
+                bindDialogDayRow(dialogRowBindings.get(i), dialogDays.get(i), isDialogUpdatingUI);
+            }
+        };
+        dialogBinding.containerDialogOptCustom.setOnClickListener(clickCustom);
+        dialogBinding.radioDialogCustom.setOnClickListener(clickCustom);
+
+        dialogBinding.btnDialogPresetWeekdays.setOnClickListener(v -> {
+            for (DayScheduleConfig d : dialogDays) {
+                d.setEnabled(d.getDayOfWeek() >= 1 && d.getDayOfWeek() <= 5);
+            }
+            for (int i = 0; i < dialogDays.size() && i < dialogRowBindings.size(); i++) {
+                bindDialogDayRow(dialogRowBindings.get(i), dialogDays.get(i), isDialogUpdatingUI);
+            }
+        });
+
+        dialogBinding.btnDialogPresetAll.setOnClickListener(v -> {
+            for (DayScheduleConfig d : dialogDays) {
+                d.setEnabled(true);
+            }
+            for (int i = 0; i < dialogDays.size() && i < dialogRowBindings.size(); i++) {
+                bindDialogDayRow(dialogRowBindings.get(i), dialogDays.get(i), isDialogUpdatingUI);
+            }
+        });
+
+        dialogBinding.btnDialogPresetClear.setOnClickListener(v -> {
+            for (DayScheduleConfig d : dialogDays) {
+                d.setEnabled(false);
+            }
+            for (int i = 0; i < dialogDays.size() && i < dialogRowBindings.size(); i++) {
+                bindDialogDayRow(dialogRowBindings.get(i), dialogDays.get(i), isDialogUpdatingUI);
+            }
+        });
+
+        dialogBinding.btnCloseDialog.setOnClickListener(v -> dialog.dismiss());
+
+        dialogBinding.btnSaveDialogRules.setOnClickListener(v -> {
+            List<AvailabilityRuleRequest> rules = new ArrayList<>();
+            if (!isDialog247[0]) {
+                for (DayScheduleConfig d : dialogDays) {
+                    if (d.isEnabled()) {
+                        AvailabilityRuleRequest req = d.toRuleRequest();
+                        if (req != null) rules.add(req);
+                    }
+                }
+                if (rules.isEmpty()) {
+                    Toast.makeText(this, R.string.msg_no_active_schedule_days, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
+            viewModel.saveWeeklyRules(spotId, rules);
+            Toast.makeText(this, R.string.toast_rules_saved, Toast.LENGTH_SHORT).show();
+            dialog.dismiss();
+        });
+
+        // Populate rows once and bind listeners
+        dialogBinding.containerDialogDays.removeAllViews();
+        dialogRowBindings.clear();
+        LayoutInflater inflater = LayoutInflater.from(this);
+
+        for (DayScheduleConfig day : dialogDays) {
+            ItemWeeklyScheduleDayBinding row = ItemWeeklyScheduleDayBinding.inflate(inflater, dialogBinding.containerDialogDays, false);
+            row.checkDay.setText(day.getDayName());
+
+            row.checkDay.setOnCheckedChangeListener((btn, isChecked) -> {
+                if (isDialogUpdatingUI[0]) return;
+                day.setEnabled(isChecked);
+                bindDialogDayRow(row, day, isDialogUpdatingUI);
+            });
+
+            row.checkAllDay.setOnCheckedChangeListener((btn, isChecked) -> {
+                if (isDialogUpdatingUI[0]) return;
+                day.setAllDay(isChecked);
+                bindDialogDayRow(row, day, isDialogUpdatingUI);
+            });
+
+            row.btnTimeFrom.setOnClickListener(v -> {
+                TimePickerDialog picker = new TimePickerDialog(this, (view, h, m) -> {
+                    day.setStartHour(h);
+                    day.setStartMinute(m);
+                    if (day.getStartHour() > day.getEndHour() ||
+                            (day.getStartHour() == day.getEndHour() && day.getStartMinute() >= day.getEndMinute())) {
+                        day.setEndHour(Math.min(23, h + 1));
+                        day.setEndMinute(m);
+                    }
+                    bindDialogDayRow(row, day, isDialogUpdatingUI);
+                }, day.getStartHour(), day.getStartMinute(), true);
+                picker.show();
+            });
+
+            row.btnTimeTo.setOnClickListener(v -> {
+                TimePickerDialog picker = new TimePickerDialog(this, (view, h, m) -> {
+                    day.setEndHour(h);
+                    day.setEndMinute(m);
+                    if (day.getEndHour() < day.getStartHour() ||
+                            (day.getEndHour() == day.getStartHour() && day.getEndMinute() <= day.getStartMinute())) {
+                        day.setStartHour(Math.max(0, h - 1));
+                        day.setStartMinute(m);
+                    }
+                    bindDialogDayRow(row, day, isDialogUpdatingUI);
+                }, day.getEndHour(), day.getEndMinute(), true);
+                picker.show();
+            });
+
+            bindDialogDayRow(row, day, isDialogUpdatingUI);
+            dialogRowBindings.add(row);
+            dialogBinding.containerDialogDays.addView(row.getRoot());
+        }
+
+        updateDialogModeUI.run();
+        dialog.show();
+    }
+
+    private void bindDialogDayRow(ItemWeeklyScheduleDayBinding row, DayScheduleConfig day, boolean[] isUpdating) {
+        boolean prev = isUpdating[0];
+        isUpdating[0] = true;
+        try {
+            row.checkDay.setChecked(day.isEnabled());
+            row.checkAllDay.setVisibility(day.isEnabled() ? View.VISIBLE : View.GONE);
+            row.checkAllDay.setChecked(day.isAllDay());
+
+            if (!day.isEnabled()) {
+                row.textDayClosed.setVisibility(View.VISIBLE);
+                row.layoutAllDayBadge.setVisibility(View.GONE);
+                row.layoutTimePickers.setVisibility(View.GONE);
+            } else if (day.isAllDay()) {
+                row.textDayClosed.setVisibility(View.GONE);
+                row.layoutAllDayBadge.setVisibility(View.VISIBLE);
+                row.layoutTimePickers.setVisibility(View.GONE);
+            } else {
+                row.textDayClosed.setVisibility(View.GONE);
+                row.layoutAllDayBadge.setVisibility(View.GONE);
+                row.layoutTimePickers.setVisibility(View.VISIBLE);
+                row.textTimeFrom.setText(day.getFormattedStartTime());
+                row.textTimeTo.setText(day.getFormattedEndTime());
+            }
+        } finally {
+            isUpdating[0] = prev;
         }
     }
 

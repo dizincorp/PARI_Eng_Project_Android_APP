@@ -13,29 +13,30 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.project.R;
 import com.example.project.databinding.FragmentSpotAvailabilityBinding;
-import com.example.project.utils.AccessTimeParser;
+import com.example.project.databinding.ItemWeeklyScheduleDayBinding;
+import com.example.project.model.DayScheduleConfig;
+import com.example.project.network.model.AvailabilityRuleRequest;
 import com.example.project.viewmodel.AddPlaceViewModel;
 
-import java.util.Locale;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 /**
- * Fragment responsible for managing parking spot availability hours (24/7 or custom time schedule).
- * Communicates reactively with the parent {@link AddPlaceActivity} via {@link AddPlaceViewModel}.
+ * Fragment responsible for configuring parking spot availability:
+ * 1. 24/7 (open all day, 7 days a week)
+ * 2. Custom weekly schedule with selection of days, custom time intervals, or whole day ("Cały dzień").
  */
 public class SpotAvailabilityFragment extends Fragment {
 
     private FragmentSpotAvailabilityBinding binding;
     private AddPlaceViewModel viewModel;
 
-    private int startHour = 8;
-    private int startMinute = 0;
-    private int endHour = 20;
-    private int endMinute = 0;
-    private boolean is247 = false;
+    private final List<DayScheduleConfig> days = DayScheduleConfig.createDefaultWeek();
+    private final List<ItemWeeklyScheduleDayBinding> dayBindings = new ArrayList<>();
+    private boolean is247 = true;
+    private boolean isUpdatingUI = false;
 
-    /**
-     * Default constructor for SpotAvailabilityFragment.
-     */
     public SpotAvailabilityFragment() {
         // Required empty public constructor
     }
@@ -54,139 +55,339 @@ public class SpotAvailabilityFragment extends Fragment {
 
         if (getActivity() != null) {
             viewModel = new ViewModelProvider(requireActivity()).get(AddPlaceViewModel.class);
-            observeViewModel();
         }
 
-        setupListeners();
+        setupModeSelection();
+        setupPresets();
+        populateDayViews();
+        observeViewModel();
         updateUI();
+        notifyViewModel();
     }
 
-    /**
-     * Sets up click and check listeners for availability selection and TimePicker dialogs.
-     */
-    private void setupListeners() {
+    private void setupModeSelection() {
         if (binding == null) return;
 
-        binding.radioGroupAvailability.setOnCheckedChangeListener((group, checkedId) -> {
-            if (checkedId == R.id.radio_available_24_7) {
-                is247 = true;
-                binding.layoutCustomHours.setVisibility(View.GONE);
-                notifyViewModel();
-            } else if (checkedId == R.id.radio_custom_hours) {
-                is247 = false;
-                binding.layoutCustomHours.setVisibility(View.VISIBLE);
-                notifyViewModel();
+        View.OnClickListener select247Listener = v -> selectMode(true);
+        binding.containerOpt247.setOnClickListener(select247Listener);
+        binding.radioAvailable247.setOnClickListener(select247Listener);
+
+        View.OnClickListener selectCustomListener = v -> selectMode(false);
+        binding.containerOptCustom.setOnClickListener(selectCustomListener);
+        binding.radioCustomHours.setOnClickListener(selectCustomListener);
+    }
+
+    private void selectMode(boolean select247) {
+        this.is247 = select247;
+
+        if (!this.is247) {
+            // If custom mode chosen and no day is enabled, default to Monday-Friday
+            boolean hasAny = false;
+            for (DayScheduleConfig d : days) {
+                if (d.isEnabled()) {
+                    hasAny = true;
+                    break;
+                }
             }
+            if (!hasAny) {
+                applyPresetWeekdays();
+            }
+        }
+
+        updateUI();
+        notifyViewModel();
+    }
+
+    private void setupPresets() {
+        if (binding == null) return;
+
+        binding.btnPresetWeekdays.setOnClickListener(v -> {
+            applyPresetWeekdays();
+            updateUI();
+            notifyViewModel();
         });
 
-        binding.btnPickTimeFrom.setOnClickListener(v -> showStartTimePicker());
-        binding.btnPickTimeTo.setOnClickListener(v -> showEndTimePicker());
+        binding.btnPresetAll.setOnClickListener(v -> {
+            for (DayScheduleConfig d : days) {
+                d.setEnabled(true);
+            }
+            updateUI();
+            notifyViewModel();
+        });
+
+        binding.btnPresetClear.setOnClickListener(v -> {
+            for (DayScheduleConfig d : days) {
+                d.setEnabled(false);
+            }
+            updateUI();
+            notifyViewModel();
+        });
     }
 
-    /**
-     * Displays standard TimePickerDialog for start hour selection.
-     */
-    private void showStartTimePicker() {
+    private void applyPresetWeekdays() {
+        for (DayScheduleConfig d : days) {
+            if (d.getDayOfWeek() >= 1 && d.getDayOfWeek() <= 5) {
+                d.setEnabled(true);
+            } else {
+                d.setEnabled(false);
+            }
+        }
+    }
+
+    private void populateDayViews() {
+        if (binding == null || getContext() == null) return;
+
+        binding.containerDays.removeAllViews();
+        dayBindings.clear();
+
+        LayoutInflater inflater = LayoutInflater.from(getContext());
+
+        for (int i = 0; i < days.size(); i++) {
+            final DayScheduleConfig day = days.get(i);
+            ItemWeeklyScheduleDayBinding rowBinding = ItemWeeklyScheduleDayBinding.inflate(
+                    inflater, binding.containerDays, false
+            );
+
+            rowBinding.checkDay.setText(day.getDayName());
+
+            // Checkbox: enable/disable day
+            rowBinding.checkDay.setOnCheckedChangeListener((btn, isChecked) -> {
+                if (isUpdatingUI) return;
+                day.setEnabled(isChecked);
+                bindDayRow(rowBinding, day);
+                updateSummaryText();
+                notifyViewModel();
+            });
+
+            // Checkbox: "Cały dzień"
+            rowBinding.checkAllDay.setOnCheckedChangeListener((btn, isChecked) -> {
+                if (isUpdatingUI) return;
+                day.setAllDay(isChecked);
+                bindDayRow(rowBinding, day);
+                updateSummaryText();
+                notifyViewModel();
+            });
+
+            // Button: Start time
+            rowBinding.btnTimeFrom.setOnClickListener(v -> {
+                showTimePicker(day.getStartHour(), day.getStartMinute(), (h, m) -> {
+                    day.setStartHour(h);
+                    day.setStartMinute(m);
+                    if (day.getStartHour() > day.getEndHour() ||
+                            (day.getStartHour() == day.getEndHour() && day.getStartMinute() >= day.getEndMinute())) {
+                        day.setEndHour(Math.min(23, h + 1));
+                        day.setEndMinute(m);
+                    }
+                    bindDayRow(rowBinding, day);
+                    updateSummaryText();
+                    notifyViewModel();
+                });
+            });
+
+            // Button: End time
+            rowBinding.btnTimeTo.setOnClickListener(v -> {
+                showTimePicker(day.getEndHour(), day.getEndMinute(), (h, m) -> {
+                    day.setEndHour(h);
+                    day.setEndMinute(m);
+                    if (day.getEndHour() < day.getStartHour() ||
+                            (day.getEndHour() == day.getStartHour() && day.getEndMinute() <= day.getStartMinute())) {
+                        day.setStartHour(Math.max(0, h - 1));
+                        day.setStartMinute(m);
+                    }
+                    bindDayRow(rowBinding, day);
+                    updateSummaryText();
+                    notifyViewModel();
+                });
+            });
+
+            bindDayRow(rowBinding, day);
+            dayBindings.add(rowBinding);
+            binding.containerDays.addView(rowBinding.getRoot());
+        }
+    }
+
+    private void bindDayRow(ItemWeeklyScheduleDayBinding rowBinding, DayScheduleConfig day) {
+        boolean prevUpdating = isUpdatingUI;
+        isUpdatingUI = true;
+        try {
+            rowBinding.checkDay.setChecked(day.isEnabled());
+            rowBinding.checkAllDay.setVisibility(day.isEnabled() ? View.VISIBLE : View.GONE);
+            rowBinding.checkAllDay.setChecked(day.isAllDay());
+
+            if (!day.isEnabled()) {
+                rowBinding.textDayClosed.setVisibility(View.VISIBLE);
+                rowBinding.layoutAllDayBadge.setVisibility(View.GONE);
+                rowBinding.layoutTimePickers.setVisibility(View.GONE);
+            } else {
+                rowBinding.textDayClosed.setVisibility(View.GONE);
+                if (day.isAllDay()) {
+                    rowBinding.layoutAllDayBadge.setVisibility(View.VISIBLE);
+                    rowBinding.layoutTimePickers.setVisibility(View.GONE);
+                } else {
+                    rowBinding.layoutAllDayBadge.setVisibility(View.GONE);
+                    rowBinding.layoutTimePickers.setVisibility(View.VISIBLE);
+                    rowBinding.textTimeFrom.setText(day.getFormattedStartTime());
+                    rowBinding.textTimeTo.setText(day.getFormattedEndTime());
+                }
+            }
+        } finally {
+            isUpdatingUI = prevUpdating;
+        }
+    }
+
+    private void showTimePicker(int initialHour, int initialMinute, OnTimeSelectedListener listener) {
         if (getContext() == null) return;
 
         TimePickerDialog picker = new TimePickerDialog(
                 getContext(),
                 (view, hourOfDay, minute) -> {
-                    startHour = hourOfDay;
-                    startMinute = minute;
-                    updateUI();
-                    notifyViewModel();
+                    if (listener != null) {
+                        listener.onTimeSelected(hourOfDay, minute);
+                    }
                 },
-                startHour,
-                startMinute,
+                initialHour,
+                initialMinute,
                 true
         );
-        picker.setTitle(getString(R.string.picker_time_from_title));
         picker.show();
     }
 
-    /**
-     * Displays standard TimePickerDialog for end hour selection.
-     */
-    private void showEndTimePicker() {
-        if (getContext() == null) return;
-
-        TimePickerDialog picker = new TimePickerDialog(
-                getContext(),
-                (view, hourOfDay, minute) -> {
-                    endHour = hourOfDay;
-                    endMinute = minute;
-                    updateUI();
-                    notifyViewModel();
-                },
-                endHour,
-                endMinute,
-                true
-        );
-        picker.setTitle(getString(R.string.picker_time_to_title));
-        picker.show();
+    private interface OnTimeSelectedListener {
+        void onTimeSelected(int hour, int minute);
     }
 
-    /**
-     * Observes the access time LiveData from the shared ViewModel to populate initial or editing state.
-     */
     private void observeViewModel() {
         if (viewModel == null) return;
 
+        // Observe rules from ViewModel (populated on spot editing)
+        viewModel.getAvailabilityRulesLiveData().observe(getViewLifecycleOwner(), rules -> {
+            if (rules != null && !rules.isEmpty()) {
+                is247 = false;
+                for (DayScheduleConfig d : days) {
+                    d.setEnabled(false);
+                }
+                for (AvailabilityRuleRequest r : rules) {
+                    for (DayScheduleConfig d : days) {
+                        if (d.getDayOfWeek() == r.getDayOfWeek()) {
+                            d.applyRuleRequest(r);
+                            break;
+                        }
+                    }
+                }
+                updateUI();
+            }
+        });
+
+        // Observe is247 status
+        viewModel.getIs247LiveData().observe(getViewLifecycleOwner(), is247Val -> {
+            if (is247Val != null) {
+                is247 = is247Val;
+                updateUI();
+            }
+        });
+
+        // Legacy accessTime fallback
         viewModel.getAccessTimeLiveData().observe(getViewLifecycleOwner(), accessTime -> {
             if (accessTime == null || accessTime.trim().isEmpty()) {
                 return;
             }
             if ("24/7".equalsIgnoreCase(accessTime.trim()) || "Dostęp 24/7".equalsIgnoreCase(accessTime.trim())) {
                 is247 = true;
-                if (binding != null) {
-                    binding.radioAvailable247.setChecked(true);
-                    binding.layoutCustomHours.setVisibility(View.GONE);
-                }
-            } else {
-                is247 = false;
-                startHour = AccessTimeParser.getStartHour(accessTime);
-                startMinute = AccessTimeParser.getStartMinute(accessTime);
-                endHour = AccessTimeParser.getEndHour(accessTime);
-                endMinute = AccessTimeParser.getEndMinute(accessTime);
-                if (binding != null) {
-                    binding.radioCustomHours.setChecked(true);
-                    binding.layoutCustomHours.setVisibility(View.VISIBLE);
-                    updateUI();
-                }
+                updateUI();
             }
         });
     }
 
-    /**
-     * Updates TextView representations of selected start and end hours.
-     */
     private void updateUI() {
         if (binding == null) return;
 
-        binding.textTimeFrom.setText(String.format(Locale.getDefault(), "%02d:%02d", startHour, startMinute));
-        binding.textTimeTo.setText(String.format(Locale.getDefault(), "%02d:%02d", endHour, endMinute));
+        boolean prevUpdating = isUpdatingUI;
+        isUpdatingUI = true;
+        try {
+            if (is247) {
+                binding.radioAvailable247.setChecked(true);
+                binding.radioCustomHours.setChecked(false);
+                binding.layoutCustomSchedule.setVisibility(View.GONE);
+            } else {
+                binding.radioAvailable247.setChecked(false);
+                binding.radioCustomHours.setChecked(true);
+                binding.layoutCustomSchedule.setVisibility(View.VISIBLE);
+            }
+
+            for (int i = 0; i < days.size() && i < dayBindings.size(); i++) {
+                bindDayRow(dayBindings.get(i), days.get(i));
+            }
+
+            updateSummaryText();
+        } finally {
+            isUpdatingUI = prevUpdating;
+        }
     }
 
-    /**
-     * Formats current availability schedule and posts it to {@link AddPlaceViewModel}.
-     */
+    private void updateSummaryText() {
+        if (binding == null) return;
+
+        StringBuilder sb = new StringBuilder();
+        int activeCount = 0;
+
+        for (DayScheduleConfig d : days) {
+            if (d.isEnabled()) {
+                activeCount++;
+                if (sb.length() > 0) {
+                    sb.append("\n");
+                }
+                sb.append("• ").append(d.getDayName()).append(": ");
+                if (d.isAllDay()) {
+                    sb.append("Cały dzień (00:00 - 23:59)");
+                } else {
+                    sb.append(d.getFormattedStartTime()).append(" - ").append(d.getFormattedEndTime());
+                }
+            }
+        }
+
+        if (activeCount == 0) {
+            binding.textScheduleSummary.setText(getString(R.string.msg_no_active_schedule_days));
+        } else {
+            binding.textScheduleSummary.setText(sb.toString());
+        }
+    }
+
     private void notifyViewModel() {
         if (viewModel == null) return;
 
-        String formattedSchedule;
         if (is247) {
-            formattedSchedule = "24/7";
+            viewModel.setAvailabilitySchedule(true, Collections.emptyList(), "24/7");
         } else {
-            formattedSchedule = String.format(Locale.getDefault(), "%02d:%02d - %02d:%02d",
-                    startHour, startMinute, endHour, endMinute);
+            List<AvailabilityRuleRequest> rules = new ArrayList<>();
+            StringBuilder shortSummary = new StringBuilder();
+
+            for (DayScheduleConfig d : days) {
+                if (d.isEnabled()) {
+                    AvailabilityRuleRequest req = d.toRuleRequest();
+                    if (req != null) {
+                        rules.add(req);
+                    }
+                    if (shortSummary.length() > 0) {
+                        shortSummary.append(", ");
+                    }
+                    shortSummary.append(d.getDayShort()).append(": ");
+                    if (d.isAllDay()) {
+                        shortSummary.append("Cały dzień");
+                    } else {
+                        shortSummary.append(d.getFormattedStartTime()).append("-").append(d.getFormattedEndTime());
+                    }
+                }
+            }
+
+            String summaryStr = shortSummary.length() > 0 ? shortSummary.toString() : "Niedostępne";
+            viewModel.setAvailabilitySchedule(false, rules, summaryStr);
         }
-        viewModel.setAccessTime(formattedSchedule);
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        dayBindings.clear();
         binding = null;
     }
 }

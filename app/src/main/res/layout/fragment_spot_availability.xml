@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     app:cardBackgroundColor="@color/card_background"
@@ -23,104 +24,217 @@
             android:textSize="18sp"
             android:textStyle="bold" />
 
-        <RadioGroup
-            android:id="@+id/radio_group_availability"
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:text="Określ, kiedy kierowcy mogą dokonywać rezerwacji miejsca"
+            android:textColor="@color/brand_slate_500"
+            android:textSize="12sp" />
+
+        <!-- 24/7 vs Custom Schedule Selection -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
+            android:layout_marginTop="16dp"
             android:orientation="vertical">
 
-            <RadioButton
-                android:id="@+id/radio_available_24_7"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:buttonTint="@color/brand_emerald_600"
-                android:text="@string/opt_available_24_7"
-                android:textColor="@color/brand_slate_900"
-                android:textSize="14sp" />
-
-            <RadioButton
-                android:id="@+id/radio_custom_hours"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="6dp"
-                android:buttonTint="@color/brand_emerald_600"
-                android:checked="true"
-                android:text="@string/opt_custom_hours"
-                android:textColor="@color/brand_slate_900"
-                android:textSize="14sp" />
-        </RadioGroup>
-
-        <LinearLayout
-            android:id="@+id/layout_custom_hours"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:baselineAligned="false"
-            android:orientation="horizontal">
-
+            <!-- Option 1: 24/7 -->
             <LinearLayout
-                android:id="@+id/btn_pick_time_from"
-                android:layout_width="0dp"
+                android:id="@+id/container_opt_24_7"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginEnd="6dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_input_rounded"
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?android:attr/selectableItemBackground"
                 android:orientation="vertical"
-                android:padding="14dp">
+                android:paddingVertical="4dp">
+
+                <RadioButton
+                    android:id="@+id/radio_available_24_7"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:buttonTint="@color/brand_emerald_600"
+                    android:checked="true"
+                    android:clickable="false"
+                    android:focusable="false"
+                    android:text="@string/opt_available_24_7"
+                    android:textColor="@color/brand_slate_900"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/label_time_from"
+                    android:layout_marginStart="32dp"
+                    android:text="@string/opt_available_24_7_desc"
                     android:textColor="@color/brand_slate_500"
                     android:textSize="12sp" />
-
-                <TextView
-                    android:id="@+id/text_time_from"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="08:00"
-                    android:textColor="@color/brand_slate_950"
-                    android:textSize="17sp"
-                    android:textStyle="bold" />
             </LinearLayout>
 
+            <!-- Option 2: Custom Weekly Schedule -->
             <LinearLayout
-                android:id="@+id/btn_pick_time_to"
-                android:layout_width="0dp"
+                android:id="@+id/container_opt_custom"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="6dp"
-                android:layout_weight="1"
-                android:background="@drawable/bg_input_rounded"
+                android:layout_marginTop="10dp"
                 android:clickable="true"
                 android:focusable="true"
                 android:foreground="?android:attr/selectableItemBackground"
                 android:orientation="vertical"
-                android:padding="14dp">
+                android:paddingVertical="4dp">
+
+                <RadioButton
+                    android:id="@+id/radio_custom_hours"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:buttonTint="@color/brand_emerald_600"
+                    android:clickable="false"
+                    android:focusable="false"
+                    android:text="@string/opt_custom_schedule_title"
+                    android:textColor="@color/brand_slate_900"
+                    android:textSize="14sp"
+                    android:textStyle="bold" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/label_time_to"
+                    android:layout_marginStart="32dp"
+                    android:text="@string/opt_custom_schedule_desc"
                     android:textColor="@color/brand_slate_500"
                     android:textSize="12sp" />
-
-                <TextView
-                    android:id="@+id/text_time_to"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:text="20:00"
-                    android:textColor="@color/brand_slate_950"
-                    android:textSize="17sp"
-                    android:textStyle="bold" />
             </LinearLayout>
         </LinearLayout>
 
+        <!-- Detailed Custom Schedule Section (Visible only when Option 2 is checked) -->
+        <LinearLayout
+            android:id="@+id/layout_custom_schedule"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="vertical"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginBottom="14dp"
+                android:background="@color/brand_slate_200" />
+
+            <!-- Quick Presets Row -->
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Szybki wybór:"
+                android:textColor="@color/brand_slate_500"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:layout_marginBottom="14dp"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/btn_preset_weekdays"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_badge_slate"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="5dp"
+                    android:text="@string/preset_weekdays"
+                    android:textColor="@color/brand_slate_700"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/btn_preset_all"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/bg_badge_slate"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="5dp"
+                    android:text="@string/preset_all_days"
+                    android:textColor="@color/brand_slate_700"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/btn_preset_clear"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/bg_badge_rose"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?android:attr/selectableItemBackground"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="5dp"
+                    android:text="@string/preset_clear"
+                    android:textColor="@color/brand_rose_700"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <!-- 7 Days Dynamic Container -->
+            <LinearLayout
+                android:id="@+id/container_days"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <!-- Schedule Live Summary Card -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:background="@drawable/bg_badge_slate"
+                android:orientation="vertical"
+                android:padding="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_clock"
+                        app:tint="@color/brand_slate_700" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="6dp"
+                        android:text="@string/label_schedule_summary_title"
+                        android:textColor="@color/brand_slate_800"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/text_schedule_summary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:lineSpacingExtra="2dp"
+                    android:textColor="@color/brand_slate_700"
+                    android:textSize="12sp"
+                    tools:text="Wtorek: 13:00 - 20:00\nCzwartek: 06:00 - 23:59\nSobota: Cały dzień (00:00 - 23:59)" />
+            </LinearLayout>
+        </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

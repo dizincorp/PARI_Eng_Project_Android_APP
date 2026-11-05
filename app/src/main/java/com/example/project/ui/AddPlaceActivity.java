@@ -13,6 +13,7 @@ import android.view.View;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.OnBackPressedCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
@@ -27,10 +28,13 @@ import androidx.lifecycle.ViewModelProvider;
 import com.example.project.R;
 import com.example.project.databinding.ActivityAddPlaceBinding;
 import com.example.project.model.ParkingPlace;
+import com.example.project.network.model.AvailabilityRuleRequest;
 import com.example.project.repository.AppRepository;
+import com.example.project.utils.ViewAnimationUtils;
 import com.example.project.viewmodel.AddPlaceViewModel;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -38,7 +42,7 @@ import java.util.concurrent.Executors;
 
 /**
  * Activity for creating or updating a parking spot with photo selection, geocoding,
- * and decoupled availability management via {@link SpotAvailabilityFragment}.
+ * and decoupled availability management via {@link SpotAvailabilityActivity}.
  */
 public class AddPlaceActivity extends BaseActivity {
 
@@ -72,6 +76,32 @@ public class AddPlaceActivity extends BaseActivity {
                 }
             });
 
+    private final ActivityResultLauncher<Intent> availabilityLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    Intent data = result.getData();
+                    boolean is247 = data.getBooleanExtra(SpotAvailabilityActivity.EXTRA_IS_24_7, true);
+                    Serializable rawRules = data.getSerializableExtra(SpotAvailabilityActivity.EXTRA_RULES);
+                    List<AvailabilityRuleRequest> rules = new ArrayList<>();
+                    if (rawRules instanceof List<?>) {
+                        for (Object obj : (List<?>) rawRules) {
+                            if (obj instanceof AvailabilityRuleRequest) {
+                                rules.add((AvailabilityRuleRequest) obj);
+                            }
+                        }
+                    }
+                    String summary = data.getStringExtra(SpotAvailabilityActivity.EXTRA_ACCESS_TIME_SUMMARY);
+                    if (summary == null || summary.trim().isEmpty()) {
+                        summary = is247 ? "Całodobowo 24/7" : "Zgodnie z harmonogramem";
+                    }
+
+                    viewModel.setAvailabilitySchedule(is247, rules, summary);
+                    if (binding != null) {
+                        binding.textAvailabilitySummary.setText(summary);
+                    }
+                }
+            });
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -84,6 +114,13 @@ public class AddPlaceActivity extends BaseActivity {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
             v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
             return insets;
+        });
+
+        getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
+            @Override
+            public void handleOnBackPressed() {
+                finish();
+            }
         });
 
         viewModel = new ViewModelProvider(this).get(AddPlaceViewModel.class);
@@ -109,7 +146,10 @@ public class AddPlaceActivity extends BaseActivity {
             return;
         }
 
-        binding.btnBack.setOnClickListener(v -> finish());
+        binding.btnBack.setOnClickListener(v -> {
+            ViewAnimationUtils.playBounceAnimation(v, null);
+            finish();
+        });
         binding.btnMore.setOnClickListener(v -> finish());
 
         // Black button with white text "Dodaj zdjęcie" requesting storage permission before opening gallery
@@ -120,6 +160,34 @@ public class AddPlaceActivity extends BaseActivity {
             selectedPhotoUri = "";
             binding.imgSpotPreview.setImageDrawable(null);
             binding.cardPhotoPreview.setVisibility(View.GONE);
+        });
+
+        // Availability card opens dedicated SpotAvailabilityActivity
+        binding.cardSpotAvailability.setOnClickListener(v -> {
+            ViewAnimationUtils.playBounceAnimation(v, () -> {
+                Intent intent = new Intent(AddPlaceActivity.this, SpotAvailabilityActivity.class);
+                if (currentPlaceId != null) {
+                    intent.putExtra(SpotAvailabilityActivity.EXTRA_SPOT_ID, currentPlaceId);
+                }
+                String name = binding.editSpotName.getText() != null ? binding.editSpotName.getText().toString().trim() : "";
+                if (!name.isEmpty()) {
+                    intent.putExtra(SpotAvailabilityActivity.EXTRA_SPOT_TITLE, name);
+                }
+                Boolean is247 = viewModel.getIs247LiveData().getValue();
+                intent.putExtra(SpotAvailabilityActivity.EXTRA_IS_24_7, is247 != null ? is247 : true);
+
+                List<AvailabilityRuleRequest> currentRules = viewModel.getAvailabilityRulesLiveData().getValue();
+                if (currentRules != null && !currentRules.isEmpty()) {
+                    intent.putExtra(SpotAvailabilityActivity.EXTRA_RULES, new ArrayList<>(currentRules));
+                }
+
+                String currentSummary = viewModel.getAccessTimeLiveData().getValue();
+                if (currentSummary != null) {
+                    intent.putExtra(SpotAvailabilityActivity.EXTRA_ACCESS_TIME_SUMMARY, currentSummary);
+                }
+
+                availabilityLauncher.launch(intent);
+            });
         });
 
         // Geocoding preview button
@@ -307,6 +375,13 @@ public class AddPlaceActivity extends BaseActivity {
                 binding.chipUnderground.setChecked(place.getAmenities().contains("Podziemny"));
                 binding.chipGate.setChecked(place.getAmenities().contains("Brama automatyczna") || place.getAmenities().contains("GATE"));
                 binding.chipCovered.setChecked(place.getAmenities().contains("Zadaszone") || place.getAmenities().contains("COVERED"));
+            }
+        });
+
+        // Observe access time to update summary on card
+        viewModel.getAccessTimeLiveData().observe(this, accessTime -> {
+            if (binding != null && accessTime != null && !accessTime.trim().isEmpty()) {
+                binding.textAvailabilitySummary.setText(accessTime.trim());
             }
         });
 

@@ -95,6 +95,10 @@ public class AvailabilityCalendarViewModel extends AndroidViewModel {
         return selectedSpotIdLiveData;
     }
 
+    public String getSelectedSpotId() {
+        return selectedSpotIdLiveData.getValue();
+    }
+
     /**
      * Refreshes blocked periods for the currently selected spot.
      */
