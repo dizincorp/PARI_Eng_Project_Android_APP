@@ -19,10 +19,17 @@ public class QuoteRequest {
     @SerializedName(value = "end", alternate = {"endsAt"})
     private Date endsAt;
 
+    @SerializedName("bookingType")
+    private String bookingType; // "HOURLY", "DAILY", "MONTHLY"
+
+    @SerializedName("durationMonths")
+    private Integer durationMonths;
+
     /**
      * Default no-argument constructor for Gson serialization.
      */
     public QuoteRequest() {
+        this.bookingType = "HOURLY";
     }
 
     /**
@@ -36,6 +43,7 @@ public class QuoteRequest {
         this.spotId = spotId;
         this.startsAt = startsAt;
         this.endsAt = endsAt;
+        this.bookingType = "HOURLY";
     }
 
     /**
@@ -49,6 +57,31 @@ public class QuoteRequest {
         this.spotId = spotId;
         this.startsAt = new Date(startMs);
         this.endsAt = new Date(endMs);
+        this.bookingType = "HOURLY";
+    }
+
+    public QuoteRequest(String spotId, long startMs, long endMs, String bookingType, Integer durationMonths) {
+        this.spotId = spotId;
+        this.startsAt = new Date(startMs);
+        this.endsAt = new Date(endMs);
+        this.bookingType = (bookingType != null && !bookingType.trim().isEmpty()) ? bookingType.trim() : "HOURLY";
+        this.durationMonths = durationMonths;
+    }
+
+    public String getBookingType() {
+        return bookingType != null ? bookingType : "HOURLY";
+    }
+
+    public void setBookingType(String bookingType) {
+        this.bookingType = bookingType;
+    }
+
+    public Integer getDurationMonths() {
+        return durationMonths;
+    }
+
+    public void setDurationMonths(Integer durationMonths) {
+        this.durationMonths = durationMonths;
     }
 
     public String getSpotId() {

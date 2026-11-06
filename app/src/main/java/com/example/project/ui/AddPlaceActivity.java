@@ -102,6 +102,43 @@ public class AddPlaceActivity extends BaseActivity {
                 }
             });
 
+    private Double selectedLatitude = null;
+    private Double selectedLongitude = null;
+
+    private final ActivityResultLauncher<Intent> pickLocationLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    Intent data = result.getData();
+                    double lat = data.getDoubleExtra(PickLocationActivity.EXTRA_LATITUDE, 0.0);
+                    double lng = data.getDoubleExtra(PickLocationActivity.EXTRA_LONGITUDE, 0.0);
+                    String street = data.getStringExtra(PickLocationActivity.EXTRA_STREET);
+                    String city = data.getStringExtra(PickLocationActivity.EXTRA_CITY);
+                    String postalCode = data.getStringExtra(PickLocationActivity.EXTRA_POSTAL_CODE);
+
+                    if (street != null && !street.isEmpty()) {
+                        binding.editStreet.setText(street);
+                    }
+                    if (city != null && !city.isEmpty()) {
+                        binding.editCity.setText(city);
+                    }
+                    if (postalCode != null && !postalCode.isEmpty()) {
+                        binding.editPostalCode.setText(postalCode);
+                    }
+
+                    if (lat != 0.0 && lng != 0.0) {
+                        selectedLatitude = lat;
+                        selectedLongitude = lng;
+                        viewModel.setCustomCoordinates(lat, lng);
+                        if (binding.layoutSelectedCoords != null && binding.textSelectedCoords != null) {
+                            binding.layoutSelectedCoords.setVisibility(View.VISIBLE);
+                            binding.textSelectedCoords.setText(getString(R.string.coords_set_from_map,
+                                    String.format(Locale.US, "%.5f, %.5f", lat, lng)));
+                        }
+                    }
+                    Toast.makeText(this, R.string.toast_location_selected, Toast.LENGTH_SHORT).show();
+                }
+            });
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -190,30 +227,28 @@ public class AddPlaceActivity extends BaseActivity {
             });
         });
 
-        // Geocoding preview button
+        // Launch interactive Map location picker
         binding.btnSetOnMap.setOnClickListener(v -> {
+            Intent intent = new Intent(this, PickLocationActivity.class);
             String street = binding.editStreet.getText() != null ? binding.editStreet.getText().toString().trim() : "";
             String city = binding.editCity.getText() != null ? binding.editCity.getText().toString().trim() : "";
-            if (street.isEmpty() || city.isEmpty()) {
-                Toast.makeText(this, R.string.msg_validation_error, Toast.LENGTH_SHORT).show();
-                return;
+            String postalCode = binding.editPostalCode.getText() != null ? binding.editPostalCode.getText().toString().trim() : "";
+
+            if (!street.isEmpty()) {
+                intent.putExtra(PickLocationActivity.EXTRA_INITIAL_STREET, street);
             }
-            Toast.makeText(this, R.string.msg_geocoding_in_progress, Toast.LENGTH_SHORT).show();
-            Executors.newSingleThreadExecutor().execute(() -> {
-                String query = street + ", " + city + ", Poland";
-                try {
-                    Geocoder geocoder = new Geocoder(this, Locale.getDefault());
-                    List<Address> addresses = geocoder.getFromLocationName(query, 1);
-                    if (addresses != null && !addresses.isEmpty()) {
-                        Address addr = addresses.get(0);
-                        runOnUiThread(() -> Toast.makeText(this, "Współrzędne GPS: " + String.format(Locale.US, "%.4f, %.4f", addr.getLatitude(), addr.getLongitude()), Toast.LENGTH_SHORT).show());
-                    } else {
-                        runOnUiThread(() -> Toast.makeText(this, R.string.error_location_not_found, Toast.LENGTH_SHORT).show());
-                    }
-                } catch (IOException e) {
-                    runOnUiThread(() -> Toast.makeText(this, R.string.error_location_not_found, Toast.LENGTH_SHORT).show());
-                }
-            });
+            if (!city.isEmpty()) {
+                intent.putExtra(PickLocationActivity.EXTRA_INITIAL_CITY, city);
+            }
+            if (!postalCode.isEmpty()) {
+                intent.putExtra(PickLocationActivity.EXTRA_INITIAL_POSTAL_CODE, postalCode);
+            }
+            if (selectedLatitude != null && selectedLongitude != null
+                    && selectedLatitude != 0.0 && selectedLongitude != 0.0) {
+                intent.putExtra(PickLocationActivity.EXTRA_INITIAL_LAT, selectedLatitude);
+                intent.putExtra(PickLocationActivity.EXTRA_INITIAL_LNG, selectedLongitude);
+            }
+            pickLocationLauncher.launch(intent);
         });
 
         // Submit button
@@ -353,6 +388,16 @@ public class AddPlaceActivity extends BaseActivity {
             if (place.getStreet() != null) binding.editStreet.setText(place.getStreet());
             if (place.getCity() != null) binding.editCity.setText(place.getCity());
             if (place.getPostalCode() != null) binding.editPostalCode.setText(place.getPostalCode());
+            if (place.getLatitude() != 0.0 && place.getLongitude() != 0.0) {
+                selectedLatitude = place.getLatitude();
+                selectedLongitude = place.getLongitude();
+                viewModel.setCustomCoordinates(selectedLatitude, selectedLongitude);
+                if (binding.layoutSelectedCoords != null && binding.textSelectedCoords != null) {
+                    binding.layoutSelectedCoords.setVisibility(View.VISIBLE);
+                    binding.textSelectedCoords.setText(getString(R.string.coords_set_from_map,
+                            String.format(Locale.US, "%.5f, %.5f", selectedLatitude, selectedLongitude)));
+                }
+            }
             binding.editPrice.setText(String.format(Locale.US, "%.2f", place.getPrice()));
 
             selectedPhotoUri = place.getImageUri();

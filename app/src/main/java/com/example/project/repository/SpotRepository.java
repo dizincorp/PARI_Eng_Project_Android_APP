@@ -224,6 +224,16 @@ public class SpotRepository {
                         }
                         resultLiveData.postValue(Resource.success(spot));
                     });
+                } else if (response.code() == 409) {
+                    Log.w(TAG, "activateSpot returned HTTP 409 (spot already active), synchronizing local cache to ACTIVE for: " + id);
+                    diskExecutor.execute(() -> {
+                        ParkingPlaceEntity existing = parkingPlaceDao.getPlaceById(id.trim());
+                        if (existing != null) {
+                            existing.setStatus("ACTIVE");
+                            parkingPlaceDao.insertOrUpdate(existing);
+                        }
+                        resultLiveData.postValue(Resource.success(null));
+                    });
                 } else {
                     String errorMsg = "Błąd aktywacji miejsca: HTTP " + response.code();
                     Log.e(TAG, errorMsg);
@@ -273,6 +283,16 @@ public class SpotRepository {
                             parkingPlaceDao.insertOrUpdate(entity);
                         }
                         resultLiveData.postValue(Resource.success(spot));
+                    });
+                } else if (response.code() == 409) {
+                    Log.w(TAG, "deactivateSpot returned HTTP 409 (spot already inactive or draft), synchronizing local cache to INACTIVE for: " + id);
+                    diskExecutor.execute(() -> {
+                        ParkingPlaceEntity existing = parkingPlaceDao.getPlaceById(id.trim());
+                        if (existing != null) {
+                            existing.setStatus("INACTIVE");
+                            parkingPlaceDao.insertOrUpdate(existing);
+                        }
+                        resultLiveData.postValue(Resource.success(null));
                     });
                 } else {
                     String errorMsg = "Błąd dezaktywacji miejsca: HTTP " + response.code();
@@ -450,7 +470,7 @@ public class SpotRepository {
                         for (ParkingSpot spot : remoteSpots) {
                             if (spot != null) {
                                 ParkingPlaceEntity entity = toEntity(spot);
-                                if (entity.getStatus() == null || entity.getStatus().isEmpty() || "DRAFT".equalsIgnoreCase(entity.getStatus())) {
+                                if (entity.getStatus() == null || entity.getStatus().isEmpty()) {
                                     entity.setStatus("ACTIVE");
                                 }
                                 if (currentUserId != null && !currentUserId.isEmpty() && currentUserId.equals(spot.getOwnerId())) {
@@ -670,7 +690,7 @@ public class SpotRepository {
         entity.setOwnerEmail(spot.getOwnerId());
 
         String rawStatus = spot.getStatus();
-        if (rawStatus == null || rawStatus.isEmpty() || "DRAFT".equalsIgnoreCase(rawStatus)) {
+        if (rawStatus == null || rawStatus.isEmpty()) {
             entity.setStatus("ACTIVE");
         } else {
             entity.setStatus(rawStatus.toUpperCase(Locale.ROOT));
@@ -680,11 +700,8 @@ public class SpotRepository {
             boolean isOcc = "OCCUPIED".equalsIgnoreCase(spot.getOccupancy());
             boolean isRes = "RESERVED".equalsIgnoreCase(spot.getOccupancy());
             boolean isBlk = "BLOCKED".equalsIgnoreCase(spot.getOccupancy());
-            entity.setOccupied(isOcc || isRes);
+            entity.setOccupied(isOcc || isRes || isBlk);
             entity.setCheckedIn(isOcc);
-            if (isBlk) {
-                entity.setStatus("BLOCKED");
-            }
         } else {
             entity.setOccupied(false);
             entity.setCheckedIn(false);

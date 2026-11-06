@@ -216,7 +216,7 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Card 2: HARMONOGRAM Card -->
+            <!-- Card 2: HARMONOGRAM & KALENDARZ Card -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -233,6 +233,7 @@
                     android:orientation="vertical"
                     android:padding="20dp">
 
+                    <!-- Title & Header -->
                     <RelativeLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content">
@@ -255,7 +256,7 @@
                                 android:layout_width="wrap_content"
                                 android:layout_height="wrap_content"
                                 android:layout_marginStart="8dp"
-                                android:text="@string/header_schedule"
+                                android:text="@string/title_booking_type"
                                 android:textColor="@color/brand_slate_950"
                                 android:textSize="16sp"
                                 android:textStyle="bold" />
@@ -271,11 +272,394 @@
                             android:textSize="11sp" />
                     </RelativeLayout>
 
+                    <!-- Tariff SingleSelection ChipGroup (Hourly, Daily, Monthly) -->
+                    <com.google.android.material.chip.ChipGroup
+                        android:id="@+id/chip_group_booking_type"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        app:selectionRequired="true"
+                        app:singleSelection="true">
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_tariff_hourly"
+                            style="@style/Widget.MaterialComponents.Chip.Choice"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:checked="true"
+                            android:text="@string/tariff_hourly"
+                            android:textColor="@color/brand_slate_900"
+                            android:textSize="13sp"
+                            app:chipCornerRadius="14dp"
+                            app:chipStrokeColor="@color/brand_slate_300"
+                            app:chipStrokeWidth="1dp" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_tariff_daily"
+                            style="@style/Widget.MaterialComponents.Chip.Choice"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/tariff_daily"
+                            android:textColor="@color/brand_slate_900"
+                            android:textSize="13sp"
+                            app:chipCornerRadius="14dp"
+                            app:chipStrokeColor="@color/brand_slate_300"
+                            app:chipStrokeWidth="1dp" />
+
+                        <com.google.android.material.chip.Chip
+                            android:id="@+id/chip_tariff_monthly"
+                            style="@style/Widget.MaterialComponents.Chip.Choice"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/tariff_monthly"
+                            android:textColor="@color/brand_slate_900"
+                            android:textSize="13sp"
+                            app:chipCornerRadius="14dp"
+                            app:chipStrokeColor="@color/brand_slate_300"
+                            app:chipStrokeWidth="1dp" />
+                    </com.google.android.material.chip.ChipGroup>
+
+                    <!-- Quick duration packages (for daily: 1d, 3d, 1w, 2w; for monthly: 1m, 3m, 6m, 1y) -->
+                    <HorizontalScrollView
+                        android:id="@+id/scroll_packages"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:scrollbars="none"
+                        android:visibility="gone"
+                        tools:visibility="visible">
+
+                        <com.google.android.material.chip.ChipGroup
+                            android:id="@+id/chip_group_packages"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            app:selectionRequired="false"
+                            app:singleLine="true"
+                            app:singleSelection="true" />
+                    </HorizontalScrollView>
+
+                    <!-- Divider -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginVertical="14dp"
+                        android:background="@color/brand_slate_200" />
+
+                    <!-- Calendar Section Header with Month Navigation -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/calendar_driver_title"
+                                android:textColor="@color/brand_slate_950"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="1dp"
+                                android:text="@string/calendar_driver_subtitle"
+                                android:textColor="@color/brand_slate_500"
+                                android:textSize="11sp" />
+                        </LinearLayout>
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_today"
+                            style="@style/Widget.MaterialComponents.Button.TextButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="32dp"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:minWidth="0dp"
+                            android:paddingHorizontal="8dp"
+                            android:text="@string/btn_today"
+                            android:textAllCaps="false"
+                            android:textColor="@color/brand_emerald_700"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <ImageButton
+                            android:id="@+id/btn_prev_month"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_chevron_left"
+                            app:tint="@color/brand_slate_800" />
+
+                        <TextView
+                            android:id="@+id/text_current_month"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginHorizontal="6dp"
+                            android:gravity="center"
+                            android:textColor="@color/brand_slate_950"
+                            android:textSize="13sp"
+                            android:textStyle="bold"
+                            tools:text="Listopad 2026" />
+
+                        <ImageButton
+                            android:id="@+id/btn_next_month"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/brand_slate_800" />
+                    </LinearLayout>
+
+                    <!-- Weekdays Header Row (Mon-Sun) -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="@string/day_mon"
+                            android:textColor="@color/brand_slate_500"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="@string/day_tue"
+                            android:textColor="@color/brand_slate_500"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="@string/day_wed"
+                            android:textColor="@color/brand_slate_500"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="@string/day_thu"
+                            android:textColor="@color/brand_slate_500"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="@string/day_fri"
+                            android:textColor="@color/brand_slate_500"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="@string/day_sat"
+                            android:textColor="@color/brand_slate_500"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="@string/day_sun"
+                            android:textColor="@color/brand_slate_500"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- Days Grid RecyclerView (7 columns) -->
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/recycler_calendar_days"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:nestedScrollingEnabled="false"
+                        android:overScrollMode="never" />
+
+                    <!-- Calendar Color Legend -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:background="@drawable/bg_segmented_container"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="10dp"
+                        android:paddingVertical="6dp">
+
+                        <!-- Green: Wolne -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="horizontal">
+
+                            <View
+                                android:layout_width="7dp"
+                                android:layout_height="7dp"
+                                android:background="@drawable/shape_status_dot"
+                                android:backgroundTint="@color/brand_emerald_500" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="5dp"
+                                android:text="@string/legend_free"
+                                android:textColor="@color/brand_slate_700"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <!-- Yellow: Rezerwacja -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="horizontal">
+
+                            <View
+                                android:layout_width="7dp"
+                                android:layout_height="7dp"
+                                android:background="@drawable/shape_status_dot"
+                                android:backgroundTint="@color/brand_amber_600" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="5dp"
+                                android:text="@string/legend_reserved"
+                                android:textColor="@color/brand_slate_700"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <!-- Red: Zablokowane -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="horizontal">
+
+                            <View
+                                android:layout_width="7dp"
+                                android:layout_height="7dp"
+                                android:background="@drawable/shape_status_dot"
+                                android:backgroundTint="@color/brand_rose_500" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="5dp"
+                                android:text="@string/legend_blocked"
+                                android:textColor="@color/brand_slate_700"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Selected Day Info & Access Banner -->
+                    <com.google.android.material.card.MaterialCardView
+                        android:id="@+id/layout_selected_day_banner"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        app:cardBackgroundColor="@color/brand_slate_50"
+                        app:cardCornerRadius="12dp"
+                        app:cardElevation="0dp"
+                        app:strokeColor="@color/brand_slate_200"
+                        app:strokeWidth="1dp">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="vertical"
+                            android:padding="12dp">
+
+                            <RelativeLayout
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content">
+
+                                <TextView
+                                    android:id="@+id/text_selected_day_label"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_alignParentStart="true"
+                                    android:textColor="@color/brand_slate_950"
+                                    android:textSize="13sp"
+                                    android:textStyle="bold"
+                                    tools:text="Dzień: 2026-11-06" />
+
+                                <TextView
+                                    android:id="@+id/badge_selected_day_status"
+                                    android:layout_width="wrap_content"
+                                    android:layout_height="wrap_content"
+                                    android:layout_alignParentEnd="true"
+                                    android:background="@drawable/bg_badge_emerald"
+                                    android:paddingHorizontal="8dp"
+                                    android:paddingVertical="2dp"
+                                    android:textColor="@color/brand_emerald_700"
+                                    android:textSize="11sp"
+                                    android:textStyle="bold"
+                                    tools:text="Wolne" />
+                            </RelativeLayout>
+
+                            <TextView
+                                android:id="@+id/text_selected_day_access"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="4dp"
+                                android:textColor="@color/brand_slate_600"
+                                android:textSize="12sp"
+                                tools:text="Godziny dostępu: Dostęp całodobowy (24/7)" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
+
+                    <!-- Divider -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginVertical="14dp"
+                        android:background="@color/brand_slate_200" />
+
                     <!-- Start & End Date-Time Selectors Grid -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="14dp"
                         android:gravity="center_vertical"
                         android:orientation="horizontal">
 
@@ -542,6 +926,32 @@
                         android:textSize="17sp"
                         android:textStyle="bold" />
 
+                    <!-- Tariff row -->
+                    <RelativeLayout
+                        android:id="@+id/layout_summary_tariff_row"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentStart="true"
+                            android:text="@string/label_tariff"
+                            android:textColor="@color/brand_slate_600"
+                            android:textSize="14sp" />
+
+                        <TextView
+                            android:id="@+id/text_summary_tariff_value"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:textColor="@color/brand_slate_950"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            tools:text="⏱ Na godziny" />
+                    </RelativeLayout>
+
                     <!-- Duration row -->
                     <RelativeLayout
                         android:layout_width="match_parent"
@@ -591,6 +1001,34 @@
                             android:textSize="14sp"
                             android:textStyle="bold"
                             tools:text="40.00 PLN" />
+                    </RelativeLayout>
+                    <!-- Discount row -->
+                    <RelativeLayout
+                        android:id="@+id/layout_summary_discount_row"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:visibility="gone"
+                        tools:visibility="visible">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentStart="true"
+                            android:text="@string/label_discount"
+                            android:textColor="@color/brand_emerald_700"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/text_summary_discount_value"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_alignParentEnd="true"
+                            android:textColor="@color/brand_emerald_700"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            tools:text="-10% (-80.00 PLN)" />
                     </RelativeLayout>
 
                     <!-- Service fee row -->

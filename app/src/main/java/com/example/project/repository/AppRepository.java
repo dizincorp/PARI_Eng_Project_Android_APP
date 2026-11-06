@@ -616,6 +616,15 @@ public class AppRepository {
         );
         r.setUserEmail(e.getUserEmail() != null ? e.getUserEmail() : "");
         r.setImageUri(e.getImageUri() != null ? e.getImageUri() : "");
+        if (e.getUserName() != null && !e.getUserName().isEmpty()) {
+            r.setUserName(e.getUserName());
+        }
+        if (e.getCarModel() != null && !e.getCarModel().isEmpty()) {
+            r.setCarModel(e.getCarModel());
+        }
+        if (e.getCarPlate() != null && !e.getCarPlate().isEmpty()) {
+            r.setCarPlate(e.getCarPlate());
+        }
         return r;
     }
 

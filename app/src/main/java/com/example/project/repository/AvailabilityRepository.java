@@ -11,6 +11,13 @@ import androidx.lifecycle.MutableLiveData;
 import com.example.project.database.AppDatabase;
 import com.example.project.database.dao.AvailabilityRuleDao;
 import com.example.project.database.dao.BlockedPeriodDao;
+import com.example.project.database.dao.ReservationDao;
+import com.example.project.database.entity.ReservationEntity;
+import com.example.project.network.model.BookedSlotResponse;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
+import java.util.TimeZone;
 import com.example.project.database.entity.AvailabilityRuleEntity;
 import com.example.project.database.entity.BlockedPeriodEntity;
 import com.example.project.network.ApiClient;
@@ -42,6 +49,7 @@ public class AvailabilityRepository {
     private final AvailabilityApiService apiService;
     private final AvailabilityRuleDao ruleDao;
     private final BlockedPeriodDao blockedPeriodDao;
+    private final ReservationDao reservationDao;
     private final ExecutorService diskExecutor;
 
     /**
@@ -54,6 +62,7 @@ public class AvailabilityRepository {
                 ApiClient.getAvailabilityApiService(),
                 AppDatabase.getInstance(context).availabilityRuleDao(),
                 AppDatabase.getInstance(context).blockedPeriodDao(),
+                AppDatabase.getInstance(context).reservationDao(),
                 Executors.newSingleThreadExecutor()
         );
     }
@@ -69,10 +78,12 @@ public class AvailabilityRepository {
     public AvailabilityRepository(@NonNull AvailabilityApiService apiService,
                                   @NonNull AvailabilityRuleDao ruleDao,
                                   @NonNull BlockedPeriodDao blockedPeriodDao,
+                                  @Nullable ReservationDao reservationDao,
                                   @NonNull ExecutorService diskExecutor) {
         this.apiService = apiService;
         this.ruleDao = ruleDao;
         this.blockedPeriodDao = blockedPeriodDao;
+        this.reservationDao = reservationDao;
         this.diskExecutor = diskExecutor;
     }
 
@@ -95,6 +106,14 @@ public class AvailabilityRepository {
      * @param spotId Unique spot identifier
      * @return LiveData list of {@link AvailabilityRuleEntity}
      */
+    public LiveData<List<AvailabilityRuleEntity>> getAllRulesLiveData() {
+        return ruleDao.getAllRulesLiveData();
+    }
+
+    public LiveData<List<BlockedPeriodEntity>> getAllBlockedPeriodsLiveData() {
+        return blockedPeriodDao.getAllBlockedPeriodsLiveData();
+    }
+
     public LiveData<List<AvailabilityRuleEntity>> getRulesLiveData(@NonNull String spotId) {
         return ruleDao.getRulesForSpotLiveData(spotId);
     }
@@ -127,6 +146,7 @@ public class AvailabilityRepository {
         }
 
         String cleanId = spotId.trim();
+        fetchBookedSlots(cleanId);
 
         apiService.getBlockedPeriods(cleanId).enqueue(new Callback<List<BlockedPeriodResponse>>() {
             @Override
@@ -201,6 +221,83 @@ public class AvailabilityRepository {
      * @param spotId Unique spot identifier
      * @return LiveData emitting Resource with the updated rules
      */
+    /**
+     * Fetches occupied intervals (both driver reservations and owner blocked periods)
+     * from GET /api/spots/{spotId}/booked-slots?from={from}&amp;to={to}
+     * and synchronizes them into local Room database (BlockedPeriodDao and ReservationDao).
+     *
+     * @param spotId Unique spot identifier
+     */
+    public void fetchBookedSlots(@NonNull String spotId) {
+        if (spotId == null || spotId.trim().isEmpty()) return;
+        String cleanId = spotId.trim();
+
+        long nowMs = System.currentTimeMillis();
+        SimpleDateFormat isoFmt = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", Locale.US);
+        isoFmt.setTimeZone(TimeZone.getTimeZone("UTC"));
+        String fromIso = isoFmt.format(new Date(nowMs - 86400000L * 30));
+        String toIso = isoFmt.format(new Date(nowMs + 86400000L * 365));
+
+        apiService.getBookedSlots(cleanId, fromIso, toIso).enqueue(new Callback<List<BookedSlotResponse>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<BookedSlotResponse>> call,
+                                   @NonNull Response<List<BookedSlotResponse>> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    List<BookedSlotResponse> slots = response.body();
+                    Log.d(TAG, "Successfully fetched " + slots.size() + " booked slots for spot: " + cleanId);
+                    diskExecutor.execute(() -> {
+                        List<BlockedPeriodEntity> blockedList = new ArrayList<>();
+                        List<ReservationEntity> resList = new ArrayList<>();
+
+                        for (BookedSlotResponse slot : slots) {
+                            if (slot == null) continue;
+                            if (slot.isBlocked()) {
+                                String blockId = (slot.getBlockId() != null && !slot.getBlockId().isEmpty())
+                                        ? slot.getBlockId()
+                                        : (cleanId + "_" + slot.getStart());
+                                blockedList.add(new BlockedPeriodEntity(
+                                        blockId,
+                                        cleanId,
+                                        slot.getStart(),
+                                        slot.getEnd(),
+                                        "Zablokowane przez właściciela"
+                                ));
+                            } else {
+                                String resId = (slot.getReservationId() != null && !slot.getReservationId().isEmpty())
+                                        ? slot.getReservationId()
+                                        : ("res_" + slot.getStart());
+                                long startMs = BlockedPeriodEntity.parseIsoToMillis(slot.getStart());
+                                long endMs = BlockedPeriodEntity.parseIsoToMillis(slot.getEnd());
+                                String st = slot.getStatus() != null ? slot.getStatus() : "CONFIRMED";
+                                ReservationEntity re = new ReservationEntity();
+                                re.setId(resId);
+                                re.setPlaceId(cleanId);
+                                re.setStartTimeMs(startMs);
+                                re.setEndTimeMs(endMs);
+                                re.setStatus(st);
+                                resList.add(re);
+                            }
+                        }
+
+                        if (!blockedList.isEmpty()) {
+                            blockedPeriodDao.replaceBlockedPeriodsForSpot(cleanId, blockedList);
+                        }
+                        if (reservationDao != null && !resList.isEmpty()) {
+                            reservationDao.insertOrUpdateAll(resList);
+                        }
+                    });
+                } else {
+                    Log.d(TAG, "GET booked-slots returned HTTP " + response.code() + " for spot: " + cleanId);
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<List<BookedSlotResponse>> call, @NonNull Throwable t) {
+                Log.e(TAG, "GET booked-slots network failure: " + t.getMessage(), t);
+            }
+        });
+    }
+
     public LiveData<Resource<List<AvailabilityRuleEntity>>> fetchAvailabilityRules(@NonNull String spotId) {
         MutableLiveData<Resource<List<AvailabilityRuleEntity>>> result = new MutableLiveData<>();
         result.postValue(Resource.loading(null));
@@ -351,6 +448,15 @@ public class AvailabilityRepository {
      * @param request Block parameters
      * @return LiveData emitting Resource with the created {@link BlockedPeriodEntity}
      */
+    /**
+     * Inserts a blocked period into the local Room database immediately (e.g. for optimistic UI).
+     *
+     * @param entity BlockedPeriodEntity to insert
+     */
+    public void insertBlockedPeriodLocally(@NonNull BlockedPeriodEntity entity) {
+        diskExecutor.execute(() -> blockedPeriodDao.insert(entity));
+    }
+
     public LiveData<Resource<BlockedPeriodEntity>> createBlockedPeriod(@NonNull String spotId,
                                                                       @NonNull CreateBlockRequest request) {
         MutableLiveData<Resource<BlockedPeriodEntity>> result = new MutableLiveData<>();

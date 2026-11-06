@@ -10,8 +10,10 @@ import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Transformations;
 
 import com.example.project.R;
+import com.example.project.database.AppDatabase;
 import com.example.project.database.entity.AvailabilityRuleEntity;
 import com.example.project.database.entity.BlockedPeriodEntity;
+import com.example.project.database.entity.ReservationEntity;
 import com.example.project.model.ParkingPlace;
 import com.example.project.model.Reservation;
 import com.example.project.network.Resource;
@@ -19,7 +21,9 @@ import com.example.project.network.model.AvailabilityRuleRequest;
 import com.example.project.network.model.CreateBlockRequest;
 import com.example.project.repository.AppRepository;
 import com.example.project.repository.AvailabilityRepository;
+import com.example.project.repository.ReservationRepository;
 import com.example.project.repository.SpotRepository;
+import com.example.project.utils.SessionManager;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -29,62 +33,84 @@ import java.util.Locale;
 import java.util.TimeZone;
 
 /**
- * ViewModel managing parking spot availability, weekly schedules, and calendar block periods.
- * Follows the Single Source of Truth pattern with Room database and Retrofit API.
+ * ViewModel managing parking spot availability, calendar month overview, and slot blocking.
+ * Restricts places strictly to the currently logged-in owner and supports both aggregate
+ * ("Wszystkie miejsca") and per-spot views.
  */
 public class AvailabilityCalendarViewModel extends AndroidViewModel {
+
+    public static final String ALL_SPOTS_ID = "ALL";
 
     private final AppRepository appRepository;
     private final SpotRepository spotRepository;
     private final AvailabilityRepository availabilityRepository;
+    private final ReservationRepository reservationRepository;
 
     private final MutableLiveData<String> selectedDateLiveData = new MutableLiveData<>();
-    private final MutableLiveData<String> selectedSpotIdLiveData = new MutableLiveData<>();
-    private final MutableLiveData<List<Reservation>> dateReservationsLiveData = new MutableLiveData<>();
+    private final MutableLiveData<String> selectedSpotIdLiveData = new MutableLiveData<>(ALL_SPOTS_ID);
     private final MutableLiveData<Boolean> blockSlotSuccess = new MutableLiveData<>();
     private final MutableLiveData<Boolean> unblockSlotSuccess = new MutableLiveData<>();
     private final MutableLiveData<String> errorMessageLiveData = new MutableLiveData<>();
 
     private final LiveData<List<AvailabilityRuleEntity>> rulesLiveData;
     private final LiveData<List<BlockedPeriodEntity>> blockedPeriodsLiveData;
+    private final LiveData<List<ReservationEntity>> reservationsLiveData;
 
-    /**
-     * Parameterized constructor providing Application context for repository initializations.
-     *
-     * @param application Application context
-     */
     public AvailabilityCalendarViewModel(@NonNull Application application) {
         super(application);
         this.appRepository = AppRepository.getInstance();
         this.spotRepository = SpotRepository.getInstance(application);
         this.availabilityRepository = AvailabilityRepository.getInstance(application);
+        this.reservationRepository = ReservationRepository.getInstance(application);
 
         setSelectedDate(appRepository.getTodayDateString());
 
-        // Reactively observe Room availability rules for the selected spot
+        // Observe availability rules depending on whether ALL or specific spot is selected
         this.rulesLiveData = Transformations.switchMap(selectedSpotIdLiveData, spotId -> {
-            if (spotId == null || spotId.trim().isEmpty()) {
-                return new MutableLiveData<>(new ArrayList<>());
+            if (spotId == null || ALL_SPOTS_ID.equals(spotId)) {
+                return availabilityRepository.getAllRulesLiveData();
             }
             availabilityRepository.fetchAvailabilityRules(spotId.trim());
             return availabilityRepository.getRulesLiveData(spotId.trim());
         });
 
-        // Reactively observe Room blocked periods for the selected spot
+        // Observe blocked periods depending on whether ALL or specific spot is selected
         this.blockedPeriodsLiveData = Transformations.switchMap(selectedSpotIdLiveData, spotId -> {
-            if (spotId == null || spotId.trim().isEmpty()) {
-                return new MutableLiveData<>(new ArrayList<>());
+            if (spotId == null || ALL_SPOTS_ID.equals(spotId)) {
+                return availabilityRepository.getAllBlockedPeriodsLiveData();
             }
             availabilityRepository.fetchBlockedPeriods(spotId.trim());
             return availabilityRepository.getBlockedPeriodsLiveData(spotId.trim());
         });
 
-        // Refresh owner's spots in the background
+        // Observe all reservations from Room
+        this.reservationsLiveData = AppDatabase.getInstance(application).reservationDao().getAllReservationsLiveData();
+
+        // Refresh owner's spots from backend into Room
         spotRepository.fetchMySpots();
+        reservationRepository.fetchIncomingReservations(getCurrentUserEmail());
+
+        // Cleanup any legacy fake block reservations from the reservations table
+        AppDatabase.getInstance(application).getQueryExecutor().execute(() -> {
+            AppDatabase.getInstance(application).reservationDao().deleteBlockReservations();
+        });
     }
 
+    private String getCurrentUserEmail() {
+        String currentEmail = appRepository.getUserEmailLiveData().getValue();
+        if (currentEmail == null || currentEmail.isEmpty()) {
+            if (SessionManager.getInstance() != null) {
+                currentEmail = SessionManager.getInstance().getUserEmail();
+            }
+        }
+        return currentEmail != null ? currentEmail : "";
+    }
+
+    /**
+     * Strictly retrieves the logged-in user's owned spots.
+     */
     public LiveData<List<ParkingPlace>> getPlacesLiveData() {
-        return appRepository.getPlacesLiveData();
+        return appRepository.getMyPlacesLiveData();
     }
 
     public LiveData<String> getSelectedDateLiveData() {
@@ -96,21 +122,19 @@ public class AvailabilityCalendarViewModel extends AndroidViewModel {
     }
 
     public String getSelectedSpotId() {
-        return selectedSpotIdLiveData.getValue();
+        return selectedSpotIdLiveData.getValue() != null ? selectedSpotIdLiveData.getValue() : ALL_SPOTS_ID;
     }
 
-    /**
-     * Refreshes blocked periods for the currently selected spot.
-     */
-    public void refreshBlockedPeriods() {
-        String currentId = selectedSpotIdLiveData.getValue();
-        if (currentId != null && !currentId.trim().isEmpty()) {
-            availabilityRepository.fetchBlockedPeriods(currentId.trim());
-        }
+    public LiveData<List<AvailabilityRuleEntity>> getRulesLiveData() {
+        return rulesLiveData;
     }
 
-    public LiveData<List<Reservation>> getDateReservationsLiveData() {
-        return dateReservationsLiveData;
+    public LiveData<List<BlockedPeriodEntity>> getBlockedPeriodsLiveData() {
+        return blockedPeriodsLiveData;
+    }
+
+    public LiveData<List<ReservationEntity>> getReservationsLiveData() {
+        return reservationsLiveData;
     }
 
     public LiveData<Boolean> getBlockSlotSuccess() {
@@ -125,66 +149,64 @@ public class AvailabilityCalendarViewModel extends AndroidViewModel {
         return errorMessageLiveData;
     }
 
-    public LiveData<List<AvailabilityRuleEntity>> getRulesLiveData() {
-        return rulesLiveData;
-    }
-
-    public LiveData<List<BlockedPeriodEntity>> getBlockedPeriodsLiveData() {
-        return blockedPeriodsLiveData;
-    }
-
-    /**
-     * Updates the currently selected spot identifier.
-     *
-     * @param spotId Spot identifier
-     */
     public void setSelectedSpotId(@Nullable String spotId) {
-        if (spotId != null && !spotId.equals(selectedSpotIdLiveData.getValue())) {
-            selectedSpotIdLiveData.setValue(spotId);
+        String target = (spotId != null && !spotId.trim().isEmpty()) ? spotId.trim() : ALL_SPOTS_ID;
+        if (!target.equals(selectedSpotIdLiveData.getValue())) {
+            selectedSpotIdLiveData.setValue(target);
         }
     }
 
-    /**
-     * Sets the selected calendar date and loads its reservations.
-     *
-     * @param dateStr Date formatted string (YYYY-MM-DD)
-     */
     public void setSelectedDate(@Nullable String dateStr) {
-        if (dateStr == null) {
-            return;
+        if (dateStr != null && !dateStr.equals(selectedDateLiveData.getValue())) {
+            selectedDateLiveData.setValue(dateStr);
         }
-        selectedDateLiveData.setValue(dateStr);
-        List<Reservation> reservations = appRepository.getReservationsForDate(dateStr);
-        dateReservationsLiveData.setValue(reservations);
     }
 
     /**
-     * Blocks a time slot for the selected parking spot.
-     *
-     * @param placeId   ID of spot
-     * @param placeName Name of spot
-     * @param timeFrom  Start time (HH:mm)
-     * @param timeTo    End time (HH:mm)
-     * @param reason    Reason description for blocking
+     * Refreshes blocked periods and incoming reservations for the owner's spots.
+     */
+    public void refreshBlockedPeriods() {
+        spotRepository.fetchMySpots();
+        reservationRepository.fetchIncomingReservations(getCurrentUserEmail());
+
+        String currentId = selectedSpotIdLiveData.getValue();
+        if (currentId != null && !ALL_SPOTS_ID.equals(currentId) && !currentId.trim().isEmpty()) {
+            availabilityRepository.fetchBlockedPeriods(currentId.trim());
+        } else {
+            List<ParkingPlace> mySpots = appRepository.getMyPlacesLiveData().getValue();
+            if (mySpots != null) {
+                for (ParkingPlace p : mySpots) {
+                    if (p != null && p.getId() != null) {
+                        availabilityRepository.fetchBlockedPeriods(p.getId().trim());
+                        availabilityRepository.fetchAvailabilityRules(p.getId().trim());
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Blocks a time slot for a specified spot on the target date.
      */
     public void blockSelectedSlot(@Nullable String placeId,
                                   @Nullable String placeName,
                                   @Nullable String timeFrom,
                                   @Nullable String timeTo,
-                                  @Nullable String reason) {
-        if (placeId == null || placeId.trim().isEmpty()) {
-            errorMessageLiveData.setValue("Brak wybranego miejsca parkingowego");
+                                  @Nullable String reason,
+                                  @Nullable String targetDate) {
+        if (placeId == null || placeId.trim().isEmpty() || ALL_SPOTS_ID.equals(placeId)) {
+            errorMessageLiveData.setValue("Wybierz konkretne miejsce parkingowe do zablokowania");
             return;
         }
 
-        String currentDateStr = selectedDateLiveData.getValue();
-        String targetDateStr = (currentDateStr != null) ? currentDateStr : appRepository.getTodayDateString();
+        String targetDateStr = (targetDate != null && !targetDate.trim().isEmpty())
+                ? targetDate.trim()
+                : (selectedDateLiveData.getValue() != null ? selectedDateLiveData.getValue() : appRepository.getTodayDateString());
 
         String from = (timeFrom != null && !timeFrom.trim().isEmpty()) ? timeFrom.trim() : "12:00";
         String to = (timeTo != null && !timeTo.trim().isEmpty()) ? timeTo.trim() : "18:00";
         String blockReason = (reason != null && !reason.trim().isEmpty()) ? reason.trim() : "Blokada właściciela";
 
-        // Convert user local date & time to standard ISO-8601 UTC Instant (e.g. 2026-11-01T15:00:00.000Z)
         SimpleDateFormat localParserSec = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.US);
         SimpleDateFormat localParserMin = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.US);
         SimpleDateFormat isoUtc = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
@@ -224,68 +246,47 @@ public class AvailabilityCalendarViewModel extends AndroidViewModel {
 
         CreateBlockRequest request = new CreateBlockRequest(startIso, endIso, blockReason);
 
-        availabilityRepository.createCalendarBlock(placeId, request).observeForever(resource -> {
+        availabilityRepository.createCalendarBlock(placeId.trim(), request).observeForever(resource -> {
             if (resource == null) return;
             if (resource.status == Resource.Status.SUCCESS) {
                 blockSlotSuccess.postValue(true);
+                refreshBlockedPeriods();
             } else if (resource.status == Resource.Status.ERROR) {
                 errorMessageLiveData.postValue(resource.message != null ? resource.message : "Błąd blokowania terminu");
             }
         });
 
-        // Add local reservation representation for offline/immediate UI display
-        String range = from + " - " + to;
-        String pName = (placeName != null && !placeName.isEmpty()) ? placeName : "Miejsce Parkingowe";
-
-        Reservation blockReservation = new Reservation(
-                "block_" + System.currentTimeMillis(),
-                placeId,
-                pName,
-                "ul. Nowogrodzka 10",
-                "Warszawa",
-                "1",
-                targetDateStr,
-                range,
-                blockStartMs > 0 ? blockStartMs : System.currentTimeMillis(),
-                blockEndMs > 0 ? blockEndMs : (System.currentTimeMillis() + 14400000L),
-                blockReason,
-                "ZABLOKOWANA",
-                0.0,
-                "4829",
-                R.drawable.default_parking_spot
+        // Offline / immediate UI representation via BlockedPeriodEntity (NOT ReservationEntity)
+        String tempBlockId = "block_" + System.currentTimeMillis();
+        BlockedPeriodEntity localBlock = new BlockedPeriodEntity(
+                tempBlockId,
+                placeId.trim(),
+                startIso,
+                endIso,
+                (blockReason != null && !blockReason.isEmpty()) ? blockReason : "Termin zablokowany"
         );
-
-        appRepository.addReservation(blockReservation);
-        setSelectedDate(targetDateStr);
+        availabilityRepository.insertBlockedPeriodLocally(localBlock);
     }
 
     /**
      * Unblocks (deletes) a calendar blocked period for a spot.
-     *
-     * @param placeId  ID of spot
-     * @param periodId ID of blocked period
      */
     public void unblockPeriod(@Nullable String placeId, @Nullable String periodId) {
         if (placeId == null || periodId == null || placeId.trim().isEmpty() || periodId.trim().isEmpty()) {
             return;
         }
 
-        availabilityRepository.deleteCalendarBlock(placeId, periodId).observeForever(resource -> {
+        availabilityRepository.deleteCalendarBlock(placeId.trim(), periodId.trim()).observeForever(resource -> {
             if (resource == null) return;
             if (resource.status == Resource.Status.SUCCESS) {
                 unblockSlotSuccess.postValue(true);
+                refreshBlockedPeriods();
             } else if (resource.status == Resource.Status.ERROR) {
                 errorMessageLiveData.postValue(resource.message != null ? resource.message : "Błąd odblokowania terminu");
             }
         });
     }
 
-    /**
-     * Replaces weekly availability rules for a spot.
-     *
-     * @param spotId Unique spot identifier
-     * @param rules  List of availability rules
-     */
     public void saveWeeklyRules(@NonNull String spotId, @NonNull List<AvailabilityRuleRequest> rules) {
         availabilityRepository.replaceAvailabilityRules(spotId, rules).observeForever(resource -> {
             if (resource == null) return;

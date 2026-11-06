@@ -88,19 +88,24 @@
             android:gravity="center_vertical"
             android:orientation="horizontal">
 
-            <FrameLayout
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:background="@drawable/bg_icon_rounded_slate">
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                app:cardCornerRadius="20dp"
+                app:cardElevation="0dp"
+                app:strokeColor="@color/brand_slate_200"
+                app:strokeWidth="1dp"
+                app:cardBackgroundColor="@color/brand_slate_100">
 
                 <ImageView
-                    android:layout_width="20dp"
-                    android:layout_height="20dp"
-                    android:layout_gravity="center"
-                    android:contentDescription="@string/title_availability_calendar"
+                    android:id="@+id/img_driver_avatar"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:contentDescription="@null"
+                    android:scaleType="centerCrop"
                     android:src="@drawable/ic_avatar"
-                    app:tint="@color/brand_slate_700" />
-            </FrameLayout>
+                    app:tint="@color/brand_slate_600" />
+            </com.google.android.material.card.MaterialCardView>
 
             <LinearLayout
                 android:layout_width="match_parent"

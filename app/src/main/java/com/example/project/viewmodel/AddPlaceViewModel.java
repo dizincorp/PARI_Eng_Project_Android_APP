@@ -60,6 +60,9 @@ public class AddPlaceViewModel extends AndroidViewModel {
     private final MutableLiveData<Boolean> is247LiveData = new MutableLiveData<>(true);
     private final MutableLiveData<List<AvailabilityRuleRequest>> availabilityRulesLiveData = new MutableLiveData<>(new ArrayList<>());
 
+    private Double customLatitude = null;
+    private Double customLongitude = null;
+
     /**
      * Public constructor initializing dependencies with Android Application context.
      *
@@ -140,6 +143,21 @@ public class AddPlaceViewModel extends AndroidViewModel {
         this.accessTimeLiveData.setValue(summary);
     }
 
+    public void setCustomCoordinates(@Nullable Double lat, @Nullable Double lng) {
+        this.customLatitude = lat;
+        this.customLongitude = lng;
+    }
+
+    @Nullable
+    public Double getCustomLatitude() {
+        return customLatitude;
+    }
+
+    @Nullable
+    public Double getCustomLongitude() {
+        return customLongitude;
+    }
+
     /**
      * Loads a place from repository for editing if ID is provided.
      *
@@ -150,6 +168,10 @@ public class AddPlaceViewModel extends AndroidViewModel {
             ParkingPlace place = appRepository.getPlaceById(placeId);
             if (place != null) {
                 editingPlaceLiveData.setValue(place);
+                if (place.getLatitude() != 0.0 && place.getLongitude() != 0.0) {
+                    customLatitude = place.getLatitude();
+                    customLongitude = place.getLongitude();
+                }
                 if (place.getAccessTime() != null && !place.getAccessTime().trim().isEmpty()) {
                     String timeStr = place.getAccessTime().trim();
                     accessTimeLiveData.setValue(timeStr);
@@ -399,30 +421,38 @@ public class AddPlaceViewModel extends AndroidViewModel {
         createSpotStatusLiveData.setValue(Resource.loading(null));
 
         executorService.execute(() -> {
-            // Geocode address using Android Google Geocoder
-            double lat = 51.2465;
-            double lng = 22.5684;
-            String addressQuery = street.trim() + ", " + (postalCode != null ? postalCode.trim() : "")
-                    + " " + city.trim() + ", Poland";
+            // Geocode address using Android Google Geocoder, or use custom coordinates selected on map
+            double lat;
+            double lng;
+            if (customLatitude != null && customLongitude != null
+                    && customLatitude != 0.0 && customLongitude != 0.0) {
+                lat = customLatitude;
+                lng = customLongitude;
+            } else {
+                lat = 51.2465;
+                lng = 22.5684;
+                String addressQuery = street.trim() + ", " + (postalCode != null ? postalCode.trim() : "")
+                        + " " + city.trim() + ", Poland";
 
-            try {
-                Geocoder geocoder = new Geocoder(getApplication(), Locale.getDefault());
-                List<Address> addresses = geocoder.getFromLocationName(addressQuery, 1);
-                if (addresses != null && !addresses.isEmpty()) {
-                    Address found = addresses.get(0);
-                    lat = found.getLatitude();
-                    lng = found.getLongitude();
-                } else {
-                    if (city.trim().equalsIgnoreCase("Warszawa") || city.trim().equalsIgnoreCase("Warsaw")) {
-                        lat = 52.2297;
-                        lng = 21.0122;
-                    } else if (city.trim().equalsIgnoreCase("Kraków") || city.trim().equalsIgnoreCase("Krakow")) {
-                        lat = 50.0647;
-                        lng = 19.9450;
+                try {
+                    Geocoder geocoder = new Geocoder(getApplication(), Locale.getDefault());
+                    List<Address> addresses = geocoder.getFromLocationName(addressQuery, 1);
+                    if (addresses != null && !addresses.isEmpty()) {
+                        Address found = addresses.get(0);
+                        lat = found.getLatitude();
+                        lng = found.getLongitude();
+                    } else {
+                        if (city.trim().equalsIgnoreCase("Warszawa") || city.trim().equalsIgnoreCase("Warsaw")) {
+                            lat = 52.2297;
+                            lng = 21.0122;
+                        } else if (city.trim().equalsIgnoreCase("Kraków") || city.trim().equalsIgnoreCase("Krakow")) {
+                            lat = 50.0647;
+                            lng = 19.9450;
+                        }
                     }
+                } catch (IOException | IllegalArgumentException e) {
+                    Log.e(TAG, "Geocoding failed for address: " + addressQuery, e);
                 }
-            } catch (IOException | IllegalArgumentException e) {
-                Log.e(TAG, "Geocoding failed for address: " + addressQuery, e);
             }
 
             // Map UI amenities to backend enum strings

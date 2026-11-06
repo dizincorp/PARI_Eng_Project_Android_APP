@@ -40,6 +40,24 @@ public class QuoteResponse {
     @SerializedName("currency")
     private String currency;
 
+    @SerializedName("bookingType")
+    private String bookingType;
+
+    @SerializedName("baseCost")
+    private Double baseCost;
+
+    @SerializedName("discountPercent")
+    private Double discountPercent;
+
+    @SerializedName("discountAmount")
+    private Double discountAmount;
+
+    @SerializedName("durationDays")
+    private Integer durationDays;
+
+    @SerializedName("durationMonths")
+    private Integer durationMonths;
+
     /**
      * Default no-argument constructor for Gson deserialization.
      */
@@ -159,6 +177,68 @@ public class QuoteResponse {
 
     public void setCurrency(String currency) {
         this.currency = currency;
+    }
+
+    public String getBookingType() {
+        return bookingType != null ? bookingType : "HOURLY";
+    }
+
+    public void setBookingType(String bookingType) {
+        this.bookingType = bookingType;
+    }
+
+    public Double getBaseCost() {
+        return baseCost != null ? baseCost : (spotCost != null ? spotCost : 0.0);
+    }
+
+    public void setBaseCost(Double baseCost) {
+        this.baseCost = baseCost;
+    }
+
+    public Double getDiscountPercent() {
+        return discountPercent != null ? discountPercent : 0.0;
+    }
+
+    public void setDiscountPercent(Double discountPercent) {
+        this.discountPercent = discountPercent;
+    }
+
+    public Double getDiscountAmount() {
+        return discountAmount != null ? discountAmount : 0.0;
+    }
+
+    public void setDiscountAmount(Double discountAmount) {
+        this.discountAmount = discountAmount;
+    }
+
+    public Integer getDurationDays() {
+        return durationDays;
+    }
+
+    public void setDurationDays(Integer durationDays) {
+        this.durationDays = durationDays;
+    }
+
+    public Integer getDurationMonths() {
+        return durationMonths;
+    }
+
+    public void setDurationMonths(Integer durationMonths) {
+        this.durationMonths = durationMonths;
+    }
+
+    public Double getDailyRate() {
+        if (durationDays != null && durationDays > 0 && baseCost != null) {
+            return baseCost / durationDays;
+        }
+        return null;
+    }
+
+    public Double getMonthlyRate() {
+        if (durationMonths != null && durationMonths > 0 && baseCost != null) {
+            return baseCost / durationMonths;
+        }
+        return null;
     }
 
     /**

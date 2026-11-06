@@ -251,6 +251,7 @@ public class PlacesActivity extends BaseActivity {
             boolean isActive = p.isActive();
             itemBinding.switchSpotActive.setChecked(isActive);
             itemBinding.switchSpotActive.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                if (!buttonView.isPressed()) return;
                 if (isChecked) {
                     viewModel.activateSpot(p.getId());
                 } else {

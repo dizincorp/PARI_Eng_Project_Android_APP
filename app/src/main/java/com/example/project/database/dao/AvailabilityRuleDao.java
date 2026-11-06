@@ -26,6 +26,12 @@ public interface AvailabilityRuleDao {
     @Query("SELECT * FROM availability_rules WHERE spotId = :spotId ORDER BY dayOfWeek ASC, startTime ASC")
     LiveData<List<AvailabilityRuleEntity>> getRulesForSpotLiveData(String spotId);
 
+    @Query("SELECT * FROM availability_rules WHERE spotId IN (:spotIds) ORDER BY dayOfWeek ASC, startTime ASC")
+    LiveData<List<AvailabilityRuleEntity>> getRulesForSpotsLiveData(List<String> spotIds);
+
+    @Query("SELECT * FROM availability_rules ORDER BY dayOfWeek ASC, startTime ASC")
+    LiveData<List<AvailabilityRuleEntity>> getAllRulesLiveData();
+
     /**
      * Synchronously retrieves all availability rules for a specific parking spot.
      *

@@ -3,6 +3,7 @@ package com.example.project.network;
 import com.example.project.network.model.AvailabilityRuleRequest;
 import com.example.project.network.model.AvailabilityRuleResponse;
 import com.example.project.network.model.BlockedPeriodResponse;
+import com.example.project.network.model.BookedSlotResponse;
 import com.example.project.network.model.CreateBlockRequest;
 
 import java.util.List;
@@ -14,6 +15,7 @@ import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
 import retrofit2.http.Path;
+import retrofit2.http.Query;
 
 /**
  * Retrofit API interface for spot availability rules and calendar blocked periods (F03).
@@ -60,6 +62,22 @@ public interface AvailabilityApiService {
      */
     @GET("api/spots/{spotId}/calendar/blocks")
     Call<List<BlockedPeriodResponse>> getCalendarBlocks(@Path("spotId") String spotId);
+
+    /**
+     * Retrieves occupied intervals (reservations and owner blocked periods)
+     * via GET /api/spots/{spotId}/booked-slots?from={from}&amp;to={to}.
+     *
+     * @param spotId  Unique spot identifier
+     * @param fromIso Range start in ISO-8601 (e.g. 2026-11-01T00:00:00Z)
+     * @param toIso   Range end in ISO-8601 (e.g. 2026-12-01T23:59:59Z)
+     * @return Call delivering list of {@link BookedSlotResponse}
+     */
+    @GET("api/spots/{spotId}/booked-slots")
+    Call<List<BookedSlotResponse>> getBookedSlots(
+            @Path("spotId") String spotId,
+            @Query("from") String fromIso,
+            @Query("to") String toIso
+    );
 
     /**
      * Blocks a period in the spot calendar via POST /api/spots/{spotId}/calendar/blocks.

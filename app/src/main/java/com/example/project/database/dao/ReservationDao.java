@@ -62,6 +62,15 @@ public interface ReservationDao {
     @Query("SELECT * FROM reservations WHERE dateString = :dateStr")
     List<ReservationEntity> getReservationsForDate(String dateStr);
 
+    @Query("SELECT * FROM reservations WHERE placeId IN (:spotIds)")
+    LiveData<List<ReservationEntity>> getReservationsForSpotIdsLiveData(List<String> spotIds);
+
+    @Query("SELECT * FROM reservations WHERE placeId = :spotId")
+    LiveData<List<ReservationEntity>> getReservationsForSpotLiveData(String spotId);
+
+    @Query("SELECT * FROM reservations")
+    LiveData<List<ReservationEntity>> getAllReservationsLiveData();
+
     /**
      * Gets the latest active reservation for a specific parking spot by spot ID.
      *
@@ -76,6 +85,9 @@ public interface ReservationDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insertOrUpdateAll(List<ReservationEntity> reservations);
+
+    @Query("DELETE FROM reservations WHERE id LIKE 'block_%' OR status IN ('ZABLOKOWANA', 'BLOCKED')")
+    void deleteBlockReservations();
 
     @Query("DELETE FROM reservations")
     void deleteAll();

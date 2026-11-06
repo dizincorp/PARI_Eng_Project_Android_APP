@@ -1,44 +1,38 @@
 package com.example.project.ui;
 
-import android.app.DatePickerDialog;
-import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.os.Bundle;
-import android.text.Editable;
-import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.AdapterView;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.NumberPicker;
+import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.appcompat.app.AlertDialog;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.lifecycle.ViewModelProvider;
-import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.GridLayoutManager;
 
 import com.example.project.R;
-import com.example.project.adapter.BlockedPeriodsAdapter;
+import com.example.project.adapter.CalendarDayAdapter;
 import com.example.project.database.entity.AvailabilityRuleEntity;
 import com.example.project.database.entity.BlockedPeriodEntity;
+import com.example.project.database.entity.ReservationEntity;
 import com.example.project.databinding.ActivityAvailabilityCalendarBinding;
-import com.example.project.databinding.DialogDateTimePickerBinding;
-import com.example.project.databinding.DialogEditWeeklyAvailabilityBinding;
-import com.example.project.databinding.ItemWeeklyScheduleDayBinding;
-import com.example.project.model.DayScheduleConfig;
-import com.example.project.network.model.AvailabilityRuleRequest;
+import com.example.project.databinding.ItemCalendarBlockBinding;
 import com.example.project.databinding.ItemCalendarReservationBinding;
+import com.example.project.model.CalendarDay;
 import com.example.project.model.ParkingPlace;
-import com.example.project.model.Reservation;
-import com.example.project.viewmodel.AvailabilityCalendarViewModel;
+import com.example.project.utils.ImageLoader;
 import com.example.project.utils.ViewAnimationUtils;
+import com.example.project.viewmodel.AvailabilityCalendarViewModel;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.text.SimpleDateFormat;
@@ -49,16 +43,24 @@ import java.util.List;
 import java.util.Locale;
 
 /**
- * Activity for managing calendar availability, weekly rules, and slot blocking.
- * Employs View Binding and reactive LiveData observation with interactive time-range selection
- * supporting both Wheel Pickers and Direct Text Input matching reservation behavior.
+ * Activity for managing calendar availability, visual overview of reservations,
+ * access hours, and spot blocking. Restricts spots to the owner's own places,
+ * supports both aggregate and individual spot views, and renders a color-coded
+ * monthly calendar (Green = Free, Yellow = Reserved, Red = Blocked).
  */
 public class AvailabilityCalendarActivity extends BaseActivity {
 
     private ActivityAvailabilityCalendarBinding binding;
     private AvailabilityCalendarViewModel viewModel;
-    private BlockedPeriodsAdapter blockedPeriodsAdapter;
+    private CalendarDayAdapter calendarDayAdapter;
+
     private final List<ParkingPlace> currentPlacesList = new ArrayList<>();
+    private final List<BlockedPeriodEntity> currentBlockedPeriods = new ArrayList<>();
+    private final List<ReservationEntity> currentReservations = new ArrayList<>();
+    private final List<AvailabilityRuleEntity> currentRules = new ArrayList<>();
+
+    private final Calendar displayedMonthCal = Calendar.getInstance();
+    private String selectedDateStr = "";
 
     @Override
     protected void onResume() {
@@ -86,18 +88,20 @@ public class AvailabilityCalendarActivity extends BaseActivity {
 
         viewModel = new ViewModelProvider(this).get(AvailabilityCalendarViewModel.class);
 
-        // Initialize default hours with current actual time
-        initDefaultTimes();
+        // Initialize to today
+        Calendar today = Calendar.getInstance();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+        selectedDateStr = sdf.format(today.getTime());
+        viewModel.setSelectedDate(selectedDateStr);
 
-        setupBlockedPeriodsRecyclerView();
-        setupClickListeners();
+        displayedMonthCal.setTime(today.getTime());
+
+        initDefaultTimes();
         setupCalendarView();
+        setupClickListeners();
         observeViewModel();
     }
 
-    /**
-     * Initializes default blocking time fields to actual current time and +2 hours.
-     */
     private void initDefaultTimes() {
         if (binding == null) return;
         Calendar initCal = Calendar.getInstance();
@@ -108,59 +112,55 @@ public class AvailabilityCalendarActivity extends BaseActivity {
         binding.editTimeTo.setText(format.format(initCal.getTime()));
     }
 
-    private void setupBlockedPeriodsRecyclerView() {
-        if (binding == null) {
-            return;
-        }
-
-        blockedPeriodsAdapter = new BlockedPeriodsAdapter();
-        blockedPeriodsAdapter.setOnUnblockClickListener(this::showUnblockConfirmationDialog);
-
-        binding.recyclerBlockedPeriods.setLayoutManager(new LinearLayoutManager(this));
-        binding.recyclerBlockedPeriods.setAdapter(blockedPeriodsAdapter);
-    }
-
-    private void showUnblockConfirmationDialog(@NonNull BlockedPeriodEntity block) {
-        new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.confirm_unblock_title)
-                .setMessage(R.string.confirm_unblock_message)
-                .setPositiveButton(R.string.btn_unblock, (dialog, which) -> {
-                    String selectedPlaceId = getSelectedPlaceId();
-                    viewModel.unblockPeriod(selectedPlaceId, block.getId());
-                })
-                .setNegativeButton(android.R.string.cancel, null)
-                .show();
-    }
-
     private void setupCalendarView() {
-        if (binding == null) {
-            return;
-        }
+        if (binding == null) return;
 
-        binding.calendarView.setOnDateChangeListener((view, year, month, dayOfMonth) -> {
-            String selectedDateStr = String.format(Locale.getDefault(), "%04d-%02d-%02d", year, month + 1, dayOfMonth);
-            viewModel.setSelectedDate(selectedDateStr);
-        });
+        binding.recyclerCalendarDays.setLayoutManager(new GridLayoutManager(this, 7));
+        calendarDayAdapter = new CalendarDayAdapter();
+        calendarDayAdapter.setOnDayClickListener(day -> selectDate(day.getDateString()));
+        binding.recyclerCalendarDays.setAdapter(calendarDayAdapter);
+
+        updateMonthHeader();
     }
 
     private void setupClickListeners() {
-        if (binding == null) {
-            return;
-        }
+        if (binding == null) return;
 
         binding.btnBack.setOnClickListener(v -> finish());
-        binding.btnReturnToPlaces.setOnClickListener(v -> finish());
 
-        // Interactive time cards and buttons triggering the picker dialog
-        binding.cardStartDatetime.setOnClickListener(v -> showTimeRangePickerDialog(true));
-        binding.cardEndDatetime.setOnClickListener(v -> showTimeRangePickerDialog(false));
-        binding.btnChangeTime.setOnClickListener(v -> showTimeRangePickerDialog(true));
-                binding.btnEditWeeklyRules.setOnClickListener(v -> {
+        // Month Navigation
+        binding.btnPrevMonth.setOnClickListener(v -> {
+            displayedMonthCal.add(Calendar.MONTH, -1);
+            updateMonthHeader();
+            renderCalendarGrid();
+        });
+
+        binding.btnNextMonth.setOnClickListener(v -> {
+            displayedMonthCal.add(Calendar.MONTH, 1);
+            updateMonthHeader();
+            renderCalendarGrid();
+        });
+
+        binding.btnToday.setOnClickListener(v -> {
+            Calendar today = Calendar.getInstance();
+            displayedMonthCal.setTime(today.getTime());
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+            selectDate(sdf.format(today.getTime()));
+            updateMonthHeader();
+            renderCalendarGrid();
+        });
+
+        // Weekly schedule rules edit button (Requirement 5)
+        binding.btnEditWeeklyRules.setOnClickListener(v -> {
             ViewAnimationUtils.playBounceAnimation(v, () -> {
                 String spotId = viewModel.getSelectedSpotId();
-                if (spotId == null || spotId.trim().isEmpty()) {
-                    Toast.makeText(this, "Wybierz najpierw miejsce parkingowe", Toast.LENGTH_SHORT).show();
-                    return;
+                if (AvailabilityCalendarViewModel.ALL_SPOTS_ID.equals(spotId)) {
+                    if (!currentPlacesList.isEmpty()) {
+                        spotId = currentPlacesList.get(0).getId();
+                    } else {
+                        Toast.makeText(this, "Brak dodanych miejsc parkingowych", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
                 }
                 Intent intent = new Intent(AvailabilityCalendarActivity.this, SpotAvailabilityActivity.class);
                 intent.putExtra(SpotAvailabilityActivity.EXTRA_SPOT_ID, spotId);
@@ -168,34 +168,27 @@ public class AvailabilityCalendarActivity extends BaseActivity {
             });
         });
 
-        // Quick action: set to actual current time
-        binding.btnQuickSetNow.setOnClickListener(v -> {
+        // Quick time presets for blocking form
+        binding.chipPresetAllDay.setOnClickListener(v -> {
+            binding.editTimeFrom.setText("00:00");
+            binding.editTimeTo.setText("23:59");
+        });
+
+        binding.chipPresetAfternoon.setOnClickListener(v -> {
+            binding.editTimeFrom.setText("16:00");
+            binding.editTimeTo.setText("20:00");
+        });
+
+        binding.chipPresetNowPlus2.setOnClickListener(v -> {
             Calendar now = Calendar.getInstance();
             now.set(Calendar.SECOND, 0);
-            SimpleDateFormat displayTimeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
-            binding.editTimeFrom.setText(displayTimeFormat.format(now.getTime()));
+            SimpleDateFormat tf = new SimpleDateFormat("HH:mm", Locale.getDefault());
+            binding.editTimeFrom.setText(tf.format(now.getTime()));
             now.add(Calendar.HOUR_OF_DAY, 2);
-            binding.editTimeTo.setText(displayTimeFormat.format(now.getTime()));
-            Toast.makeText(this, R.string.btn_set_current_time, Toast.LENGTH_SHORT).show();
+            binding.editTimeTo.setText(tf.format(now.getTime()));
         });
 
-        binding.spinnerParkingPlaces.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (position >= 0 && position < currentPlacesList.size()) {
-                    ParkingPlace selected = currentPlacesList.get(position);
-                    if (selected != null) {
-                        viewModel.setSelectedSpotId(selected.getId());
-                    }
-                }
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-                // No-op
-            }
-        });
-
+        // Block Slot Button (Requirement 4)
         binding.btnBlockSlot.setOnClickListener(v -> {
             String timeFrom = binding.editTimeFrom.getText() != null ? binding.editTimeFrom.getText().toString().trim() : "12:00";
             String timeTo = binding.editTimeTo.getText() != null ? binding.editTimeTo.getText().toString().trim() : "18:00";
@@ -211,455 +204,71 @@ public class AvailabilityCalendarActivity extends BaseActivity {
                 return;
             }
 
-            String selectedPlaceId = getSelectedPlaceId();
-            String selectedPlaceName = getSelectedPlaceName();
+            String targetSpotId;
+            String targetSpotName;
 
-            viewModel.blockSelectedSlot(selectedPlaceId, selectedPlaceName, timeFrom, timeTo, reason);
-        });
-    }
-
-    /**
-     * Shows a flexible Material Dialog enabling exact selection of Year, Month, Day,
-     * Hour, Minute, and Second for blocking time range, offering a toggle between Wheel Pickers
-     * and Direct Text Input, as well as an automated "Set Current Time" action button matching
-     * reservation functionality.
-     *
-     * @param editStartFirst True if initial target is Start datetime, false for End datetime
-     */
-    private void showTimeRangePickerDialog(boolean editStartFirst) {
-        DialogDateTimePickerBinding dialogBinding = DialogDateTimePickerBinding.inflate(LayoutInflater.from(this));
-
-        Calendar tempStart = Calendar.getInstance();
-        Calendar tempEnd = Calendar.getInstance();
-
-        // 1. Determine target date from selected calendar date
-        String currentDateStr = viewModel.getSelectedDateLiveData().getValue();
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
-        SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
-        SimpleDateFormat displayTimeFormat = new SimpleDateFormat("HH:mm", Locale.getDefault());
-        SimpleDateFormat fullFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault());
-
-        if (currentDateStr != null && !currentDateStr.trim().isEmpty()) {
-            try {
-                Date d = dateFormat.parse(currentDateStr.trim());
-                if (d != null) {
-                    tempStart.setTime(d);
-                    tempEnd.setTime(d);
-                }
-            } catch (Exception ignored) {}
-        }
-
-        // 2. Parse times from editTimeFrom and editTimeTo
-        String fromStr = binding.editTimeFrom.getText() != null ? binding.editTimeFrom.getText().toString().trim() : "12:00";
-        String toStr = binding.editTimeTo.getText() != null ? binding.editTimeTo.getText().toString().trim() : "18:00";
-
-        parseTimeIntoCalendar(tempStart, fromStr, 12, 0);
-        parseTimeIntoCalendar(tempEnd, toStr, 18, 0);
-
-        // If today and tempStart is in the past, advance to now
-        Calendar now = Calendar.getInstance();
-        now.set(Calendar.SECOND, 0);
-        now.set(Calendar.MILLISECOND, 0);
-        if (isSameDay(tempStart, now) && tempStart.before(now)) {
-            tempStart.setTimeInMillis(now.getTimeInMillis());
-            if (tempEnd.getTimeInMillis() <= tempStart.getTimeInMillis()) {
-                tempEnd.setTimeInMillis(tempStart.getTimeInMillis() + 7200000L); // +2h
-            }
-        }
-
-        final boolean[] isEditingStart = new boolean[]{editStartFirst};
-        final boolean[] isWheelsMode = new boolean[]{true};
-        NumberPicker.Formatter twoDigitFormatter = i -> String.format(Locale.US, "%02d", i);
-
-        // Configure NumberPickers
-        dialogBinding.pickerHour.setMinValue(0);
-        dialogBinding.pickerHour.setMaxValue(23);
-        dialogBinding.pickerHour.setFormatter(twoDigitFormatter);
-
-        dialogBinding.pickerMinute.setMinValue(0);
-        dialogBinding.pickerMinute.setMaxValue(59);
-        dialogBinding.pickerMinute.setFormatter(twoDigitFormatter);
-
-        dialogBinding.pickerSecond.setMinValue(0);
-        dialogBinding.pickerSecond.setMaxValue(59);
-        dialogBinding.pickerSecond.setFormatter(twoDigitFormatter);
-
-        dialogBinding.datePickerDialog.setMinDate(System.currentTimeMillis() - 60000L);
-
-        Runnable updatePreviews = () -> {
-            dialogBinding.textPreviewStartValue.setText(getString(R.string.preview_start_format, fullFormat.format(tempStart.getTime())));
-            dialogBinding.textPreviewEndValue.setText(getString(R.string.preview_end_format, fullFormat.format(tempEnd.getTime())));
-        };
-
-        // Reads values from wheel pickers into the active working calendar
-        Runnable savePickersToTarget = () -> {
-            Calendar target = isEditingStart[0] ? tempStart : tempEnd;
-            target.set(Calendar.YEAR, dialogBinding.datePickerDialog.getYear());
-            target.set(Calendar.MONTH, dialogBinding.datePickerDialog.getMonth());
-            target.set(Calendar.DAY_OF_MONTH, dialogBinding.datePickerDialog.getDayOfMonth());
-            target.set(Calendar.HOUR_OF_DAY, dialogBinding.pickerHour.getValue());
-            target.set(Calendar.MINUTE, dialogBinding.pickerMinute.getValue());
-            target.set(Calendar.SECOND, dialogBinding.pickerSecond.getValue());
-            target.set(Calendar.MILLISECOND, 0);
-
-            // Synchronize text inputs
-            dialogBinding.editTextDate.setText(dateFormat.format(target.getTime()));
-            dialogBinding.editTextTime.setText(timeFormat.format(target.getTime()));
-
-            updatePreviews.run();
-        };
-
-        // Reads values from text inputs into the active working calendar
-        Runnable saveTextToTarget = () -> {
-            Calendar target = isEditingStart[0] ? tempStart : tempEnd;
-            String dateText = dialogBinding.editTextDate.getText() != null ? dialogBinding.editTextDate.getText().toString().trim() : "";
-            String timeText = dialogBinding.editTextTime.getText() != null ? dialogBinding.editTextTime.getText().toString().trim() : "";
-
-            if (!dateText.isEmpty() && !timeText.isEmpty()) {
-                try {
-                    String fullStr = dateText + " " + (timeText.length() == 5 ? timeText + ":00" : timeText);
-                    Date parsed = fullFormat.parse(fullStr);
-                    if (parsed != null) {
-                        target.setTimeInMillis(parsed.getTime());
-                        // Synchronize wheel pickers
-                        dialogBinding.datePickerDialog.updateDate(
-                                target.get(Calendar.YEAR),
-                                target.get(Calendar.MONTH),
-                                target.get(Calendar.DAY_OF_MONTH)
-                        );
-                        dialogBinding.pickerHour.setValue(target.get(Calendar.HOUR_OF_DAY));
-                        dialogBinding.pickerMinute.setValue(target.get(Calendar.MINUTE));
-                        dialogBinding.pickerSecond.setValue(target.get(Calendar.SECOND));
-                    }
-                } catch (Exception ignored) {}
-            }
-            updatePreviews.run();
-        };
-
-        // Synchronizes both DatePicker/NumberPickers and Text fields with the given calendar
-        HelperAction<Calendar> loadIntoPickers = target -> {
-            dialogBinding.datePickerDialog.updateDate(
-                    target.get(Calendar.YEAR),
-                    target.get(Calendar.MONTH),
-                    target.get(Calendar.DAY_OF_MONTH)
-            );
-            dialogBinding.pickerHour.setValue(target.get(Calendar.HOUR_OF_DAY));
-            dialogBinding.pickerMinute.setValue(target.get(Calendar.MINUTE));
-            dialogBinding.pickerSecond.setValue(target.get(Calendar.SECOND));
-
-            dialogBinding.editTextDate.setText(dateFormat.format(target.getTime()));
-            dialogBinding.editTextTime.setText(timeFormat.format(target.getTime()));
-        };
-
-        // Apply active target tab (Start vs End)
-        Runnable applyMode = () -> {
-            if (isEditingStart[0]) {
-                dialogBinding.radioStartMode.setChecked(true);
-                dialogBinding.radioStartMode.setTextColor(ContextCompat.getColor(this, R.color.white));
-                dialogBinding.radioStartMode.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.brand_slate_950));
-
-                dialogBinding.radioEndMode.setChecked(false);
-                dialogBinding.radioEndMode.setTextColor(ContextCompat.getColor(this, R.color.brand_slate_600));
-                dialogBinding.radioEndMode.setBackgroundTintList(null);
-
-                dialogBinding.textActiveTargetLabel.setText(R.string.label_start_time);
-                loadIntoPickers.execute(tempStart);
-            } else {
-                dialogBinding.radioEndMode.setChecked(true);
-                dialogBinding.radioEndMode.setTextColor(ContextCompat.getColor(this, R.color.white));
-                dialogBinding.radioEndMode.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.brand_slate_950));
-
-                dialogBinding.radioStartMode.setChecked(false);
-                dialogBinding.radioStartMode.setTextColor(ContextCompat.getColor(this, R.color.brand_slate_600));
-                dialogBinding.radioStartMode.setBackgroundTintList(null);
-
-                dialogBinding.textActiveTargetLabel.setText(R.string.label_end_time);
-                loadIntoPickers.execute(tempEnd);
-            }
-        };
-
-        applyMode.run();
-        updatePreviews.run();
-
-        // Listeners for user changes in wheel pickers
-        Calendar initial = isEditingStart[0] ? tempStart : tempEnd;
-        dialogBinding.datePickerDialog.init(
-                initial.get(Calendar.YEAR),
-                initial.get(Calendar.MONTH),
-                initial.get(Calendar.DAY_OF_MONTH),
-                (view, year, monthOfYear, dayOfMonth) -> savePickersToTarget.run()
-        );
-        dialogBinding.pickerHour.setOnValueChangedListener((picker, oldVal, newVal) -> savePickersToTarget.run());
-        dialogBinding.pickerMinute.setOnValueChangedListener((picker, oldVal, newVal) -> savePickersToTarget.run());
-        dialogBinding.pickerSecond.setOnValueChangedListener((picker, oldVal, newVal) -> savePickersToTarget.run());
-
-        // TextWatcher for text inputs
-        TextWatcher textWatcher = new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                if (!isWheelsMode[0]) {
-                    saveTextToTarget.run();
-                }
-            }
-
-            @Override
-            public void afterTextChanged(Editable s) {}
-        };
-        dialogBinding.editTextDate.addTextChangedListener(textWatcher);
-        dialogBinding.editTextTime.addTextChangedListener(textWatcher);
-
-        // System DatePicker & TimePicker buttons
-        dialogBinding.btnPickCalendar.setOnClickListener(v -> {
-            Calendar target = isEditingStart[0] ? tempStart : tempEnd;
-            DatePickerDialog dpd = new DatePickerDialog(this, (view, year, month, dayOfMonth) -> {
-                target.set(Calendar.YEAR, year);
-                target.set(Calendar.MONTH, month);
-                target.set(Calendar.DAY_OF_MONTH, dayOfMonth);
-                loadIntoPickers.execute(target);
-                updatePreviews.run();
-            }, target.get(Calendar.YEAR), target.get(Calendar.MONTH), target.get(Calendar.DAY_OF_MONTH));
-            dpd.getDatePicker().setMinDate(System.currentTimeMillis() - 60000L);
-            dpd.show();
-        });
-
-        dialogBinding.btnPickClock.setOnClickListener(v -> {
-            Calendar target = isEditingStart[0] ? tempStart : tempEnd;
-            TimePickerDialog tpd = new TimePickerDialog(this, (view, hourOfDay, minute) -> {
-                target.set(Calendar.HOUR_OF_DAY, hourOfDay);
-                target.set(Calendar.MINUTE, minute);
-                target.set(Calendar.SECOND, 0);
-                loadIntoPickers.execute(target);
-                updatePreviews.run();
-            }, target.get(Calendar.HOUR_OF_DAY), target.get(Calendar.MINUTE), true);
-            tpd.show();
-        });
-
-        // "Now" Button
-        dialogBinding.btnSetNow.setOnClickListener(v -> {
-            Calendar currentActual = Calendar.getInstance();
-            currentActual.set(Calendar.SECOND, 0);
-            currentActual.set(Calendar.MILLISECOND, 0);
-
-            Calendar target = isEditingStart[0] ? tempStart : tempEnd;
-            target.setTimeInMillis(currentActual.getTimeInMillis());
-
-            if (isEditingStart[0] && tempEnd.getTimeInMillis() <= tempStart.getTimeInMillis()) {
-                tempEnd.setTimeInMillis(tempStart.getTimeInMillis() + 7200000L);
-            }
-
-            loadIntoPickers.execute(target);
-            updatePreviews.run();
-        });
-
-        // Toggle Wheels vs Text Input
-        dialogBinding.radioModeWheels.setOnClickListener(v -> {
-            if (!isWheelsMode[0]) {
-                saveTextToTarget.run();
-                isWheelsMode[0] = true;
-                dialogBinding.layoutWheelsContainer.setVisibility(View.VISIBLE);
-                dialogBinding.layoutTextContainer.setVisibility(View.GONE);
-
-                dialogBinding.radioModeWheels.setChecked(true);
-                dialogBinding.radioModeWheels.setTextColor(ContextCompat.getColor(this, R.color.white));
-                dialogBinding.radioModeWheels.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.brand_slate_950));
-
-                dialogBinding.radioModeText.setChecked(false);
-                dialogBinding.radioModeText.setTextColor(ContextCompat.getColor(this, R.color.brand_slate_600));
-                dialogBinding.radioModeText.setBackgroundTintList(null);
-
-                loadIntoPickers.execute(isEditingStart[0] ? tempStart : tempEnd);
-            }
-        });
-
-        dialogBinding.radioModeText.setOnClickListener(v -> {
-            if (isWheelsMode[0]) {
-                savePickersToTarget.run();
-                isWheelsMode[0] = false;
-                dialogBinding.layoutWheelsContainer.setVisibility(View.GONE);
-                dialogBinding.layoutTextContainer.setVisibility(View.VISIBLE);
-
-                dialogBinding.radioModeText.setChecked(true);
-                dialogBinding.radioModeText.setTextColor(ContextCompat.getColor(this, R.color.white));
-                dialogBinding.radioModeText.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.brand_slate_950));
-
-                dialogBinding.radioModeWheels.setChecked(false);
-                dialogBinding.radioModeWheels.setTextColor(ContextCompat.getColor(this, R.color.brand_slate_600));
-                dialogBinding.radioModeWheels.setBackgroundTintList(null);
-
-                loadIntoPickers.execute(isEditingStart[0] ? tempStart : tempEnd);
-            }
-        });
-
-        // Switching between Start and End tabs
-        dialogBinding.radioStartMode.setOnClickListener(v -> {
-            if (!isEditingStart[0]) {
-                if (isWheelsMode[0]) {
-                    savePickersToTarget.run();
+            if (AvailabilityCalendarViewModel.ALL_SPOTS_ID.equals(viewModel.getSelectedSpotId())) {
+                int pos = binding.spinnerBlockSpot.getSelectedItemPosition();
+                if (pos >= 0 && pos < currentPlacesList.size()) {
+                    ParkingPlace p = currentPlacesList.get(pos);
+                    targetSpotId = p.getId();
+                    targetSpotName = p.getDisplayName();
                 } else {
-                    saveTextToTarget.run();
+                    Toast.makeText(this, "Wybierz miejsce parkingowe do zablokowania", Toast.LENGTH_SHORT).show();
+                    return;
                 }
-                isEditingStart[0] = true;
-                applyMode.run();
-            }
-        });
-
-        dialogBinding.radioEndMode.setOnClickListener(v -> {
-            if (isEditingStart[0]) {
-                if (isWheelsMode[0]) {
-                    savePickersToTarget.run();
-                } else {
-                    saveTextToTarget.run();
-                }
-                isEditingStart[0] = false;
-                applyMode.run();
-            }
-        });
-
-        AlertDialog dialog = new AlertDialog.Builder(this)
-                .setView(dialogBinding.getRoot())
-                .create();
-
-        dialogBinding.btnApplyDialog.setOnClickListener(v -> {
-            if (isWheelsMode[0]) {
-                savePickersToTarget.run();
             } else {
-                saveTextToTarget.run();
+                targetSpotId = viewModel.getSelectedSpotId();
+                targetSpotName = getPlaceNameById(targetSpotId);
             }
 
-            if (tempStart.getTimeInMillis() >= tempEnd.getTimeInMillis()) {
-                Toast.makeText(this, R.string.error_invalid_time_range, Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            // Update UI fields
-            binding.editTimeFrom.setText(displayTimeFormat.format(tempStart.getTime()));
-            binding.editTimeTo.setText(displayTimeFormat.format(tempEnd.getTime()));
-
-            // Update calendar date if user selected a different day in the dialog
-            String newDateStr = dateFormat.format(tempStart.getTime());
-            viewModel.setSelectedDate(newDateStr);
-            binding.calendarView.setDate(tempStart.getTimeInMillis(), true, true);
-
-            dialog.dismiss();
+            viewModel.blockSelectedSlot(targetSpotId, targetSpotName, timeFrom, timeTo, reason, selectedDateStr);
         });
-
-        dialogBinding.btnCancelDialog.setOnClickListener(v -> dialog.dismiss());
-
-        dialog.show();
-    }
-
-    private void parseTimeIntoCalendar(Calendar cal, String timeStr, int defHour, int defMin) {
-        if (timeStr == null || timeStr.trim().isEmpty()) {
-            cal.set(Calendar.HOUR_OF_DAY, defHour);
-            cal.set(Calendar.MINUTE, defMin);
-            cal.set(Calendar.SECOND, 0);
-            cal.set(Calendar.MILLISECOND, 0);
-            return;
-        }
-        String[] parts = timeStr.trim().split(":");
-        try {
-            int h = Integer.parseInt(parts[0]);
-            int m = parts.length > 1 ? Integer.parseInt(parts[1]) : 0;
-            int s = parts.length > 2 ? Integer.parseInt(parts[2]) : 0;
-            cal.set(Calendar.HOUR_OF_DAY, h);
-            cal.set(Calendar.MINUTE, m);
-            cal.set(Calendar.SECOND, s);
-            cal.set(Calendar.MILLISECOND, 0);
-        } catch (Exception e) {
-            cal.set(Calendar.HOUR_OF_DAY, defHour);
-            cal.set(Calendar.MINUTE, defMin);
-            cal.set(Calendar.SECOND, 0);
-            cal.set(Calendar.MILLISECOND, 0);
-        }
-    }
-
-    private boolean isSameDay(Calendar c1, Calendar c2) {
-        return c1.get(Calendar.YEAR) == c2.get(Calendar.YEAR)
-                && c1.get(Calendar.DAY_OF_YEAR) == c2.get(Calendar.DAY_OF_YEAR);
-    }
-
-    private interface HelperAction<T> {
-        void execute(T value);
-    }
-
-    private String getSelectedPlaceId() {
-        int selectedPos = binding.spinnerParkingPlaces.getSelectedItemPosition();
-        if (selectedPos >= 0 && selectedPos < currentPlacesList.size()) {
-            ParkingPlace p = currentPlacesList.get(selectedPos);
-            if (p != null) {
-                return p.getId();
-            }
-        }
-        return "";
-    }
-
-    private String getSelectedPlaceName() {
-        int selectedPos = binding.spinnerParkingPlaces.getSelectedItemPosition();
-        if (selectedPos >= 0 && selectedPos < currentPlacesList.size()) {
-            ParkingPlace p = currentPlacesList.get(selectedPos);
-            if (p != null) {
-                return p.getDisplayName();
-            }
-        }
-        return getString(R.string.select_parking_place);
     }
 
     private void observeViewModel() {
+        // Observe owner's places strictly (Requirement 1 & 3)
         viewModel.getPlacesLiveData().observe(this, places -> {
-            if (binding == null || places == null) {
-                return;
-            }
-
+            if (places == null) return;
             currentPlacesList.clear();
             currentPlacesList.addAll(places);
 
-            List<String> placeNames = new ArrayList<>();
-            for (ParkingPlace p : places) {
-                placeNames.add(p.getDisplayName());
-            }
-
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(
-                    this,
-                    android.R.layout.simple_spinner_item,
-                    placeNames
-            );
-            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            binding.spinnerParkingPlaces.setAdapter(adapter);
-
-            if (!currentPlacesList.isEmpty()) {
-                viewModel.setSelectedSpotId(currentPlacesList.get(0).getId());
-            }
+            renderPlacesFilterChips();
+            updateSpinnerPlacesForBlock();
+            renderCalendarGrid();
+            updateDayDetails(selectedDateStr);
         });
 
-        viewModel.getSelectedDateLiveData().observe(this, dateStr -> {
-            if (binding != null && dateStr != null) {
-                binding.textSelectedDateTitle.setText(getString(R.string.format_reservations_for_date, dateStr));
-            }
-        });
-
-        viewModel.getDateReservationsLiveData().observe(this, this::updateDateReservationsList);
-
+        // Observe blocked periods
         viewModel.getBlockedPeriodsLiveData().observe(this, periods -> {
-            if (binding == null) return;
-            List<BlockedPeriodEntity> activePeriods = new ArrayList<>();
+            currentBlockedPeriods.clear();
             if (periods != null) {
-                for (BlockedPeriodEntity b : periods) {
-                    if (b != null && !b.isExpired()) {
-                        activePeriods.add(b);
-                    }
-                }
+                currentBlockedPeriods.addAll(periods);
             }
-            boolean hasBlocks = !activePeriods.isEmpty();
-            blockedPeriodsAdapter.setBlockedPeriods(activePeriods);
-            binding.recyclerBlockedPeriods.setVisibility(hasBlocks ? View.VISIBLE : View.GONE);
-            binding.textNoBlockedPeriods.setVisibility(hasBlocks ? View.GONE : View.VISIBLE);
+            renderCalendarGrid();
+            updateDayDetails(selectedDateStr);
         });
 
-        viewModel.getRulesLiveData().observe(this, this::updateWeeklyRulesUI);
+        // Observe reservations
+        viewModel.getReservationsLiveData().observe(this, reservations -> {
+            currentReservations.clear();
+            if (reservations != null) {
+                currentReservations.addAll(reservations);
+            }
+            renderCalendarGrid();
+            updateDayDetails(selectedDateStr);
+        });
 
+        // Observe availability rules
+        viewModel.getRulesLiveData().observe(this, rules -> {
+            currentRules.clear();
+            if (rules != null) {
+                currentRules.addAll(rules);
+            }
+            updateDayDetails(selectedDateStr);
+        });
+
+        // Status messages
         viewModel.getBlockSlotSuccess().observe(this, success -> {
             if (Boolean.TRUE.equals(success)) {
                 Toast.makeText(this, R.string.msg_slot_blocked, Toast.LENGTH_SHORT).show();
@@ -677,45 +286,504 @@ public class AvailabilityCalendarActivity extends BaseActivity {
 
         viewModel.getErrorMessageLiveData().observe(this, errorMsg -> {
             if (errorMsg != null && !errorMsg.trim().isEmpty()) {
-                if (errorMsg.contains("401")) {
-                    new MaterialAlertDialogBuilder(this)
-                            .setTitle(R.string.title_session_expired)
-                            .setMessage(R.string.error_session_expired_401)
-                            .setPositiveButton(R.string.btn_relogin, (dialog, which) -> {
-                                com.example.project.utils.SessionManager.getInstance(this).logoutUser();
-                                Intent intent = new Intent(this, LoginActivity.class);
-                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                                startActivity(intent);
-                                finish();
-                            })
-                            .setNegativeButton(android.R.string.cancel, null)
-                            .show();
-                } else {
-                    Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show();
-                }
+                Toast.makeText(this, errorMsg, Toast.LENGTH_LONG).show();
             }
         });
     }
 
-    private void updateWeeklyRulesUI(@Nullable List<AvailabilityRuleEntity> rules) {
+    private void selectDate(@NonNull String dateStr) {
+        selectedDateStr = dateStr;
+        viewModel.setSelectedDate(dateStr);
+        if (calendarDayAdapter != null) {
+            calendarDayAdapter.setSelectedDateString(dateStr);
+        }
+        updateDayDetails(dateStr);
+    }
+
+    private void updateMonthHeader() {
+        if (binding == null) return;
+        SimpleDateFormat monthYearFormat = new SimpleDateFormat("LLLL yyyy", new Locale("pl", "PL"));
+        String monthTitle = monthYearFormat.format(displayedMonthCal.getTime());
+        if (monthTitle != null && monthTitle.length() > 0) {
+            monthTitle = Character.toUpperCase(monthTitle.charAt(0)) + monthTitle.substring(1);
+        }
+        binding.textMonthYear.setText(monthTitle);
+    }
+
+    /**
+     * Builds and renders the 7-column calendar grid for the displayed month.
+     * Colors days from today onwards as Green (Free), Yellow (Reserved), or Red (Blocked).
+     */
+    private void renderCalendarGrid() {
+        if (calendarDayAdapter == null) return;
+
+        Calendar todayCal = Calendar.getInstance();
+        todayCal.set(Calendar.HOUR_OF_DAY, 0);
+        todayCal.set(Calendar.MINUTE, 0);
+        todayCal.set(Calendar.SECOND, 0);
+        todayCal.set(Calendar.MILLISECOND, 0);
+        long todayStartMs = todayCal.getTimeInMillis();
+
+        List<CalendarDay> days = buildMonthDays(
+                displayedMonthCal,
+                todayStartMs,
+                selectedDateStr,
+                currentBlockedPeriods,
+                currentReservations,
+                viewModel.getSelectedSpotId()
+        );
+
+        calendarDayAdapter.setDays(days);
+    }
+
+    /**
+     * Constructs the full day list for the month with 7-column Monday-to-Sunday alignment.
+     */
+    private List<CalendarDay> buildMonthDays(Calendar monthCal,
+                                             long todayStartMs,
+                                             String selectedDate,
+                                             List<BlockedPeriodEntity> blockedPeriods,
+                                             List<ReservationEntity> reservations,
+                                             String spotFilterId) {
+        List<CalendarDay> result = new ArrayList<>();
+        SimpleDateFormat sdfDate = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
+
+        Calendar iter = (Calendar) monthCal.clone();
+        iter.set(Calendar.DAY_OF_MONTH, 1);
+        iter.set(Calendar.HOUR_OF_DAY, 0);
+        iter.set(Calendar.MINUTE, 0);
+        iter.set(Calendar.SECOND, 0);
+        iter.set(Calendar.MILLISECOND, 0);
+
+        int targetMonth = iter.get(Calendar.MONTH);
+
+        // Calculate leading blanks: Mon=0, Tue=1, Wed=2, Thu=3, Fri=4, Sat=5, Sun=6
+        int firstDayCal = iter.get(Calendar.DAY_OF_WEEK);
+        int leadingBlanks = (firstDayCal == Calendar.SUNDAY) ? 6 : (firstDayCal - 2);
+
+        // Previous month padding
+        Calendar prevMonthIter = (Calendar) iter.clone();
+        prevMonthIter.add(Calendar.DAY_OF_MONTH, -leadingBlanks);
+        for (int i = 0; i < leadingBlanks; i++) {
+            Date d = prevMonthIter.getTime();
+            String dStr = sdfDate.format(d);
+            int dayNum = prevMonthIter.get(Calendar.DAY_OF_MONTH);
+            result.add(new CalendarDay(d, dStr, dayNum, false, false, CalendarDay.Status.PAST));
+            prevMonthIter.add(Calendar.DAY_OF_MONTH, 1);
+        }
+
+        // Current month days
+        while (iter.get(Calendar.MONTH) == targetMonth) {
+            Date d = iter.getTime();
+            String dStr = sdfDate.format(d);
+            int dayNum = iter.get(Calendar.DAY_OF_MONTH);
+
+            long dayStartMs = iter.getTimeInMillis();
+            long dayEndMs = dayStartMs + 86400000L - 1L;
+            boolean isToday = (dayStartMs == todayStartMs);
+
+            CalendarDay.Status status;
+            if (dayStartMs < todayStartMs) {
+                status = CalendarDay.Status.PAST;
+            } else {
+                // Check if blocked
+                boolean hasBlock = false;
+                if (blockedPeriods != null) {
+                    for (BlockedPeriodEntity b : blockedPeriods) {
+                        if (b == null || b.isExpired()) continue;
+                        if (!AvailabilityCalendarViewModel.ALL_SPOTS_ID.equals(spotFilterId)
+                                && !spotFilterId.equals(b.getSpotId())) {
+                            continue;
+                        }
+                        long bStart = b.getStartMillis();
+                        long bEnd = b.getEndMillis();
+                        if (bStart < dayEndMs && bEnd > dayStartMs) {
+                            hasBlock = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (hasBlock) {
+                    status = CalendarDay.Status.BLOCKED_RED;
+                } else {
+                    // Check if reserved
+                    boolean hasRes = false;
+                    if (reservations != null) {
+                        for (ReservationEntity r : reservations) {
+                            if (r == null) continue;
+                            if (!AvailabilityCalendarViewModel.ALL_SPOTS_ID.equals(spotFilterId)
+                                    && !spotFilterId.equals(r.getPlaceId())) {
+                                continue;
+                            }
+                            String resStatus = r.getStatus();
+                            if ("CANCELLED".equalsIgnoreCase(resStatus)
+                                    || "REJECTED".equalsIgnoreCase(resStatus)
+                                    || "ANULOWANA".equalsIgnoreCase(resStatus)
+                                    || "ODRZUCONA".equalsIgnoreCase(resStatus)
+                                    || "ZABLOKOWANA".equalsIgnoreCase(resStatus)
+                                    || "BLOCKED".equalsIgnoreCase(resStatus)
+                                    || (r.getId() != null && r.getId().startsWith("block_"))) {
+                                continue;
+                            }
+                            if (r.getStartTimeMs() > 0 && r.getEndTimeMs() > 0) {
+                                if (r.getStartTimeMs() < dayEndMs && r.getEndTimeMs() > dayStartMs) {
+                                    hasRes = true;
+                                    break;
+                                }
+                            } else if (dStr.equals(r.getDateString())) {
+                                hasRes = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (hasRes) {
+                        status = CalendarDay.Status.RESERVED_YELLOW;
+                    } else {
+                        status = CalendarDay.Status.FREE_GREEN;
+                    }
+                }
+            }
+
+            CalendarDay calDay = new CalendarDay(d, dStr, dayNum, true, isToday, status);
+            if (dStr.equals(selectedDate)) {
+                calDay.setSelected(true);
+            }
+            result.add(calDay);
+
+            iter.add(Calendar.DAY_OF_MONTH, 1);
+        }
+
+        // Trailing padding to complete 7 columns
+        int remainder = result.size() % 7;
+        if (remainder != 0) {
+            int trailingBlanks = 7 - remainder;
+            for (int i = 0; i < trailingBlanks; i++) {
+                Date d = iter.getTime();
+                String dStr = sdfDate.format(d);
+                int dayNum = iter.get(Calendar.DAY_OF_MONTH);
+                result.add(new CalendarDay(d, dStr, dayNum, false, false, CalendarDay.Status.PAST));
+                iter.add(Calendar.DAY_OF_MONTH, 1);
+            }
+        }
+
+        return result;
+    }
+
+    /**
+     * Updates the Day Details card according to the selected date.
+     * Displays access hours (Requirement 5), reservations with driver avatar/car info,
+     * existing blocks with unblock action, and the blocking form (Requirement 4).
+     */
+    private void updateDayDetails(@Nullable String dateStr) {
+        if (binding == null || dateStr == null || dateStr.trim().isEmpty()) return;
+
+        Calendar targetCal = Calendar.getInstance();
+        try {
+            Date d = new SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(dateStr);
+            if (d != null) targetCal.setTime(d);
+        } catch (Exception ignored) {}
+
+        SimpleDateFormat plFullFormat = new SimpleDateFormat("EEEE, d MMMM yyyy", new Locale("pl", "PL"));
+        String dateDisplay = plFullFormat.format(targetCal.getTime());
+        if (dateDisplay != null && dateDisplay.length() > 0) {
+            dateDisplay = Character.toUpperCase(dateDisplay.charAt(0)) + dateDisplay.substring(1);
+        }
+        binding.textSelectedDateTitle.setText(dateDisplay);
+
+        long dayStartMs;
+        Calendar c = (Calendar) targetCal.clone();
+        c.set(Calendar.HOUR_OF_DAY, 0);
+        c.set(Calendar.MINUTE, 0);
+        c.set(Calendar.SECOND, 0);
+        c.set(Calendar.MILLISECOND, 0);
+        dayStartMs = c.getTimeInMillis();
+        long dayEndMs = dayStartMs + 86400000L - 1L;
+
+        String spotFilter = viewModel.getSelectedSpotId();
+
+        // 1. Evaluate Day Status Badge (Free / Reserved / Blocked)
+        boolean hasBlock = false;
+        List<BlockedPeriodEntity> dayBlocks = new ArrayList<>();
+        for (BlockedPeriodEntity b : currentBlockedPeriods) {
+            if (b == null || b.isExpired()) continue;
+            if (!AvailabilityCalendarViewModel.ALL_SPOTS_ID.equals(spotFilter) && !spotFilter.equals(b.getSpotId())) continue;
+            if (b.getStartMillis() < dayEndMs && b.getEndMillis() > dayStartMs) {
+                hasBlock = true;
+                dayBlocks.add(b);
+            }
+        }
+
+        boolean hasRes = false;
+        List<ReservationEntity> dayReservations = new ArrayList<>();
+        for (ReservationEntity r : currentReservations) {
+            if (r == null) continue;
+            if (!AvailabilityCalendarViewModel.ALL_SPOTS_ID.equals(spotFilter) && !spotFilter.equals(r.getPlaceId())) continue;
+            String resStatus = r.getStatus();
+            if ("CANCELLED".equalsIgnoreCase(resStatus) || "REJECTED".equalsIgnoreCase(resStatus)
+                    || "ANULOWANA".equalsIgnoreCase(resStatus) || "ODRZUCONA".equalsIgnoreCase(resStatus)
+                    || "ZABLOKOWANA".equalsIgnoreCase(resStatus) || "BLOCKED".equalsIgnoreCase(resStatus)
+                    || (r.getId() != null && r.getId().startsWith("block_"))) {
+                continue;
+            }
+            boolean matchesDay = false;
+            if (r.getStartTimeMs() > 0 && r.getEndTimeMs() > 0) {
+                matchesDay = (r.getStartTimeMs() < dayEndMs && r.getEndTimeMs() > dayStartMs);
+            } else if (dateStr.equals(r.getDateString())) {
+                matchesDay = true;
+            }
+            if (matchesDay) {
+                hasRes = true;
+                dayReservations.add(r);
+            }
+        }
+
+        if (hasBlock) {
+            binding.badgeDayStatus.setText(R.string.status_day_blocked);
+            binding.badgeDayStatus.setBackground(ContextCompat.getDrawable(this, R.drawable.bg_badge_rose));
+            binding.badgeDayStatus.setTextColor(ContextCompat.getColor(this, R.color.brand_rose_700));
+        } else if (hasRes) {
+            binding.badgeDayStatus.setText(R.string.status_day_reserved);
+            binding.badgeDayStatus.setBackground(ContextCompat.getDrawable(this, R.drawable.bg_badge_amber));
+            binding.badgeDayStatus.setTextColor(ContextCompat.getColor(this, R.color.brand_amber_800));
+        } else {
+            binding.badgeDayStatus.setText(R.string.status_day_free);
+            binding.badgeDayStatus.setBackground(ContextCompat.getDrawable(this, R.drawable.bg_badge_emerald));
+            binding.badgeDayStatus.setTextColor(ContextCompat.getColor(this, R.color.brand_emerald_800));
+        }
+
+        // 2. Access Hours (Requirement 5)
+        int calDay = targetCal.get(Calendar.DAY_OF_WEEK);
+        int isoDay = (calDay == Calendar.SUNDAY) ? 7 : (calDay - 1);
+        String dayName = getDayOfWeekName(isoDay);
+
+        if (!AvailabilityCalendarViewModel.ALL_SPOTS_ID.equals(spotFilter)) {
+            AvailabilityRuleEntity matchedRule = findRuleForSpotAndDay(spotFilter, isoDay);
+            if (matchedRule != null) {
+                String hours = (matchedRule.getStartTime().equals("00:00") && matchedRule.getEndTime().equals("23:59"))
+                        ? getString(R.string.access_open_all_day)
+                        : (matchedRule.getStartTime() + " - " + matchedRule.getEndTime());
+                binding.textAccessHoursDetails.setText(String.format(Locale.getDefault(), "%s: %s", dayName, hours));
+            } else {
+                ParkingPlace p = getPlaceById(spotFilter);
+                if (p != null && p.getAccessTime() != null && !p.getAccessTime().isEmpty()) {
+                    String timeStr = p.getAccessTime();
+                    if ("24/7".equalsIgnoreCase(timeStr) || "Dostęp 24/7".equalsIgnoreCase(timeStr)) {
+                        binding.textAccessHoursDetails.setText(getString(R.string.access_24_7));
+                    } else {
+                        binding.textAccessHoursDetails.setText(String.format(Locale.getDefault(), "%s: %s", dayName, timeStr));
+                    }
+                } else {
+                    binding.textAccessHoursDetails.setText(getString(R.string.access_24_7));
+                }
+            }
+        } else {
+            if (currentPlacesList.isEmpty()) {
+                binding.textAccessHoursDetails.setText(getString(R.string.access_24_7));
+            } else {
+                StringBuilder sb = new StringBuilder();
+                sb.append(getString(R.string.access_all_places_note)).append("\n");
+                for (ParkingPlace p : currentPlacesList) {
+                    sb.append("• ").append(p.getDisplayName()).append(": ");
+                    AvailabilityRuleEntity matched = findRuleForSpotAndDay(p.getId(), isoDay);
+                    if (matched != null) {
+                        sb.append(matched.getStartTime()).append(" - ").append(matched.getEndTime());
+                    } else if (p.getAccessTime() != null && !p.getAccessTime().isEmpty()) {
+                        sb.append(p.getAccessTime());
+                    } else {
+                        sb.append("24/7");
+                    }
+                    sb.append("\n");
+                }
+                binding.textAccessHoursDetails.setText(sb.toString().trim());
+            }
+        }
+
+        // 3. Render Reservations (Requirement 4)
+        binding.containerDateReservations.removeAllViews();
+        if (dayReservations.isEmpty()) {
+            binding.textNoReservations.setVisibility(View.VISIBLE);
+        } else {
+            binding.textNoReservations.setVisibility(View.GONE);
+            LayoutInflater inflater = LayoutInflater.from(this);
+            for (ReservationEntity r : dayReservations) {
+                ItemCalendarReservationBinding itemBinding = ItemCalendarReservationBinding.inflate(
+                        inflater, binding.containerDateReservations, false);
+
+                itemBinding.textReservationTime.setText(r.getTimeRange() != null ? r.getTimeRange() : "");
+                itemBinding.textPlaceName.setText(r.getPlaceName() != null ? r.getPlaceName() : getPlaceNameById(r.getPlaceId()));
+
+                String driver = r.getUserName() != null && !r.getUserName().trim().isEmpty() ? r.getUserName().trim() : "Kierowca";
+                itemBinding.textUserName.setText(driver);
+
+                String car = r.getCarModel() != null && !r.getCarModel().trim().isEmpty() ? r.getCarModel().trim() : "Pojazd";
+                String plate = r.getCarPlate() != null && !r.getCarPlate().trim().isEmpty() ? " • " + r.getCarPlate().trim() : "";
+                itemBinding.textCarDetails.setText(car + plate);
+
+                ImageLoader.getInstance(this).loadImage(
+                        itemBinding.imgDriverAvatar,
+                        r.getImageUri(),
+                        R.drawable.ic_avatar
+                );
+
+                binding.containerDateReservations.addView(itemBinding.getRoot());
+            }
+        }
+
+        // 4. Render Blocked Periods (Requirement 4)
+        binding.containerDateBlocks.removeAllViews();
+        if (dayBlocks.isEmpty()) {
+            binding.textNoBlocks.setVisibility(View.VISIBLE);
+        } else {
+            binding.textNoBlocks.setVisibility(View.GONE);
+            LayoutInflater inflater = LayoutInflater.from(this);
+            for (BlockedPeriodEntity b : dayBlocks) {
+                ItemCalendarBlockBinding blockBinding = ItemCalendarBlockBinding.inflate(
+                        inflater, binding.containerDateBlocks, false);
+
+                blockBinding.textBlockTimeRange.setText(formatBlockHours(b));
+                blockBinding.textBlockSpotName.setText(getPlaceNameById(b.getSpotId()));
+                blockBinding.textBlockReason.setText(
+                        (b.getReason() != null && !b.getReason().trim().isEmpty())
+                                ? b.getReason().trim()
+                                : "Blokada właściciela"
+                );
+
+                blockBinding.btnUnblockBlock.setOnClickListener(v -> showUnblockConfirmationDialog(b));
+
+                binding.containerDateBlocks.addView(blockBinding.getRoot());
+            }
+        }
+    }
+
+    private void renderPlacesFilterChips() {
+        if (binding == null) return;
+        binding.layoutPlacesChips.removeAllViews();
+
+        boolean isAllSelected = AvailabilityCalendarViewModel.ALL_SPOTS_ID.equals(viewModel.getSelectedSpotId());
+        View allChip = createFilterChip(getString(R.string.tab_all_places), isAllSelected, v -> {
+            viewModel.setSelectedSpotId(AvailabilityCalendarViewModel.ALL_SPOTS_ID);
+            renderPlacesFilterChips();
+            updateSpinnerPlacesForBlock();
+            renderCalendarGrid();
+            updateDayDetails(selectedDateStr);
+        });
+        binding.layoutPlacesChips.addView(allChip);
+
+        for (ParkingPlace p : currentPlacesList) {
+            boolean isSelected = p.getId().equals(viewModel.getSelectedSpotId());
+            View chip = createFilterChip(p.getDisplayName(), isSelected, v -> {
+                viewModel.setSelectedSpotId(p.getId());
+                renderPlacesFilterChips();
+                updateSpinnerPlacesForBlock();
+                renderCalendarGrid();
+                updateDayDetails(selectedDateStr);
+            });
+            binding.layoutPlacesChips.addView(chip);
+        }
+    }
+
+    private View createFilterChip(String label, boolean isSelected, View.OnClickListener listener) {
+        TextView chip = new TextView(this);
+        chip.setText(label);
+        chip.setTextSize(13f);
+        chip.setTypeface(null, android.graphics.Typeface.BOLD);
+        chip.setClickable(true);
+        chip.setFocusable(true);
+
+        float density = getResources().getDisplayMetrics().density;
+        int padH = (int) (14 * density);
+        int padV = (int) (8 * density);
+        chip.setPadding(padH, padV, padH, padV);
+
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        lp.setMarginEnd((int) (8 * density));
+        chip.setLayoutParams(lp);
+
+        if (isSelected) {
+            chip.setBackground(ContextCompat.getDrawable(this, R.drawable.bg_badge_slate));
+            chip.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.brand_slate_950));
+            chip.setTextColor(ContextCompat.getColor(this, R.color.white));
+        } else {
+            chip.setBackground(ContextCompat.getDrawable(this, R.drawable.bg_input_rounded));
+            chip.setTextColor(ContextCompat.getColor(this, R.color.brand_slate_700));
+        }
+
+        chip.setOnClickListener(listener);
+        return chip;
+    }
+
+    private void updateSpinnerPlacesForBlock() {
         if (binding == null) return;
 
-        if (rules == null || rules.isEmpty()) {
-            binding.textWeeklyRulesSummary.setText(R.string.availability_open_24_7);
-            return;
-        }
+        boolean isAll = AvailabilityCalendarViewModel.ALL_SPOTS_ID.equals(viewModel.getSelectedSpotId());
+        binding.layoutSelectBlockSpot.setVisibility(isAll ? View.VISIBLE : View.GONE);
 
-        StringBuilder sb = new StringBuilder();
-        for (AvailabilityRuleEntity rule : rules) {
-            String dayName = getDayOfWeekName(rule.getDayOfWeek());
-            sb.append(dayName)
-                    .append(": ")
-                    .append(rule.getStartTime())
-                    .append(" - ")
-                    .append(rule.getEndTime())
-                    .append("\n");
+        if (isAll) {
+            List<String> names = new ArrayList<>();
+            for (ParkingPlace p : currentPlacesList) {
+                names.add(p.getDisplayName());
+            }
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                    this,
+                    android.R.layout.simple_spinner_item,
+                    names
+            );
+            adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+            binding.spinnerBlockSpot.setAdapter(adapter);
         }
-        binding.textWeeklyRulesSummary.setText(sb.toString().trim());
+    }
+
+    private void showUnblockConfirmationDialog(@NonNull BlockedPeriodEntity block) {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.confirm_unblock_title)
+                .setMessage(R.string.confirm_unblock_message)
+                .setPositiveButton(R.string.btn_unblock, (dialog, which) -> {
+                    viewModel.unblockPeriod(block.getSpotId(), block.getId());
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    private String formatBlockHours(BlockedPeriodEntity block) {
+        long s = block.getStartMillis();
+        long e = block.getEndMillis();
+        if (s > 0 && e > 0) {
+            SimpleDateFormat tf = new SimpleDateFormat("HH:mm", Locale.getDefault());
+            return tf.format(new Date(s)) + " - " + tf.format(new Date(e));
+        }
+        return block.getStart() + " - " + block.getEnd();
+    }
+
+    private String getPlaceNameById(String id) {
+        for (ParkingPlace p : currentPlacesList) {
+            if (p.getId().equals(id)) {
+                return p.getDisplayName();
+            }
+        }
+        return getString(R.string.select_parking_place);
+    }
+
+    @Nullable
+    private ParkingPlace getPlaceById(String id) {
+        for (ParkingPlace p : currentPlacesList) {
+            if (p.getId().equals(id)) {
+                return p;
+            }
+        }
+        return null;
+    }
+
+    @Nullable
+    private AvailabilityRuleEntity findRuleForSpotAndDay(String spotId, int isoDay) {
+        for (AvailabilityRuleEntity r : currentRules) {
+            if (r.getSpotId().equals(spotId) && r.getDayOfWeek() == isoDay) {
+                return r;
+            }
+        }
+        return null;
     }
 
     private String getDayOfWeekName(int day) {
@@ -731,261 +799,27 @@ public class AvailabilityCalendarActivity extends BaseActivity {
         }
     }
 
-    private void updateDateReservationsList(List<Reservation> reservations) {
-        if (binding == null) {
+    private void parseTimeIntoCalendar(Calendar cal, String timeStr, int defHour, int defMin) {
+        if (timeStr == null || timeStr.trim().isEmpty()) {
+            cal.set(Calendar.HOUR_OF_DAY, defHour);
+            cal.set(Calendar.MINUTE, defMin);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
             return;
         }
-
-        binding.containerDateReservations.removeAllViews();
-
-        if (reservations == null || reservations.isEmpty()) {
-            return;
-        }
-
-        LayoutInflater inflater = LayoutInflater.from(this);
-
-        for (Reservation r : reservations) {
-            if (r == null) {
-                continue;
-            }
-
-            ItemCalendarReservationBinding itemBinding = ItemCalendarReservationBinding.inflate(inflater, binding.containerDateReservations, false);
-
-            itemBinding.textReservationTime.setText(r.getTimeRange() != null ? r.getTimeRange() : "");
-            itemBinding.textPlaceName.setText(r.getPlaceName() != null ? r.getPlaceName() : "");
-            itemBinding.textUserName.setText(r.getUserName() != null ? r.getUserName() : "");
-
-            String carModel = r.getCarModel() != null ? r.getCarModel() : "";
-            String carPlate = r.getCarPlate() != null ? r.getCarPlate() : "";
-            itemBinding.textCarDetails.setText(getString(R.string.format_sub_details, carModel, carPlate));
-
-            binding.containerDateReservations.addView(itemBinding.getRoot());
-        }
-    }
-
-    private void showEditWeeklyRulesDialog() {
-        if (binding == null) return;
-        String spotId = viewModel.getSelectedSpotId();
-        if (spotId == null || spotId.trim().isEmpty()) {
-            Toast.makeText(this, "Wybierz najpierw miejsce parkingowe", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
-        List<DayScheduleConfig> dialogDays = DayScheduleConfig.createDefaultWeek();
-        List<AvailabilityRuleEntity> currentEntities = viewModel.getRulesLiveData().getValue();
-        final boolean[] isDialog247 = new boolean[]{currentEntities == null || currentEntities.isEmpty()};
-
-        if (currentEntities != null && !currentEntities.isEmpty()) {
-            for (DayScheduleConfig d : dialogDays) {
-                d.setEnabled(false);
-            }
-            for (AvailabilityRuleEntity entity : currentEntities) {
-                for (DayScheduleConfig d : dialogDays) {
-                    if (d.getDayOfWeek() == entity.getDayOfWeek()) {
-                        d.applyRuleRequest(new AvailabilityRuleRequest(
-                                entity.getDayOfWeek(),
-                                entity.getStartTime(),
-                                entity.getEndTime(),
-                                entity.getValidFrom(),
-                                entity.getValidTo()
-                        ));
-                        break;
-                    }
-                }
-            }
-        }
-
-        DialogEditWeeklyAvailabilityBinding dialogBinding = DialogEditWeeklyAvailabilityBinding.inflate(getLayoutInflater());
-        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
-                .setView(dialogBinding.getRoot())
-                .setCancelable(true)
-                .create();
-
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
-        }
-
-        final boolean[] isDialogUpdatingUI = new boolean[]{false};
-        final List<ItemWeeklyScheduleDayBinding> dialogRowBindings = new ArrayList<>();
-
-        Runnable updateDialogModeUI = () -> {
-            boolean prev = isDialogUpdatingUI[0];
-            isDialogUpdatingUI[0] = true;
-            try {
-                if (isDialog247[0]) {
-                    dialogBinding.radioDialog247.setChecked(true);
-                    dialogBinding.radioDialogCustom.setChecked(false);
-                    dialogBinding.layoutDialogCustomSchedule.setVisibility(View.GONE);
-                } else {
-                    dialogBinding.radioDialog247.setChecked(false);
-                    dialogBinding.radioDialogCustom.setChecked(true);
-                    dialogBinding.layoutDialogCustomSchedule.setVisibility(View.VISIBLE);
-                }
-            } finally {
-                isDialogUpdatingUI[0] = prev;
-            }
-        };
-
-        View.OnClickListener click247 = v -> {
-            isDialog247[0] = true;
-            updateDialogModeUI.run();
-        };
-        dialogBinding.containerDialogOpt247.setOnClickListener(click247);
-        dialogBinding.radioDialog247.setOnClickListener(click247);
-
-        View.OnClickListener clickCustom = v -> {
-            isDialog247[0] = false;
-            boolean any = false;
-            for (DayScheduleConfig d : dialogDays) {
-                if (d.isEnabled()) {
-                    any = true;
-                    break;
-                }
-            }
-            if (!any) {
-                for (DayScheduleConfig d : dialogDays) {
-                    d.setEnabled(d.getDayOfWeek() >= 1 && d.getDayOfWeek() <= 5);
-                }
-            }
-            updateDialogModeUI.run();
-            for (int i = 0; i < dialogDays.size() && i < dialogRowBindings.size(); i++) {
-                bindDialogDayRow(dialogRowBindings.get(i), dialogDays.get(i), isDialogUpdatingUI);
-            }
-        };
-        dialogBinding.containerDialogOptCustom.setOnClickListener(clickCustom);
-        dialogBinding.radioDialogCustom.setOnClickListener(clickCustom);
-
-        dialogBinding.btnDialogPresetWeekdays.setOnClickListener(v -> {
-            for (DayScheduleConfig d : dialogDays) {
-                d.setEnabled(d.getDayOfWeek() >= 1 && d.getDayOfWeek() <= 5);
-            }
-            for (int i = 0; i < dialogDays.size() && i < dialogRowBindings.size(); i++) {
-                bindDialogDayRow(dialogRowBindings.get(i), dialogDays.get(i), isDialogUpdatingUI);
-            }
-        });
-
-        dialogBinding.btnDialogPresetAll.setOnClickListener(v -> {
-            for (DayScheduleConfig d : dialogDays) {
-                d.setEnabled(true);
-            }
-            for (int i = 0; i < dialogDays.size() && i < dialogRowBindings.size(); i++) {
-                bindDialogDayRow(dialogRowBindings.get(i), dialogDays.get(i), isDialogUpdatingUI);
-            }
-        });
-
-        dialogBinding.btnDialogPresetClear.setOnClickListener(v -> {
-            for (DayScheduleConfig d : dialogDays) {
-                d.setEnabled(false);
-            }
-            for (int i = 0; i < dialogDays.size() && i < dialogRowBindings.size(); i++) {
-                bindDialogDayRow(dialogRowBindings.get(i), dialogDays.get(i), isDialogUpdatingUI);
-            }
-        });
-
-        dialogBinding.btnCloseDialog.setOnClickListener(v -> dialog.dismiss());
-
-        dialogBinding.btnSaveDialogRules.setOnClickListener(v -> {
-            List<AvailabilityRuleRequest> rules = new ArrayList<>();
-            if (!isDialog247[0]) {
-                for (DayScheduleConfig d : dialogDays) {
-                    if (d.isEnabled()) {
-                        AvailabilityRuleRequest req = d.toRuleRequest();
-                        if (req != null) rules.add(req);
-                    }
-                }
-                if (rules.isEmpty()) {
-                    Toast.makeText(this, R.string.msg_no_active_schedule_days, Toast.LENGTH_SHORT).show();
-                    return;
-                }
-            }
-            viewModel.saveWeeklyRules(spotId, rules);
-            Toast.makeText(this, R.string.toast_rules_saved, Toast.LENGTH_SHORT).show();
-            dialog.dismiss();
-        });
-
-        // Populate rows once and bind listeners
-        dialogBinding.containerDialogDays.removeAllViews();
-        dialogRowBindings.clear();
-        LayoutInflater inflater = LayoutInflater.from(this);
-
-        for (DayScheduleConfig day : dialogDays) {
-            ItemWeeklyScheduleDayBinding row = ItemWeeklyScheduleDayBinding.inflate(inflater, dialogBinding.containerDialogDays, false);
-            row.checkDay.setText(day.getDayName());
-
-            row.checkDay.setOnCheckedChangeListener((btn, isChecked) -> {
-                if (isDialogUpdatingUI[0]) return;
-                day.setEnabled(isChecked);
-                bindDialogDayRow(row, day, isDialogUpdatingUI);
-            });
-
-            row.checkAllDay.setOnCheckedChangeListener((btn, isChecked) -> {
-                if (isDialogUpdatingUI[0]) return;
-                day.setAllDay(isChecked);
-                bindDialogDayRow(row, day, isDialogUpdatingUI);
-            });
-
-            row.btnTimeFrom.setOnClickListener(v -> {
-                TimePickerDialog picker = new TimePickerDialog(this, (view, h, m) -> {
-                    day.setStartHour(h);
-                    day.setStartMinute(m);
-                    if (day.getStartHour() > day.getEndHour() ||
-                            (day.getStartHour() == day.getEndHour() && day.getStartMinute() >= day.getEndMinute())) {
-                        day.setEndHour(Math.min(23, h + 1));
-                        day.setEndMinute(m);
-                    }
-                    bindDialogDayRow(row, day, isDialogUpdatingUI);
-                }, day.getStartHour(), day.getStartMinute(), true);
-                picker.show();
-            });
-
-            row.btnTimeTo.setOnClickListener(v -> {
-                TimePickerDialog picker = new TimePickerDialog(this, (view, h, m) -> {
-                    day.setEndHour(h);
-                    day.setEndMinute(m);
-                    if (day.getEndHour() < day.getStartHour() ||
-                            (day.getEndHour() == day.getStartHour() && day.getEndMinute() <= day.getStartMinute())) {
-                        day.setStartHour(Math.max(0, h - 1));
-                        day.setStartMinute(m);
-                    }
-                    bindDialogDayRow(row, day, isDialogUpdatingUI);
-                }, day.getEndHour(), day.getEndMinute(), true);
-                picker.show();
-            });
-
-            bindDialogDayRow(row, day, isDialogUpdatingUI);
-            dialogRowBindings.add(row);
-            dialogBinding.containerDialogDays.addView(row.getRoot());
-        }
-
-        updateDialogModeUI.run();
-        dialog.show();
-    }
-
-    private void bindDialogDayRow(ItemWeeklyScheduleDayBinding row, DayScheduleConfig day, boolean[] isUpdating) {
-        boolean prev = isUpdating[0];
-        isUpdating[0] = true;
+        String[] parts = timeStr.trim().split(":");
         try {
-            row.checkDay.setChecked(day.isEnabled());
-            row.checkAllDay.setVisibility(day.isEnabled() ? View.VISIBLE : View.GONE);
-            row.checkAllDay.setChecked(day.isAllDay());
-
-            if (!day.isEnabled()) {
-                row.textDayClosed.setVisibility(View.VISIBLE);
-                row.layoutAllDayBadge.setVisibility(View.GONE);
-                row.layoutTimePickers.setVisibility(View.GONE);
-            } else if (day.isAllDay()) {
-                row.textDayClosed.setVisibility(View.GONE);
-                row.layoutAllDayBadge.setVisibility(View.VISIBLE);
-                row.layoutTimePickers.setVisibility(View.GONE);
-            } else {
-                row.textDayClosed.setVisibility(View.GONE);
-                row.layoutAllDayBadge.setVisibility(View.GONE);
-                row.layoutTimePickers.setVisibility(View.VISIBLE);
-                row.textTimeFrom.setText(day.getFormattedStartTime());
-                row.textTimeTo.setText(day.getFormattedEndTime());
-            }
-        } finally {
-            isUpdating[0] = prev;
+            int h = Integer.parseInt(parts[0]);
+            int m = parts.length > 1 ? Integer.parseInt(parts[1]) : 0;
+            cal.set(Calendar.HOUR_OF_DAY, h);
+            cal.set(Calendar.MINUTE, m);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+        } catch (Exception e) {
+            cal.set(Calendar.HOUR_OF_DAY, defHour);
+            cal.set(Calendar.MINUTE, defMin);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
         }
     }
 

@@ -21,6 +21,8 @@ public class ParkingPlace {
     private String placeNumber;
     private String floor;
     private double price;
+    private double dailyPrice;
+    private double monthlyPrice;
     private String accessTime;
     private List<String> amenities;
     private double latitude;
@@ -170,6 +172,22 @@ public class ParkingPlace {
 
     public void setPrice(double price) {
         this.price = price;
+    }
+
+    public double getDailyPrice() {
+        return dailyPrice;
+    }
+
+    public void setDailyPrice(double dailyPrice) {
+        this.dailyPrice = dailyPrice;
+    }
+
+    public double getMonthlyPrice() {
+        return monthlyPrice;
+    }
+
+    public void setMonthlyPrice(double monthlyPrice) {
+        this.monthlyPrice = monthlyPrice;
     }
 
     public String getDescription() {

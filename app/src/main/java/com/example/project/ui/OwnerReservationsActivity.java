@@ -180,12 +180,8 @@ public class OwnerReservationsActivity extends BaseActivity implements OwnerRese
 
     @Override
     public void onReject(@NonNull ReservationEntity reservation) {
-        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_edit_phone, null);
-        EditText inputReason = dialogView.findViewById(R.id.edit_phone_number);
-        if (inputReason != null) {
-            inputReason.setHint(R.string.hint_reject_reason);
-            inputReason.setInputType(android.text.InputType.TYPE_CLASS_TEXT);
-        }
+        View dialogView = LayoutInflater.from(this).inflate(R.layout.dialog_reject_reservation, null);
+        EditText inputReason = dialogView.findViewById(R.id.edit_reject_reason);
 
         new MaterialAlertDialogBuilder(this)
                 .setTitle(R.string.dialog_reject_title)

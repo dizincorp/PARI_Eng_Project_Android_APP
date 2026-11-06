@@ -115,4 +115,44 @@ public class AvailabilityRuleEntity {
     public void setValidTo(String validTo) {
         this.validTo = validTo;
     }
+
+    @Ignore
+    public int getStartHour() {
+        try {
+            if (startTime != null && startTime.contains(":")) {
+                return Integer.parseInt(startTime.split(":")[0].trim());
+            }
+        } catch (Exception ignored) {}
+        return 0;
+    }
+
+    @Ignore
+    public int getStartMinute() {
+        try {
+            if (startTime != null && startTime.contains(":")) {
+                return Integer.parseInt(startTime.split(":")[1].trim());
+            }
+        } catch (Exception ignored) {}
+        return 0;
+    }
+
+    @Ignore
+    public int getEndHour() {
+        try {
+            if (endTime != null && endTime.contains(":")) {
+                return Integer.parseInt(endTime.split(":")[0].trim());
+            }
+        } catch (Exception ignored) {}
+        return 23;
+    }
+
+    @Ignore
+    public int getEndMinute() {
+        try {
+            if (endTime != null && endTime.contains(":")) {
+                return Integer.parseInt(endTime.split(":")[1].trim());
+            }
+        } catch (Exception ignored) {}
+        return 59;
+    }
 }

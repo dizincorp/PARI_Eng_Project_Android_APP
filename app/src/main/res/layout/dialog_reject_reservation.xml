@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="24dp"
+    android:paddingTop="8dp"
+    android:paddingEnd="24dp"
+    android:paddingBottom="4dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="6dp"
+        android:text="@string/label_reject_reason"
+        android:textColor="@color/brand_slate_700"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+
+    <EditText
+        android:id="@+id/edit_reject_reason"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:minHeight="48dp"
+        android:background="@drawable/bg_input_rounded"
+        android:gravity="top|start"
+        android:hint="@string/hint_reject_reason"
+        android:inputType="textMultiLine|textCapSentences"
+        android:padding="12dp"
+        android:textColor="@color/brand_slate_900"
+        android:textColorHint="@color/brand_slate_400"
+        android:textSize="14sp" />
+</LinearLayout>

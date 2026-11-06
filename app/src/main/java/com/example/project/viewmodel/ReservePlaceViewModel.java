@@ -11,7 +11,9 @@ import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 
 import com.example.project.database.AppDatabase;
+import com.example.project.database.entity.AvailabilityRuleEntity;
 import com.example.project.database.entity.BlockedPeriodEntity;
+import com.example.project.database.entity.ReservationEntity;
 import com.example.project.model.ParkingPlace;
 import com.example.project.model.Vehicle;
 import com.example.project.network.Resource;
@@ -21,6 +23,7 @@ import com.example.project.network.model.QuoteResponse;
 import com.example.project.network.model.ReservationRequest;
 import com.example.project.network.model.ReservationResponse;
 import com.example.project.repository.AppRepository;
+import com.example.project.repository.AvailabilityRepository;
 import com.example.project.repository.ReservationRepository;
 import com.example.project.repository.VehicleRepository;
 
@@ -42,6 +45,7 @@ public class ReservePlaceViewModel extends AndroidViewModel {
     private final ReservationRepository reservationRepository;
     private final VehicleRepository vehicleRepository;
     private final AppRepository appRepository;
+    private final AvailabilityRepository availabilityRepository;
 
     private final MediatorLiveData<Resource<ReservationResponse>> reservationStatusLiveData = new MediatorLiveData<>();
     private final MediatorLiveData<Resource<QuoteResponse>> quoteLiveData = new MediatorLiveData<>();
@@ -56,25 +60,29 @@ public class ReservePlaceViewModel extends AndroidViewModel {
         this(application,
                 ReservationRepository.getInstance(application),
                 VehicleRepository.getInstance(application),
-                AppRepository.getInstance());
+                AppRepository.getInstance(),
+                AvailabilityRepository.getInstance(application));
     }
 
     /**
      * Parameterized constructor for dependency injection and testing.
      *
-     * @param application           Application instance
-     * @param reservationRepository ReservationRepository instance
-     * @param vehicleRepository     VehicleRepository instance
-     * @param appRepository         AppRepository instance
+     * @param application            Application instance
+     * @param reservationRepository  ReservationRepository instance
+     * @param vehicleRepository      VehicleRepository instance
+     * @param appRepository          AppRepository instance
+     * @param availabilityRepository AvailabilityRepository instance
      */
     public ReservePlaceViewModel(@NonNull Application application,
                                  @NonNull ReservationRepository reservationRepository,
                                  @NonNull VehicleRepository vehicleRepository,
-                                 @NonNull AppRepository appRepository) {
+                                 @NonNull AppRepository appRepository,
+                                 @NonNull AvailabilityRepository availabilityRepository) {
         super(application);
         this.reservationRepository = reservationRepository;
         this.vehicleRepository = vehicleRepository;
         this.appRepository = appRepository;
+        this.availabilityRepository = availabilityRepository;
         refreshVehicles();
     }
 
@@ -188,6 +196,32 @@ public class ReservePlaceViewModel extends AndroidViewModel {
     }
 
     /**
+     * Refreshes availability rules and calendar blocked periods for a specific spot from the backend.
+     */
+    public void fetchSpotAvailability(@NonNull String spotId) {
+        if (spotId.trim().isEmpty()) return;
+        availabilityRepository.fetchBlockedPeriods(spotId.trim());
+        availabilityRepository.fetchAvailabilityRules(spotId.trim());
+        availabilityRepository.fetchBookedSlots(spotId.trim());
+    }
+
+    /**
+     * Observes availability rules for a spot.
+     */
+    public LiveData<List<AvailabilityRuleEntity>> getRulesLiveData(@NonNull String spotId) {
+        return availabilityRepository.getRulesLiveData(spotId.trim());
+    }
+
+    /**
+     * Observes reservations for a spot.
+     */
+    public LiveData<List<ReservationEntity>> getSpotReservationsLiveData(@NonNull String spotId) {
+        return AppDatabase.getInstance(getApplication())
+                .reservationDao()
+                .getReservationsForSpotLiveData(spotId.trim());
+    }
+
+    /**
      * Requests preliminary pricing breakdown from POST /api/reservations/quote.
      *
      * @param spotId  Target spot ID
@@ -195,9 +229,18 @@ public class ReservePlaceViewModel extends AndroidViewModel {
      * @param endMs   End timestamp in milliseconds
      */
     public void fetchQuote(@NonNull String spotId, long startMs, long endMs) {
+        fetchQuote(spotId, startMs, endMs, "HOURLY", null);
+    }
+
+    /**
+     * Requests preliminary pricing breakdown with specific booking type (HOURLY, DAILY, MONTHLY)
+     * and duration months.
+     */
+    public void fetchQuote(@NonNull String spotId, long startMs, long endMs,
+                           @Nullable String bookingType, @Nullable Integer durationMonths) {
         if (spotId.trim().isEmpty() || startMs >= endMs) return;
 
-        QuoteRequest request = new QuoteRequest(spotId, startMs, endMs);
+        QuoteRequest request = new QuoteRequest(spotId, startMs, endMs, bookingType, durationMonths);
         LiveData<Resource<QuoteResponse>> source = reservationRepository.calculateQuote(request);
         quoteLiveData.addSource(source, resource -> {
             quoteLiveData.setValue(resource);
@@ -223,6 +266,19 @@ public class ReservePlaceViewModel extends AndroidViewModel {
                                   long startMs,
                                   long endMs,
                                   @Nullable String paymentMethodToken) {
+        submitReservation(spotId, vehicleId, startMs, endMs, paymentMethodToken, "HOURLY", null);
+    }
+
+    /**
+     * Submits a reservation with multimodal booking type (HOURLY, DAILY, MONTHLY) and durationMonths.
+     */
+    public void submitReservation(@NonNull String spotId,
+                                  @NonNull String vehicleId,
+                                  long startMs,
+                                  long endMs,
+                                  @Nullable String paymentMethodToken,
+                                  @Nullable String bookingType,
+                                  @Nullable Integer durationMonths) {
         if (spotId.trim().isEmpty()) {
             reservationStatusLiveData.setValue(Resource.error("Brak identyfikatora miejsca parkingowego", null, 400));
             return;
@@ -248,7 +304,9 @@ public class ReservePlaceViewModel extends AndroidViewModel {
                 vehicleId.trim(),
                 startIso,
                 endIso,
-                paymentToken
+                paymentToken,
+                bookingType != null ? bookingType : "HOURLY",
+                durationMonths
         );
 
         String currentEmail = appRepository.getUserEmailLiveData().getValue();

@@ -23,11 +23,18 @@ public class ReservationRequest {
     @SerializedName("paymentMethodToken")
     private String paymentMethodToken;
 
+    @SerializedName("bookingType")
+    private String bookingType; // "HOURLY", "DAILY", "MONTHLY"
+
+    @SerializedName("durationMonths")
+    private Integer durationMonths;
+
     /**
      * Default no-argument constructor for Gson serialization.
      */
     public ReservationRequest() {
         this.paymentMethodToken = "pm_card_visa";
+        this.bookingType = "HOURLY";
     }
 
     /**
@@ -40,12 +47,35 @@ public class ReservationRequest {
      * @param paymentMethodToken Payment method token (e.g. "pm_card_visa")
      */
     public ReservationRequest(String spotId, String vehicleId, String start, String end, String paymentMethodToken) {
+        this(spotId, vehicleId, start, end, paymentMethodToken, "HOURLY", null);
+    }
+
+    public ReservationRequest(String spotId, String vehicleId, String start, String end,
+                              String paymentMethodToken, String bookingType, Integer durationMonths) {
         this.spotId = spotId;
         this.vehicleId = vehicleId;
         this.start = start;
         this.end = end;
         this.paymentMethodToken = (paymentMethodToken != null && !paymentMethodToken.trim().isEmpty())
                 ? paymentMethodToken.trim() : "pm_card_visa";
+        this.bookingType = (bookingType != null && !bookingType.trim().isEmpty()) ? bookingType.trim() : "HOURLY";
+        this.durationMonths = durationMonths;
+    }
+
+    public String getBookingType() {
+        return bookingType != null ? bookingType : "HOURLY";
+    }
+
+    public void setBookingType(String bookingType) {
+        this.bookingType = bookingType;
+    }
+
+    public Integer getDurationMonths() {
+        return durationMonths;
+    }
+
+    public void setDurationMonths(Integer durationMonths) {
+        this.durationMonths = durationMonths;
     }
 
     public String getSpotId() {

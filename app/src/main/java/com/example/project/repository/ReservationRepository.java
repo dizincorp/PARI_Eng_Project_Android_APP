@@ -955,10 +955,12 @@ public class ReservationRepository {
         String lower = serverMsg.toLowerCase(Locale.ROOT);
 
         if (response.code() == 409) {
-            if (lower.contains("block") || lower.contains("zablokowan") || lower.contains("calendar")) {
+            if (lower.contains("offer this space") || lower.contains("nie oferuje") || lower.contains("spot_not_available")) {
+                return "🕒 Miejsce działa tylko w godzinach otwarcia (np. od 06:00 do 22:00). Poza tymi godzinami parking jest zamknięty.";
+            } else if (lower.contains("block") || lower.contains("zablokowan") || lower.contains("calendar")) {
                 return !serverMsg.isEmpty()
-                        ? "⛔ To miejsce jest zablokowane przez właściciela (" + serverMsg + ")"
-                        : "⛔ To miejsce jest zablokowane przez właściciela w wybranym terminie!";
+                        ? "⛔ To miejsce zostało zablokowane przez właściciela (" + serverMsg + ")"
+                        : "⛔ To miejsce zostało zablokowane przez właściciela w wybranym terminie!";
             } else if (lower.contains("occup") || lower.contains("zajet") || lower.contains("reserv")) {
                 return !serverMsg.isEmpty()
                         ? "🚗 To miejsce jest już zajęte przez innego kierowcę (" + serverMsg + ")"

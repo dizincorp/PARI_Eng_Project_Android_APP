@@ -527,6 +527,7 @@
     <string name="btn_reject_reservation">Odrzuć</string>
     <string name="dialog_reject_title">Odrzucenie rezerwacji</string>
     <string name="dialog_reject_message">Podaj powód odrzucenia rezerwacji. Kierowca otrzyma natychmiastowy zwrot 100% środków:</string>
+    <string name="label_reject_reason">Powód odrzucenia</string>
     <string name="hint_reject_reason">Powód odrzucenia (opcjonalnie)</string>
     <string name="dialog_accept_title">Zatwierdzenie rezerwacji</string>
     <string name="dialog_accept_message">Czy chcesz zatwierdzić tę rezerwację miejsca? Kierowca otrzyma potwierdzenie i kod dostępu.</string>
@@ -556,4 +557,77 @@
     <string name="title_spot_availability">Harmonogram dostępności</string>
     <string name="subtitle_spot_availability">Skonfiguruj godziny i dni, w których miejsce jest otwarte dla kierowców</string>
     <string name="tip_spot_availability">Kierowcy będą mogli rezerwować to miejsce wyłącznie w wyznaczonych dniach i godzinach. W pozostałym czasie miejsce będzie widoczne jako niedostępne.</string>
+
+    <!-- Pick Location Map Screen -->
+    <string name="btn_back">Wróć</string>
+    <string name="title_pick_location">Wybierz lokalizację</string>
+    <string name="subtitle_pick_location">Wskaż dokładne miejsce parkingowe na mapie</string>
+    <string name="hint_search_location">Wyszukaj adres lub miasto...</string>
+    <string name="btn_confirm_location">Zatwierdź tę lokalizację</string>
+    <string name="loading_address">Pobieranie adresu...</string>
+    <string name="unknown_address">Punkt na mapie</string>
+    <string name="toast_location_selected">Lokalizacja została wybrana</string>
+    <string name="coords_set_from_map">Ustawiono z mapy: %1$s</string>
+    <string name="toast_address_not_found">Nie znaleziono podanego adresu</string>
+
+    <!-- Availability Calendar Redesign Strings -->
+    <string name="tab_all_places">Wszystkie miejsca</string>
+    <string name="section_places">Miejsca parkingowe</string>
+    <string name="legend_free">Wolne</string>
+    <string name="legend_reserved">Rezerwacja</string>
+    <string name="legend_blocked">Zablokowane</string>
+    <string name="legend_free_desc">Wolne (brak rezerwacji)</string>
+    <string name="legend_reserved_desc">Aktywna rezerwacja</string>
+    <string name="legend_blocked_desc">Termin zablokowany</string>
+    <string name="title_access_hours">Godziny dostępu w tym dniu</string>
+    <string name="title_day_reservations">Rezerwacje w wybranym dniu</string>
+    <string name="title_day_blocks">Zablokowane godziny</string>
+    <string name="title_block_new_slot">Zablokuj termin dla rezerwacji</string>
+    <string name="subtitle_block_new_slot">Kierowcy nie będą mogli zarezerwować wybranego terminu</string>
+    <string name="msg_no_reservations_day">Brak rezerwacji w tym dniu (termin wolny)</string>
+    <string name="msg_no_blocks_day">Brak blokad w tym dniu</string>
+    <string name="label_spot_to_block">Wybierz miejsce do zablokowania:</string>
+    <string name="preset_all_day_block">Cały dzień</string>
+    <string name="preset_afternoon_block">Popołudnie (16-20)</string>
+    <string name="preset_now_plus_2h">+2h od teraz</string>
+    <string name="btn_block_selected_slot">Zablokuj ten termin</string>
+    <string name="format_access_hours">Godziny dostępu: %1$s</string>
+    <string name="access_24_7">Dostęp całodobowy (24/7)</string>
+    <string name="access_open_all_day">Otwarte cały dzień (00:00 – 23:59)</string>
+    <string name="access_all_places_note">Dostępne według harmonogramu poszczególnych miejsc:</string>
+    <string name="btn_today">Dziś</string>
+    <string name="day_mon">Pn</string>
+    <string name="day_tue">Wt</string>
+    <string name="day_wed">Śr</string>
+    <string name="day_thu">Cz</string>
+    <string name="day_fri">Pt</string>
+    <string name="day_sat">Sb</string>
+    <string name="day_sun">Nd</string>
+    <string name="badge_today">Dziś</string>
+    <string name="status_day_free">Wolny dzień</string>
+    <string name="status_day_reserved">Rezerwacja</string>
+    <string name="status_day_blocked">Zablokowane</string>
+    <string name="cancel">Anuluj</string>
+
+    <!-- Driver Multimodal Booking & Calendar -->
+    <string name="title_booking_type">Typ rezerwacji (Taryfa)</string>
+    <string name="subtitle_booking_type">Wybierz dogodną taryfę wynajmu miejsca</string>
+    <string name="tariff_hourly">⏱ Na godziny</string>
+    <string name="tariff_daily">📅 Na dni / Tydzień</string>
+    <string name="tariff_monthly">🗓 Miesięczny</string>
+    <string name="package_1_day">1 dzień</string>
+    <string name="package_3_days">3 dni</string>
+    <string name="package_1_week">1 tydzień (7 dni)</string>
+    <string name="package_2_weeks">2 tygodnie (14 dni)</string>
+    <string name="package_1_month">1 miesiąc</string>
+    <string name="package_3_months">3 miesiące (-10%)</string>
+    <string name="package_6_months">6 miesięcy (-15%)</string>
+    <string name="package_12_months">1 rok (-20%)</string>
+    <string name="label_discount">Rabat długoterminowy</string>
+    <string name="label_tariff">Wybrana taryfa</string>
+    <string name="calendar_driver_title">Dostępność miejsca w kalendarzu</string>
+    <string name="calendar_driver_subtitle">Kolory wskazują dostępność. Kliknij dzień, aby wybrać termin</string>
+    <string name="badge_day_free_driver">Wolne</string>
+    <string name="badge_day_reserved_driver">Częściowo zajęte</string>
+    <string name="badge_day_blocked_driver">Zablokowane</string>
 </resources>

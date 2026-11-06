@@ -26,12 +26,13 @@
             android:layout_width="36dp"
             android:layout_height="36dp"
             android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/title_availability_calendar"
+            android:contentDescription="@string/btn_back"
             android:padding="6dp"
             android:src="@drawable/ic_arrow_back"
             app:tint="@color/brand_slate_950" />
 
         <TextView
+            android:id="@+id/text_toolbar_title"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="12dp"
@@ -51,12 +52,15 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/layout_top_bar" />
 
-    <ScrollView
+    <!-- Scrollable content area -->
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/scroll_container"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:clipToPadding="false"
         android:fillViewport="true"
         android:overScrollMode="never"
+        android:paddingBottom="24dp"
         app:layout_constraintBottom_toTopOf="@id/bottom_navigation"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
@@ -68,18 +72,37 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+            <!-- Spot Filter Selector: "Wszystkie miejsca" + owner's spots -->
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/subtitle_availability"
-                android:textColor="@color/brand_slate_500"
-                android:textSize="13sp" />
+                android:text="@string/section_places"
+                android:textColor="@color/brand_slate_700"
+                android:textSize="13sp"
+                android:textStyle="bold" />
 
-            <!-- Interactive Calendar View Card -->
-            <com.google.android.material.card.MaterialCardView
+            <HorizontalScrollView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="14dp"
+                android:layout_marginTop="8dp"
+                android:clipToPadding="false"
+                android:overScrollMode="never"
+                android:scrollbars="none">
+
+                <LinearLayout
+                    android:id="@+id/layout_places_chips"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal" />
+            </HorizontalScrollView>
+
+            <!-- Month Calendar Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_calendar"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
                 app:cardBackgroundColor="@color/card_background"
                 app:cardCornerRadius="20dp"
                 app:cardElevation="1dp"
@@ -90,17 +113,237 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:padding="12dp">
+                    android:padding="16dp">
 
-                    <CalendarView
-                        android:id="@+id/calendar_view"
+                    <!-- Month Header with navigation -->
+                    <LinearLayout
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content" />
+                        android:layout_height="wrap_content"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <ImageButton
+                            android:id="@+id/btn_prev_month"
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_chevron_left"
+                            app:tint="@color/brand_slate_800" />
+
+                        <TextView
+                            android:id="@+id/text_month_year"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:textColor="@color/brand_slate_950"
+                            android:textSize="17sp"
+                            android:textStyle="bold"
+                            tools:text="Listopad 2026" />
+
+                        <ImageButton
+                            android:id="@+id/btn_next_month"
+                            android:layout_width="36dp"
+                            android:layout_height="36dp"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="@null"
+                            android:src="@drawable/ic_chevron_right"
+                            app:tint="@color/brand_slate_800" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btn_today"
+                            style="@style/Widget.Material3.Button.TonalButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="36dp"
+                            android:layout_marginStart="6dp"
+                            android:backgroundTint="@color/brand_slate_100"
+                            android:insetTop="0dp"
+                            android:insetBottom="0dp"
+                            android:paddingHorizontal="10dp"
+                            android:text="@string/btn_today"
+                            android:textColor="@color/brand_slate_800"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            app:cornerRadius="10dp" />
+                    </LinearLayout>
+
+                    <!-- Weekdays Header Row (Pn, Wt, Śr, Cz, Pt, Sb, Nd) -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="@string/day_mon"
+                            android:textColor="@color/brand_slate_500"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="@string/day_tue"
+                            android:textColor="@color/brand_slate_500"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="@string/day_wed"
+                            android:textColor="@color/brand_slate_500"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="@string/day_thu"
+                            android:textColor="@color/brand_slate_500"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="@string/day_fri"
+                            android:textColor="@color/brand_slate_500"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="@string/day_sat"
+                            android:textColor="@color/brand_slate_500"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:text="@string/day_sun"
+                            android:textColor="@color/brand_slate_500"
+                            android:textSize="12sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- Days Grid RecyclerView (7 columns) -->
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/recycler_calendar_days"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:nestedScrollingEnabled="false"
+                        android:overScrollMode="never" />
+
+                    <!-- Calendar Color Legend -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:background="@drawable/bg_segmented_container"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingHorizontal="12dp"
+                        android:paddingVertical="8dp">
+
+                        <!-- Green: Wolne -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="horizontal">
+
+                            <View
+                                android:layout_width="8dp"
+                                android:layout_height="8dp"
+                                android:background="@drawable/shape_status_dot"
+                                android:backgroundTint="@color/brand_emerald_500" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="5dp"
+                                android:text="@string/legend_free"
+                                android:textColor="@color/brand_emerald_800"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <!-- Yellow: Rezerwacja -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="horizontal">
+
+                            <View
+                                android:layout_width="8dp"
+                                android:layout_height="8dp"
+                                android:background="@drawable/shape_status_dot"
+                                android:backgroundTint="@color/brand_amber_600" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="5dp"
+                                android:text="@string/legend_reserved"
+                                android:textColor="@color/brand_amber_800"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <!-- Red: Zablokowane -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:gravity="center"
+                            android:orientation="horizontal">
+
+                            <View
+                                android:layout_width="8dp"
+                                android:layout_height="8dp"
+                                android:background="@drawable/shape_status_dot"
+                                android:backgroundTint="@color/brand_rose_500" />
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginStart="5dp"
+                                android:text="@string/legend_blocked"
+                                android:textColor="@color/brand_rose_700"
+                                android:textSize="11sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </LinearLayout>
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Parking Place & Time Range Selector Card -->
+            <!-- Selected Day Details Card -->
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/card_day_details"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
@@ -116,400 +359,400 @@
                     android:orientation="vertical"
                     android:padding="20dp">
 
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/select_parking_place"
-                        android:textColor="@color/brand_slate_900"
-                        android:textSize="16sp"
-                        android:textStyle="bold" />
-
-                    <!-- Spinner with clean modern container -->
-                    <FrameLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="48dp"
-                        android:layout_marginTop="8dp"
-                        android:background="@drawable/bg_input_rounded">
-
-                        <Spinner
-                            android:id="@+id/spinner_parking_places"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:background="@null"
-                            android:paddingHorizontal="14dp" />
-                    </FrameLayout>
-
-                    <!-- Time Range Header with "Teraz" Button -->
+                    <!-- Day Title and Status Badge -->
                     <RelativeLayout
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="18dp">
+                        android:layout_height="wrap_content">
 
                         <TextView
+                            android:id="@+id/text_selected_date_title"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_alignParentStart="true"
-                            android:layout_centerVertical="true"
-                            android:text="@string/header_block_time_range"
-                            android:textColor="@color/brand_slate_700"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
+                            android:layout_toStartOf="@id/badge_day_status"
+                            android:layout_marginEnd="10dp"
+                            android:textColor="@color/brand_slate_950"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            tools:text="Czwartek, 5 listopada 2026" />
 
                         <TextView
-                            android:id="@+id/btn_quick_set_now"
+                            android:id="@+id/badge_day_status"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_alignParentEnd="true"
                             android:layout_centerVertical="true"
-                            android:background="?attr/selectableItemBackground"
-                            android:paddingHorizontal="4dp"
-                            android:paddingVertical="2dp"
-                            android:text="@string/btn_set_current_time"
-                            android:textColor="@color/brand_emerald_600"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
+                            android:background="@drawable/bg_badge_emerald"
+                            android:paddingHorizontal="10dp"
+                            android:paddingVertical="4dp"
+                            android:textColor="@color/brand_emerald_800"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            tools:text="Wolne" />
                     </RelativeLayout>
 
-                    <!-- Start & End Time Selectors Grid (Same style as ReservePlaceActivity) -->
-                    <LinearLayout
+                    <!-- Access Hours for this day (Requirement 5) -->
+                    <com.google.android.material.card.MaterialCardView
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
+                        android:layout_marginTop="14dp"
+                        app:cardBackgroundColor="@color/brand_slate_50"
+                        app:cardCornerRadius="14dp"
+                        app:cardElevation="0dp"
+                        app:strokeColor="@color/brand_slate_200"
+                        app:strokeWidth="1dp">
 
-                        <!-- Start Box -->
-                        <com.google.android.material.card.MaterialCardView
-                            android:id="@+id/card_start_datetime"
-                            android:layout_width="0dp"
+                        <LinearLayout
+                            android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:clickable="true"
-                            android:focusable="true"
-                            app:cardBackgroundColor="@color/brand_slate_50"
-                            app:cardCornerRadius="14dp"
-                            app:cardElevation="0dp"
-                            app:strokeColor="@color/brand_slate_200"
-                            app:strokeWidth="1dp">
+                            android:orientation="vertical"
+                            android:padding="12dp">
 
                             <LinearLayout
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:orientation="vertical"
-                                android:padding="12dp">
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal">
 
-                                <LinearLayout
+                                <ImageView
+                                    android:layout_width="16dp"
+                                    android:layout_height="16dp"
+                                    android:contentDescription="@null"
+                                    android:src="@drawable/ic_clock"
+                                    app:tint="@color/brand_emerald_600" />
+
+                                <TextView
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_marginStart="8dp"
+                                    android:layout_weight="1"
+                                    android:text="@string/title_access_hours"
+                                    android:textColor="@color/brand_slate_700"
+                                    android:textSize="12sp"
+                                    android:textStyle="bold" />
+
+                                <TextView
+                                    android:id="@+id/btn_edit_weekly_rules"
                                     android:layout_width="wrap_content"
                                     android:layout_height="wrap_content"
-                                    android:gravity="center_vertical"
-                                    android:orientation="horizontal">
-
-                                    <ImageView
-                                        android:layout_width="14dp"
-                                        android:layout_height="14dp"
-                                        android:contentDescription="@string/label_time_from"
-                                        android:src="@drawable/ic_clock"
-                                        app:tint="@color/brand_emerald_600" />
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginStart="6dp"
-                                        android:text="@string/label_time_from"
-                                        android:textColor="@color/brand_slate_500"
-                                        android:textSize="11sp"
-                                        android:textStyle="bold" />
-                                </LinearLayout>
-
-                                <EditText
-                                    android:id="@+id/edit_time_from"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="4dp"
-                                    android:background="@null"
-                                    android:hint="@string/hint_time_from"
-                                    android:inputType="time"
-                                    android:text="12:00"
-                                    android:textColor="@color/brand_slate_950"
-                                    android:textSize="17sp"
+                                    android:background="?attr/selectableItemBackground"
+                                    android:clickable="true"
+                                    android:focusable="true"
+                                    android:padding="2dp"
+                                    android:text="@string/btn_edit_weekly_rules"
+                                    android:textColor="@color/brand_emerald_700"
+                                    android:textSize="12sp"
                                     android:textStyle="bold" />
                             </LinearLayout>
-                        </com.google.android.material.card.MaterialCardView>
 
-                        <ImageView
-                            android:layout_width="20dp"
-                            android:layout_height="20dp"
-                            android:layout_marginHorizontal="8dp"
-                            android:contentDescription="@string/header_block_time_range"
-                            android:src="@drawable/ic_chevron_right"
-                            app:tint="@color/brand_slate_400" />
-
-                        <!-- End Box -->
-                        <com.google.android.material.card.MaterialCardView
-                            android:id="@+id/card_end_datetime"
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_weight="1"
-                            android:clickable="true"
-                            android:focusable="true"
-                            app:cardBackgroundColor="@color/brand_slate_50"
-                            app:cardCornerRadius="14dp"
-                            app:cardElevation="0dp"
-                            app:strokeColor="@color/brand_slate_200"
-                            app:strokeWidth="1dp">
-
-                            <LinearLayout
+                            <TextView
+                                android:id="@+id/text_access_hours_details"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:orientation="vertical"
-                                android:padding="12dp">
+                                android:layout_marginTop="4dp"
+                                android:textColor="@color/brand_slate_900"
+                                android:textSize="13sp"
+                                android:textStyle="bold"
+                                tools:text="Godziny dostępu: Dostęp całodobowy (24/7)" />
+                        </LinearLayout>
+                    </com.google.android.material.card.MaterialCardView>
 
-                                <LinearLayout
-                                    android:layout_width="wrap_content"
-                                    android:layout_height="wrap_content"
-                                    android:gravity="center_vertical"
-                                    android:orientation="horizontal">
-
-                                    <ImageView
-                                        android:layout_width="14dp"
-                                        android:layout_height="14dp"
-                                        android:contentDescription="@string/label_time_to"
-                                        android:src="@drawable/ic_clock"
-                                        app:tint="@color/brand_emerald_600" />
-
-                                    <TextView
-                                        android:layout_width="wrap_content"
-                                        android:layout_height="wrap_content"
-                                        android:layout_marginStart="6dp"
-                                        android:text="@string/label_time_to"
-                                        android:textColor="@color/brand_slate_500"
-                                        android:textSize="11sp"
-                                        android:textStyle="bold" />
-                                </LinearLayout>
-
-                                <EditText
-                                    android:id="@+id/edit_time_to"
-                                    android:layout_width="match_parent"
-                                    android:layout_height="wrap_content"
-                                    android:layout_marginTop="4dp"
-                                    android:background="@null"
-                                    android:hint="@string/hint_time_to"
-                                    android:inputType="time"
-                                    android:text="18:00"
-                                    android:textColor="@color/brand_slate_950"
-                                    android:textSize="17sp"
-                                    android:textStyle="bold" />
-                            </LinearLayout>
-                        </com.google.android.material.card.MaterialCardView>
-                    </LinearLayout>
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btn_change_time"
-                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                    <!-- Divider -->
+                    <View
                         android:layout_width="match_parent"
-                        android:layout_height="44dp"
-                        android:layout_marginTop="12dp"
-                        android:text="@string/btn_select_time_range"
-                        android:textColor="@color/brand_slate_800"
-                        android:textSize="13sp"
-                        android:textStyle="bold"
-                        app:cornerRadius="12dp"
-                        app:icon="@drawable/ic_clock"
-                        app:iconGravity="textStart"
-                        app:iconTint="@color/brand_emerald_600"
-                        app:strokeColor="@color/brand_slate_300"
-                        app:strokeWidth="1dp" />
+                        android:layout_height="1dp"
+                        android:layout_marginTop="16dp"
+                        android:layout_marginBottom="14dp"
+                        android:background="@color/brand_slate_200" />
+
+                    <!-- Reservations on this day (Requirement 4) -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/title_day_reservations"
+                        android:textColor="@color/brand_slate_950"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:id="@+id/container_date_reservations"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="vertical" />
+
+                    <TextView
+                        android:id="@+id/text_no_reservations"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/bg_segmented_container"
+                        android:gravity="center"
+                        android:paddingVertical="12dp"
+                        android:text="@string/msg_no_reservations_day"
+                        android:textColor="@color/brand_slate_500"
+                        android:textSize="13sp" />
+
+                    <!-- Blocked periods on this day -->
+                    <TextView
+                        android:id="@+id/text_blocks_header"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="16dp"
+                        android:text="@string/title_day_blocks"
+                        android:textColor="@color/brand_slate_950"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <LinearLayout
+                        android:id="@+id/container_date_blocks"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:orientation="vertical" />
+
+                    <TextView
+                        android:id="@+id/text_no_blocks"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/bg_segmented_container"
+                        android:gravity="center"
+                        android:paddingVertical="12dp"
+                        android:text="@string/msg_no_blocks_day"
+                        android:textColor="@color/brand_slate_500"
+                        android:textSize="13sp" />
+
+                    <!-- Divider -->
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="1dp"
+                        android:layout_marginTop="20dp"
+                        android:layout_marginBottom="16dp"
+                        android:background="@color/brand_slate_200" />
+
+                    <!-- Blocking Form (Requirement 4) -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/title_block_new_slot"
+                        android:textColor="@color/brand_slate_950"
+                        android:textSize="15sp"
+                        android:textStyle="bold" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="16dp"
+                        android:layout_marginTop="2dp"
+                        android:text="@string/subtitle_block_new_slot"
+                        android:textColor="@color/brand_slate_500"
+                        android:textSize="12sp" />
+
+                    <!-- Place selector dropdown for blocking (shown when 'All places' is selected) -->
+                    <LinearLayout
+                        android:id="@+id/layout_select_block_spot"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="@string/label_spot_to_block"
+                            android:textColor="@color/brand_slate_700"
+                            android:textSize="13sp"
+                            android:textStyle="bold" />
+
+                        <com.google.android.material.card.MaterialCardView
+                            android:layout_width="match_parent"
+                            android:layout_height="48dp"
+                            android:layout_marginTop="6dp"
+                            app:cardBackgroundColor="@color/card_background"
+                            app:cardCornerRadius="14dp"
+                            app:cardElevation="0dp"
+                            app:strokeColor="@color/brand_slate_200"
+                            app:strokeWidth="1dp">
+
+                            <Spinner
+                                android:id="@+id/spinner_block_spot"
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:paddingHorizontal="12dp" />
+                        </com.google.android.material.card.MaterialCardView>
+                    </LinearLayout>
+
+                    <!-- Time Range Inputs -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
+                        android:orientation="horizontal">
+
+                        <!-- From Time -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="6dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/label_time_from"
+                                android:textColor="@color/brand_slate_700"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+
+                            <EditText
+                                android:id="@+id/edit_time_from"
+                                android:layout_width="match_parent"
+                                android:layout_height="46dp"
+                                android:layout_marginTop="6dp"
+                                android:background="@drawable/bg_input_rounded"
+                                android:gravity="center"
+                                android:hint="12:00"
+                                android:inputType="time"
+                                android:textColor="@color/brand_slate_950"
+                                android:textColorHint="@color/brand_slate_400"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+
+                        <!-- To Time -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="6dp"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="@string/label_time_to"
+                                android:textColor="@color/brand_slate_700"
+                                android:textSize="13sp"
+                                android:textStyle="bold" />
+
+                            <EditText
+                                android:id="@+id/edit_time_to"
+                                android:layout_width="match_parent"
+                                android:layout_height="46dp"
+                                android:layout_marginTop="6dp"
+                                android:background="@drawable/bg_input_rounded"
+                                android:gravity="center"
+                                android:hint="18:00"
+                                android:inputType="time"
+                                android:textColor="@color/brand_slate_950"
+                                android:textColorHint="@color/brand_slate_400"
+                                android:textSize="14sp"
+                                android:textStyle="bold" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Quick Time Presets -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:orientation="horizontal">
+
+                        <TextView
+                            android:id="@+id/chip_preset_all_day"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginEnd="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_badge_slate"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
+                            android:paddingVertical="7dp"
+                            android:text="@string/preset_all_day_block"
+                            android:textColor="@color/brand_slate_800"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/chip_preset_afternoon"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginHorizontal="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_badge_slate"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
+                            android:paddingVertical="7dp"
+                            android:text="@string/preset_afternoon_block"
+                            android:textColor="@color/brand_slate_800"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/chip_preset_now_plus_2"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="4dp"
+                            android:layout_weight="1"
+                            android:background="@drawable/bg_badge_slate"
+                            android:clickable="true"
+                            android:focusable="true"
+                            android:gravity="center"
+                            android:paddingVertical="7dp"
+                            android:text="@string/preset_now_plus_2h"
+                            android:textColor="@color/brand_slate_800"
+                            android:textSize="11sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <!-- Reason Input -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="12dp"
                         android:text="@string/label_block_reason"
                         android:textColor="@color/brand_slate_700"
-                        android:textSize="12sp"
+                        android:textSize="13sp"
                         android:textStyle="bold" />
 
                     <EditText
                         android:id="@+id/edit_block_reason"
                         android:layout_width="match_parent"
-                        android:layout_height="48dp"
+                        android:layout_height="46dp"
                         android:layout_marginTop="6dp"
                         android:background="@drawable/bg_input_rounded"
                         android:hint="@string/hint_block_reason"
-                        android:inputType="text"
+                        android:inputType="textCapSentences"
                         android:paddingHorizontal="14dp"
-                        android:textColor="@color/brand_slate_900"
+                        android:textColor="@color/brand_slate_950"
                         android:textColorHint="@color/brand_slate_400"
                         android:textSize="14sp" />
 
-                    <!-- Primary Action: Block Slot -->
+                    <!-- Submit Block Button -->
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_block_slot"
-                        style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
                         android:layout_width="match_parent"
                         android:layout_height="50dp"
-                        android:layout_marginTop="18dp"
+                        android:layout_marginTop="16dp"
                         android:backgroundTint="@color/brand_slate_950"
-                        android:insetTop="0dp"
-                        android:insetBottom="0dp"
-                        android:text="@string/btn_block_slot"
-                        android:textAllCaps="false"
+                        android:text="@string/btn_block_selected_slot"
                         android:textColor="@color/white"
                         android:textSize="14sp"
                         android:textStyle="bold"
                         app:cornerRadius="14dp"
-                        app:icon="@drawable/ic_block"
+                        app:icon="@drawable/ic_lock"
                         app:iconGravity="textStart"
-                        app:iconPadding="8dp"
-                        app:iconSize="18dp"
-                        app:iconTint="@color/brand_rose_400" />
-
+                        app:iconTint="@color/white" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
-
-            <!-- Weekly Schedule Card -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="20dp"
-                app:cardElevation="1dp"
-                app:strokeColor="@color/brand_slate_200"
-                app:strokeWidth="1dp">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="20dp">
-
-                    <LinearLayout
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
-                        android:orientation="horizontal">
-
-                        <FrameLayout
-                            android:layout_width="36dp"
-                            android:layout_height="36dp"
-                            android:background="@drawable/bg_icon_rounded_emerald">
-
-                            <ImageView
-                                android:layout_width="18dp"
-                                android:layout_height="18dp"
-                                android:layout_gravity="center"
-                                android:contentDescription="@null"
-                                android:src="@drawable/ic_clock"
-                                app:tint="@color/brand_emerald_600" />
-                        </FrameLayout>
-
-                        <TextView
-                            android:layout_width="0dp"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="12dp"
-                            android:layout_weight="1"
-                            android:text="@string/section_weekly_rules"
-                            android:textColor="@color/brand_slate_950"
-                            android:textSize="16sp"
-                            android:textStyle="bold" />
-
-                        <TextView
-                            android:id="@+id/btn_edit_weekly_rules"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:background="@drawable/bg_badge_emerald"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:foreground="?android:attr/selectableItemBackground"
-                            android:paddingHorizontal="10dp"
-                            android:paddingVertical="5dp"
-                            android:text="@string/btn_edit_weekly_rules"
-                            android:textColor="@color/brand_emerald_700"
-                            android:textSize="12sp"
-                            android:textStyle="bold" />
-                    </LinearLayout>
-
-                    <TextView
-                        android:id="@+id/text_weekly_rules_summary"
-                        android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="12dp"
-                        android:lineSpacingExtra="3dp"
-                        android:text="@string/availability_open_24_7"
-                        android:textColor="@color/brand_slate_600"
-                        android:textSize="14sp" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Blocked Periods Section Header -->
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="@string/section_blocked_periods"
-                android:textColor="@color/brand_slate_950"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-
-            <TextView
-                android:id="@+id/text_no_blocked_periods"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="@string/no_blocked_periods"
-                android:textColor="@color/brand_slate_500"
-                android:textSize="14sp"
-                android:visibility="gone" />
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recycler_blocked_periods"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:nestedScrollingEnabled="false" />
-
-            <!-- Selected Date Reservations Section Header -->
-            <TextView
-                android:id="@+id/text_selected_date_title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:text="@string/selected_date_header"
-                android:textColor="@color/brand_slate_950"
-                android:textSize="18sp"
-                android:textStyle="bold" />
-
-            <!-- Reservations List Container -->
-            <LinearLayout
-                android:id="@+id/container_date_reservations"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:orientation="vertical" />
-
-            <!-- Return Button -->
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_return_to_places"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                android:layout_width="match_parent"
-                android:layout_height="52dp"
-                android:layout_marginTop="24dp"
-                android:layout_marginBottom="16dp"
-                android:insetTop="0dp"
-                android:insetBottom="0dp"
-                android:text="@string/btn_return_to_places"
-                android:textAllCaps="false"
-                android:textColor="@color/brand_slate_900"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                app:cornerRadius="14dp"
-                app:strokeColor="@color/brand_slate_300"
-                app:strokeWidth="1dp" />
 
         </LinearLayout>
-    </ScrollView>
+    </androidx.core.widget.NestedScrollView>
 
+    <!-- Bottom Navigation Bar -->
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_navigation"
         android:layout_width="0dp"

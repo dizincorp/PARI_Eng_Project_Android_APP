@@ -93,6 +93,10 @@
         <activity
             android:name=".ui.SpotAvailabilityActivity"
             android:exported="false" />
+
+        <activity
+            android:name=".ui.PickLocationActivity"
+            android:exported="false" />
     </application>
 
 </manifest>
