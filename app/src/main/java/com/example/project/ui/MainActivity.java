@@ -29,6 +29,7 @@ import com.example.project.databinding.DialogSpotReviewsBinding;
 import com.example.project.network.Resource;
 import com.example.project.repository.AvailabilityRepository;
 import com.example.project.repository.ReviewRepository;
+import com.example.project.utils.ViewAnimationUtils;
 import com.example.project.viewmodel.SearchViewModel;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -153,6 +154,26 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
                 Intent intent = new Intent(MainActivity.this, ReservePlaceActivity.class);
                 intent.putExtra(ReservePlaceActivity.EXTRA_PLACE_ID, selectedSpotForBooking.getId());
                 startActivity(intent);
+            }
+        });
+
+        binding.btnClosePreview.setOnClickListener(v -> {
+            ViewAnimationUtils.playBounceAnimation(v, () -> {
+                if (binding.cardPlacePreview != null) {
+                    binding.cardPlacePreview.setVisibility(View.GONE);
+                }
+                selectedSpotForBooking = null;
+            });
+        });
+
+        binding.btnPreviewReviews.setOnClickListener(v -> {
+            if (selectedSpotForBooking != null) {
+                showSpotReviewsDialog(
+                        selectedSpotForBooking.getId(),
+                        selectedSpotForBooking.getTitle(),
+                        selectedSpotForBooking.getRating(),
+                        selectedSpotForBooking.getRatingCount()
+                );
             }
         });
     }
@@ -426,6 +447,15 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
             }
         }
         binding.chipGroupPreviewAmenities.setVisibility(hasAmenities ? View.VISIBLE : View.GONE);
+
+        // Dimensions badge (if present)
+        String dimensions = spot.getFormattedDimensions();
+        if (dimensions != null && !dimensions.isEmpty()) {
+            binding.textPreviewDimensions.setText(String.format("📐 %s", dimensions));
+            binding.textPreviewDimensions.setVisibility(View.VISIBLE);
+        } else {
+            binding.textPreviewDimensions.setVisibility(View.GONE);
+        }
 
         // Description under amenities (if present)
         String description = spot.getDescription();

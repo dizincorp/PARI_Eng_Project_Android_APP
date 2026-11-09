@@ -688,6 +688,15 @@ public class SpotRepository {
         entity.setAccessInstructions(spot.getAccessInstructions());
         entity.setAccessTime("24/7");
         entity.setOwnerEmail(spot.getOwnerId());
+        if (spot.getLengthCm() > 0) {
+            entity.setLengthCm(spot.getLengthCm());
+        }
+        if (spot.getWidthCm() > 0) {
+            entity.setWidthCm(spot.getWidthCm());
+        }
+        if (spot.getHeightCm() != null) {
+            entity.setHeightCm(spot.getHeightCm());
+        }
 
         String rawStatus = spot.getStatus();
         if (rawStatus == null || rawStatus.isEmpty()) {

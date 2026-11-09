@@ -225,6 +225,15 @@ public class ReservePlaceActivity extends BaseActivity {
         binding.chipGroupPlaceAmenities.setVisibility(hasAmenities ? View.VISIBLE : View.GONE);
 
         // Description under amenities (if present)
+        // Spot dimensions
+        String dimensions = currentPlace.getFormattedDimensions();
+        if (dimensions != null && !dimensions.isEmpty()) {
+            binding.textPlaceDimensions.setText(String.format("📐 Wymiary: %s", dimensions));
+            binding.textPlaceDimensions.setVisibility(View.VISIBLE);
+        } else {
+            binding.textPlaceDimensions.setVisibility(View.GONE);
+        }
+
         String description = currentPlace.getDescription();
         if ((description == null || description.trim().isEmpty()) && currentPlace.getAccessInstructions() != null && !currentPlace.getAccessInstructions().trim().isEmpty()) {
             description = currentPlace.getAccessInstructions();

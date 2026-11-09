@@ -43,6 +43,11 @@ public class ParkingPlace {
     private String driverVehicle;
     private boolean isCheckedIn;
 
+    // Spot dimensions in centimeters
+    private int lengthCm = 500;
+    private int widthCm = 250;
+    private Integer heightCm = 200;
+
     /**
      * Default constructor for ParkingPlace.
      */
@@ -402,5 +407,39 @@ public class ParkingPlace {
             return "Miejsce " + (placeNumber != null ? placeNumber : "");
         }
         return "Miejsce " + (placeNumber != null ? placeNumber : "") + " - " + street;
+    }
+
+    public int getLengthCm() {
+        return lengthCm > 0 ? lengthCm : 500;
+    }
+
+    public void setLengthCm(int lengthCm) {
+        this.lengthCm = lengthCm;
+    }
+
+    public int getWidthCm() {
+        return widthCm > 0 ? widthCm : 250;
+    }
+
+    public void setWidthCm(int widthCm) {
+        this.widthCm = widthCm;
+    }
+
+    public Integer getHeightCm() {
+        return heightCm;
+    }
+
+    public void setHeightCm(Integer heightCm) {
+        this.heightCm = heightCm;
+    }
+
+    public String getFormattedDimensions() {
+        double lenM = (lengthCm > 0 ? lengthCm : 500) / 100.0;
+        double widM = (widthCm > 0 ? widthCm : 250) / 100.0;
+        if (heightCm != null && heightCm > 0) {
+            double hM = heightCm / 100.0;
+            return String.format(Locale.getDefault(), "%.1fm × %.1fm (wys. %.1fm)", lenM, widM, hM);
+        }
+        return String.format(Locale.getDefault(), "%.1fm × %.1fm", lenM, widM);
     }
 }

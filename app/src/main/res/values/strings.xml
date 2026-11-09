@@ -630,4 +630,9 @@
     <string name="badge_day_free_driver">Wolne</string>
     <string name="badge_day_reserved_driver">Częściowo zajęte</string>
     <string name="badge_day_blocked_driver">Zablokowane</string>
+
+    <!-- Additional Spot Details & Navigation -->
+    <string name="action_change">Zmień</string>
+    <string name="label_spot_dimensions">Wymiary miejsca</string>
+    <string name="btn_navigate_gmaps">Nawiguj w Google Maps</string>
 </resources>

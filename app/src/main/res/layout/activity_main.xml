@@ -428,6 +428,25 @@
                 app:chipSpacingHorizontal="6dp"
                 tools:visibility="visible" />
 
+            <!-- Spot Dimensions Badge -->
+            <TextView
+                android:id="@+id/text_preview_dimensions"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:background="@drawable/bg_badge_slate"
+                android:drawableStart="@drawable/ic_card_vehicles"
+                android:drawablePadding="6dp"
+                android:drawableTint="@color/brand_slate_600"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="4dp"
+                android:textColor="@color/brand_slate_700"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:visibility="gone"
+                tools:text="📐 Wymiary: 5.0m × 2.5m"
+                tools:visibility="visible" />
+
             <!-- Spot Description / Access Instructions -->
             <TextView
                 android:id="@+id/text_preview_description"

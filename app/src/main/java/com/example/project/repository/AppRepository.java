@@ -546,6 +546,9 @@ public class AppRepository {
         p.setDriverName(e.getDriverName());
         p.setDriverVehicle(e.getDriverVehicle());
         p.setCheckedIn(e.isCheckedIn());
+        p.setLengthCm(e.getLengthCm());
+        p.setWidthCm(e.getWidthCm());
+        p.setHeightCm(e.getHeightCm());
         return p;
     }
 
@@ -585,6 +588,9 @@ public class AppRepository {
         e.setDriverName(p.getDriverName());
         e.setDriverVehicle(p.getDriverVehicle());
         e.setCheckedIn(p.isCheckedIn());
+        e.setLengthCm(p.getLengthCm());
+        e.setWidthCm(p.getWidthCm());
+        e.setHeightCm(p.getHeightCm());
         return e;
     }
 

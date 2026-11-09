@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
@@ -179,6 +180,137 @@
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
+
+    <!-- Spot Dimensions Card -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_dialog_dimensions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        app:cardBackgroundColor="@color/brand_slate_50"
+        app:cardCornerRadius="14dp"
+        app:cardElevation="0dp"
+        app:strokeColor="@color/brand_slate_200"
+        app:strokeWidth="1dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal"
+            android:padding="12dp">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_card_vehicles"
+                app:tint="@color/brand_slate_700" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/label_spot_dimensions"
+                    android:textColor="@color/brand_slate_500"
+                    android:textSize="11sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/text_dialog_dimensions"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textColor="@color/brand_slate_950"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    tools:text="5.0m × 2.5m (wys. 2.0m)" />
+            </LinearLayout>
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Access Instructions Card -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/card_dialog_access_instructions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:visibility="gone"
+        app:cardBackgroundColor="@color/brand_amber_50"
+        app:cardCornerRadius="14dp"
+        app:cardElevation="0dp"
+        app:strokeColor="@color/brand_amber_200"
+        app:strokeWidth="1dp"
+        tools:visibility="visible">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_lock"
+                    app:tint="@color/brand_amber_800" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:text="@string/label_access_instructions"
+                    android:textColor="@color/brand_amber_800"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/text_dialog_access_instructions"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:lineSpacingExtra="2dp"
+                android:textColor="@color/brand_slate_800"
+                android:textSize="13sp"
+                tools:text="Kod do bramy: 1234. Po wjeździe skręć w prawo na miejsce nr 7." />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <!-- Navigation CTA Button (Google Maps) -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btn_dialog_navigate"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:layout_marginTop="12dp"
+        android:backgroundTint="@color/brand_emerald_50"
+        android:elevation="0dp"
+        android:text="@string/btn_navigate_gmaps"
+        android:textAllCaps="false"
+        android:textColor="@color/brand_emerald_800"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        app:cornerRadius="14dp"
+        app:icon="@drawable/ic_navigation"
+        app:iconGravity="textStart"
+        app:iconPadding="8dp"
+        app:iconSize="18dp"
+        app:iconTint="@color/brand_emerald_700"
+        app:strokeColor="@color/brand_emerald_300"
+        app:strokeWidth="1dp" />
 
     <!-- Parking Lifecycle Actions (Check-In & Check-Out) -->
     <com.google.android.material.button.MaterialButton

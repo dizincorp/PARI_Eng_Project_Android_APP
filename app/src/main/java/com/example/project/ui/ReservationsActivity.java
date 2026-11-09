@@ -247,17 +247,34 @@ public class ReservationsActivity extends BaseActivity implements ReservationsAd
     public void onNavigateClick(Reservation reservation) {
         if (reservation == null) return;
 
-        String street = reservation.getStreet() != null && !reservation.getStreet().isEmpty()
-                ? reservation.getStreet() : "Warszawa";
-        Uri gmmIntentUri = Uri.parse("geo:0,0?q=" + Uri.encode(street));
-        Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+        com.example.project.model.ParkingPlace spot =
+                com.example.project.repository.AppRepository.getInstance().getPlaceById(reservation.getPlaceId());
+
+        Uri navUri;
+        if (spot != null && spot.getLatitude() != 0.0 && spot.getLongitude() != 0.0) {
+            navUri = Uri.parse(String.format(Locale.US, "google.navigation:q=%f,%f", spot.getLatitude(), spot.getLongitude()));
+        } else {
+            String street = reservation.getStreet() != null && !reservation.getStreet().isEmpty()
+                    ? reservation.getStreet() : "Warszawa";
+            String city = reservation.getCity() != null && !reservation.getCity().isEmpty()
+                    ? reservation.getCity() : "";
+            String query = !city.isEmpty() ? city + ", " + street : street;
+            navUri = Uri.parse("google.navigation:q=" + Uri.encode(query));
+        }
+
+        Intent mapIntent = new Intent(Intent.ACTION_VIEW, navUri);
         mapIntent.setPackage("com.google.android.apps.maps");
 
         if (mapIntent.resolveActivity(getPackageManager()) != null) {
             startActivity(mapIntent);
         } else {
-            Intent genericMapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
-            startActivity(genericMapIntent);
+            Uri fallbackUri = (spot != null && spot.getLatitude() != 0.0 && spot.getLongitude() != 0.0)
+                    ? Uri.parse(String.format(Locale.US, "geo:%f,%f?q=%f,%f(%s)",
+                            spot.getLatitude(), spot.getLongitude(),
+                            spot.getLatitude(), spot.getLongitude(),
+                            Uri.encode(reservation.getPlaceName() != null ? reservation.getPlaceName() : "Parking")))
+                    : Uri.parse("geo:0,0?q=" + Uri.encode(reservation.getStreet() != null ? reservation.getStreet() : "Warszawa"));
+            startActivity(new Intent(Intent.ACTION_VIEW, fallbackUri));
         }
     }
 
@@ -340,6 +357,33 @@ public class ReservationsActivity extends BaseActivity implements ReservationsAd
         dialogBinding.textDialogEntryDate.setText(dateFormat.format(new Date(startMs)));
         dialogBinding.textDialogExitTime.setText(timeFormat.format(new Date(endMs)));
         dialogBinding.textDialogExitDate.setText(dateFormat.format(new Date(endMs)));
+
+        // Spot dimensions & access instructions
+        com.example.project.model.ParkingPlace spot =
+                com.example.project.repository.AppRepository.getInstance().getPlaceById(reservation.getPlaceId());
+
+        if (spot != null) {
+            String dimensions = spot.getFormattedDimensions();
+            if (dimensions != null && !dimensions.isEmpty()) {
+                dialogBinding.textDialogDimensions.setText(dimensions);
+                dialogBinding.cardDialogDimensions.setVisibility(View.VISIBLE);
+            } else {
+                dialogBinding.cardDialogDimensions.setVisibility(View.GONE);
+            }
+
+            String instructions = spot.getAccessInstructions();
+            if (instructions != null && !instructions.trim().isEmpty()) {
+                dialogBinding.textDialogAccessInstructions.setText(instructions.trim());
+                dialogBinding.cardDialogAccessInstructions.setVisibility(View.VISIBLE);
+            } else {
+                dialogBinding.cardDialogAccessInstructions.setVisibility(View.GONE);
+            }
+        } else {
+            dialogBinding.cardDialogDimensions.setVisibility(View.GONE);
+            dialogBinding.cardDialogAccessInstructions.setVisibility(View.GONE);
+        }
+
+        dialogBinding.btnDialogNavigate.setOnClickListener(v -> onNavigateClick(reservation));
 
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setView(dialogBinding.getRoot())
