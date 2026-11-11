@@ -59,6 +59,17 @@ public interface SpotApiService {
     );
 
     /**
+     * Searches for nearby parking spots with explicit page size (backend max 50).
+     */
+    @GET("api/spots")
+    Call<List<ParkingSpot>> getSpots(
+            @Query("lat") double lat,
+            @Query("lng") double lng,
+            @Query("radiusMeters") Double radiusMeters,
+            @Query("size") Integer size
+    );
+
+    /**
      * Retrieves parking spots without query parameters.
      *
      * @return Retrofit Call delivering a list of ParkingSpot items

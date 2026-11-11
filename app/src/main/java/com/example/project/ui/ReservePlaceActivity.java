@@ -832,63 +832,39 @@ public class ReservePlaceActivity extends BaseActivity {
                 binding.btnReserveAndPay.setEnabled(false);
             } else {
                 binding.textReservationBlockedWarning.setVisibility(View.GONE);
-                binding.btnReserveAndPay.setEnabled(true);
+                binding.btnReserveAndPay.setEnabled(false);
             }
         } else {
             binding.textReservationBlockedWarning.setVisibility(View.GONE);
-            binding.btnReserveAndPay.setEnabled(true);
+            binding.btnReserveAndPay.setEnabled(false);
         }
 
-        // Local pricing calculation fallback matching PricingService
+        // Show pending calculation placeholder while fetching authoritative price quote from backend
+        binding.textSummaryRateValue.setText("...");
+        binding.textSummaryServiceFee.setText("...");
+        binding.textSummaryTotalSum.setText("Kalkulacja...");
+        binding.layoutSummaryDiscountRow.setVisibility(View.GONE);
+
         if ("DAILY".equals(selectedBookingType)) {
             long diffMs = Math.max(86400000L, reqEndMs - reqStartMs);
             long days = Math.max(1, Math.round((double) diffMs / 86400000.0));
             double dailyRate = currentPlace.getDailyPrice() > 0 ? currentPlace.getDailyPrice() : currentPlace.getPrice() * 7;
-            double subtotal = dailyRate * days;
-            double serviceFee = 2.50;
-            double total = subtotal + serviceFee;
 
             String dayWord = (days == 1) ? "dzień" : (days == 7 ? "tydzień" : "dni");
             binding.textSummaryTariffValue.setText(String.format(Locale.getDefault(), "📅 Dni (%d %s)", days, dayWord));
             binding.textSummaryDuration.setText(String.format(Locale.getDefault(), "%d dni", days));
             binding.textSummaryRateLabel.setText(String.format(Locale.getDefault(), "Stawka dzienna (%.2f PLN/d)", dailyRate));
-            binding.textSummaryRateValue.setText(String.format(Locale.getDefault(), "%.2f PLN", subtotal));
-            binding.layoutSummaryDiscountRow.setVisibility(View.GONE);
-            binding.textSummaryServiceFee.setText(String.format(Locale.getDefault(), "%.2f PLN", serviceFee));
-            binding.textSummaryTotalSum.setText(String.format(Locale.getDefault(), "%.2f PLN", total));
 
             viewModel.fetchQuote(currentPlace.getId(), reqStartMs, reqEndMs, "DAILY", null);
         } else if ("MONTHLY".equals(selectedBookingType)) {
             int months = selectedDurationMonths != null ? selectedDurationMonths : 1;
             double dailyRef = currentPlace.getDailyPrice() > 0 ? currentPlace.getDailyPrice() : currentPlace.getPrice() * 7;
             double monthlyRate = currentPlace.getMonthlyPrice() > 0 ? currentPlace.getMonthlyPrice() : dailyRef * 20;
-            double baseCost = monthlyRate * months;
-
-            double discountPercent = 0.0;
-            if (months >= 12) discountPercent = 0.20;
-            else if (months >= 6) discountPercent = 0.15;
-            else if (months >= 3) discountPercent = 0.10;
-
-            double discountAmount = baseCost * discountPercent;
-            double subtotal = baseCost - discountAmount;
-            double serviceFee = 5.00;
-            double total = subtotal + serviceFee;
 
             String monthWord = (months == 1) ? "miesiąc" : (months < 5 ? "miesiące" : "miesięcy");
             binding.textSummaryTariffValue.setText(String.format(Locale.getDefault(), "🗓 Miesięczny (%d %s)", months, monthWord));
             binding.textSummaryDuration.setText(String.format(Locale.getDefault(), "%d mies.", months));
             binding.textSummaryRateLabel.setText(String.format(Locale.getDefault(), "Stawka miesięczna (%.2f PLN/m)", monthlyRate));
-            binding.textSummaryRateValue.setText(String.format(Locale.getDefault(), "%.2f PLN", baseCost));
-
-            if (discountPercent > 0) {
-                binding.layoutSummaryDiscountRow.setVisibility(View.VISIBLE);
-                binding.textSummaryDiscountValue.setText(String.format(Locale.getDefault(), "-%.0f%% (-%.2f PLN)", discountPercent * 100, discountAmount));
-            } else {
-                binding.layoutSummaryDiscountRow.setVisibility(View.GONE);
-            }
-
-            binding.textSummaryServiceFee.setText(String.format(Locale.getDefault(), "%.2f PLN", serviceFee));
-            binding.textSummaryTotalSum.setText(String.format(Locale.getDefault(), "%.2f PLN", total));
 
             viewModel.fetchQuote(currentPlace.getId(), reqStartMs, reqEndMs, "MONTHLY", months);
         } else {
@@ -896,17 +872,10 @@ public class ReservePlaceActivity extends BaseActivity {
             double rate = currentPlace.getPrice() > 0 ? currentPlace.getPrice() : 10.0;
             long diffMs = Math.max(1800000L, reqEndMs - reqStartMs);
             double hours = Math.max(0.5, (double) diffMs / (1000.0 * 60.0 * 60.0));
-            double subtotal = rate * hours;
-            double serviceFee = Math.max(2.50, subtotal * 0.05);
-            double total = subtotal + serviceFee;
 
             binding.textSummaryTariffValue.setText(R.string.tariff_hourly);
             binding.textSummaryDuration.setText(String.format(Locale.getDefault(), "%.1fh", hours));
             binding.textSummaryRateLabel.setText(String.format(Locale.getDefault(), "Stawka (%.2f PLN/h)", rate));
-            binding.textSummaryRateValue.setText(String.format(Locale.getDefault(), "%.2f PLN", subtotal));
-            binding.layoutSummaryDiscountRow.setVisibility(View.GONE);
-            binding.textSummaryServiceFee.setText(String.format(Locale.getDefault(), "%.2f PLN", serviceFee));
-            binding.textSummaryTotalSum.setText(String.format(Locale.getDefault(), "%.2f PLN", total));
 
             viewModel.fetchQuote(currentPlace.getId(), reqStartMs, reqEndMs, "HOURLY", null);
         }
@@ -1174,7 +1143,19 @@ public class ReservePlaceActivity extends BaseActivity {
                 if (quote.getTotal() != null) {
                     binding.textSummaryTotalSum.setText(String.format(Locale.getDefault(), "%.2f %s", quote.getTotal(), currency));
                 }
+
+                // Enable reserve button only if no active block warning is present
+                boolean hasWarning = binding.textReservationBlockedWarning.getVisibility() == View.VISIBLE;
+                binding.btnReserveAndPay.setEnabled(!hasWarning);
+            } else if (resource.isLoading()) {
+                binding.textSummaryRateValue.setText("...");
+                binding.textSummaryServiceFee.setText("...");
+                binding.textSummaryTotalSum.setText("Kalkulacja...");
+                binding.btnReserveAndPay.setEnabled(false);
             } else if (resource.isError() && resource.getMessage() != null && !resource.getMessage().isEmpty()) {
+                binding.textSummaryRateValue.setText("—");
+                binding.textSummaryServiceFee.setText("—");
+                binding.textSummaryTotalSum.setText("— PLN");
                 binding.textReservationBlockedWarning.setText(resource.getMessage());
                 binding.textReservationBlockedWarning.setVisibility(View.VISIBLE);
                 binding.btnReserveAndPay.setEnabled(false);

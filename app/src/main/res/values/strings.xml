@@ -431,6 +431,15 @@
     <string name="status_in_progress">W TRAKCIE</string>
     <string name="status_rejected">ODRZUCONA</string>
     <string name="status_expired">WYGASŁA</string>
+    <string name="status_no_show">NIE PRZYJECHAŁ</string>
+    <string name="status_overstay_grace">PRZEKROCZONY CZAS (+1H)</string>
+    <string name="countdown_grace_format">Przekroczony czas! Check-out za: %1$dh %2$02dm %3$02ds</string>
+    <string name="notif_auto_checkin_title">Automatyczny Check-in</string>
+    <string name="notif_auto_checkin_msg">Jesteś na miejscu „%1$s”. Parkowanie zostało rozpoczęte automatycznie.</string>
+    <string name="notif_urgent_checkout_title">Wykonaj check-out natychmiast!</string>
+    <string name="notif_urgent_checkout_msg">Czas rezerwacji „%1$s” minął! Przyznano 1 dodatkową godzinę, cena wzrosła o stawkę godzinową + 15%%. Wykonaj check-out natychmiast!</string>
+    <string name="notif_auto_checkout_title">Rezerwacja zakończona automatycznie</string>
+    <string name="notif_auto_checkout_msg">Dodatkowa godzina dla „%1$s” minęła. Parkowanie zostało automatycznie zakończone i przeniesione do historii.</string>
     <!-- Reservation Lifecycle Strings -->
     <string name="toast_cancel_success">Rezerwacja została pomyślnie anulowana.</string>
     <string name="toast_cancel_failed">Nie udało się anulować rezerwacji.</string>
@@ -635,4 +644,121 @@
     <string name="action_change">Zmień</string>
     <string name="label_spot_dimensions">Wymiary miejsca</string>
     <string name="btn_navigate_gmaps">Nawiguj w Google Maps</string>
+
+    <!-- Map Search, Nearby Parkings & Spot Filters -->
+    <string name="map_filter_title">Filtry wyszukiwania</string>
+    <string name="map_filter_btn">Filtry</string>
+    <string name="map_filter_reset">Wyczyść</string>
+    <string name="map_filter_apply">Zastosuj filtry</string>
+    <string name="map_filter_price_section">Cena za godzinę (PLN/h)</string>
+    <string name="map_filter_price_min">Cena od (zł)</string>
+    <string name="map_filter_price_max">Cena do (zł)</string>
+    <string name="map_filter_any">Dowolna</string>
+    <string name="map_filter_radius_section">Promień wokół lokalizacji</string>
+    <string name="map_filter_hours_section">Godziny pracy i dostępność</string>
+    <string name="map_filter_hours_any">Dowolne godziny</string>
+    <string name="map_filter_hours_now">Otwarte teraz</string>
+    <string name="map_filter_hours_24_7">Całodobowe (24/7)</string>
+    <string name="map_filter_hours_custom">Wybrany przedział godzin</string>
+    <string name="map_filter_day_today">Dziś</string>
+    <string name="map_filter_day_tomorrow">Jutro</string>
+    <string name="map_filter_hour_from">Od godz.</string>
+    <string name="map_filter_hour_to">Do godz.</string>
+    <string name="map_filter_dimensions_section">Parametry i wymiary miejsca</string>
+    <string name="map_filter_size_any">Dowolny rozmiar</string>
+    <string name="map_filter_size_compact">Kompakt (≥ 4.5 × 2.2 m)</string>
+    <string name="map_filter_size_standard">Standard / SUV (≥ 5.0 × 2.5 m)</string>
+    <string name="map_filter_size_large">Duże (≥ 5.5 × 2.6 m)</string>
+    <string name="map_filter_min_length_cm">Min. dł. (cm)</string>
+    <string name="map_filter_min_width_cm">Min. szer. (cm)</string>
+    <string name="map_filter_min_height_cm">Min. wys. (cm)</string>
+    <string name="map_filter_amenities_section">Udogodnienia i wyposażenie</string>
+    <string name="map_filter_extra_section">Dodatkowe kryteria</string>
+    <string name="map_filter_only_verified">Tylko zweryfikowane miejsca</string>
+    <string name="map_filter_only_auto_accept">Natychmiastowe potwierdzenie</string>
+    <string name="map_filter_rating_section">Minimalna ocena</string>
+    <string name="map_filter_sort_section">Sortowanie wyników</string>
+    <string name="sort_distance">Najbliższe</string>
+    <string name="sort_price_asc">Najtańsze</string>
+    <string name="sort_rating_desc">Najwyżej oceniane</string>
+    <string name="nearby_list_btn">Lista (%1$d)</string>
+    <string name="nearby_list_title">Parkingi w pobliżu</string>
+    <string name="nearby_searched_address_label">Wyszukany adres</string>
+    <string name="nearby_banner_format">%1$s • %2$d parkingów (promień %3$s)</string>
+    <string name="nearby_banner_empty">%1$s • Brak parkingów w promieniu %2$s</string>
+    <string name="nearby_expand_radius_btn">Zwiększ promień</string>
+    <string name="nearby_no_results_hint">Brak wolnych parkingów spełniających wybrane filtry lub w tym promieniu.</string>
+    <string name="amenity_disabled_access">Dla niepełnosprawnych</string>
+    <string name="amenity_wide_space">Szerokie miejsce</string>
+
+    <!-- Places (Moje miejsca) Filter -->
+    <string name="places_filter_dialog_title">Filtruj moje miejsca</string>
+    <string name="places_filter_all">Wszystkie</string>
+    <string name="places_filter_free">Wolne</string>
+    <string name="places_filter_occupied">Zajęte</string>
+    <string name="places_filter_checked_in">Zaparkowane teraz</string>
+    <string name="places_filter_reserved">Zarezerwowane</string>
+    <string name="places_filter_active">Aktywne</string>
+    <string name="places_filter_inactive">Wyłączone</string>
+    <string name="places_filter_blocked">Zablokowane kalendarzem</string>
+    <string name="places_filter_empty">Brak miejsc w wybranej kategorii: %1$s</string>
+    <string name="places_filter_show_all">Pokaż wszystkie</string>
+
+    <!-- History (Historia) Filters -->
+    <string name="history_filter_btn">Filtry</string>
+    <string name="history_filter_title">Filtruj i sortuj historię</string>
+    <string name="history_filter_sort_section">Sortowanie</string>
+    <string name="history_sort_end_desc">Koniec rezerwacji: najnowsze</string>
+    <string name="history_sort_end_asc">Koniec rezerwacji: najstarsze</string>
+    <string name="history_sort_price_desc">Cena końcowa: najwyższa</string>
+    <string name="history_sort_price_asc">Cena końcowa: najniższa</string>
+    <string name="history_sort_duration_desc">Czas trwania: najdłuższy</string>
+    <string name="history_sort_duration_asc">Czas trwania: najkrótszy</string>
+    <string name="history_filter_end_section">Data zakończenia rezerwacji</string>
+    <string name="history_filter_date_all">Wszystkie</string>
+    <string name="history_filter_date_today">Dzisiaj</string>
+    <string name="history_filter_date_7d">Ostatnie 7 dni</string>
+    <string name="history_filter_date_30d">Ostatnie 30 dni</string>
+    <string name="history_filter_date_custom">Własny zakres</string>
+    <string name="history_filter_date_from">Od daty</string>
+    <string name="history_filter_date_to">Do daty</string>
+    <string name="history_filter_duration_section">Czas trwania postoju</string>
+    <string name="history_filter_dur_all">Dowolny</string>
+    <string name="history_filter_dur_short">Do 2 godz.</string>
+    <string name="history_filter_dur_medium">2 – 6 godz.</string>
+    <string name="history_filter_dur_long">Powyżej 6 godz.</string>
+    <string name="history_filter_price_section">Cena końcowa (PLN)</string>
+    <string name="history_filter_overstay_only">Tylko z dopłatą po czasie (+15%)</string>
+    <string name="history_filter_status_section">Status zakończenia</string>
+    <string name="history_filter_search_hint">Szukaj po miejscu, ulicy lub pojeździe…</string>
+    <string name="history_filter_empty">Brak wpisów w historii pasujących do wybranych filtrów.</string>
+    <string name="filter_reset_btn">Resetuj filtry</string>
+    <string name="filter_apply_btn">Zastosuj</string>
+
+    <!-- Guest Reservations (Rezerwacje gości) Filters -->
+    <string name="owner_filter_title">Filtruj rezerwacje gości</string>
+    <string name="owner_filter_completed">Zakończone</string>
+    <string name="owner_filter_cancelled_rejected">Anulowane / Odrzucone</string>
+    <string name="owner_filter_expired_noshow">Wygasłe / Nieobecni</string>
+    <string name="owner_filter_spot_section">Miejsce parkingowe</string>
+    <string name="owner_filter_all_spots">Wszystkie miejsca</string>
+    <string name="owner_filter_date_section">Okres rezerwacji</string>
+    <string name="owner_filter_date_upcoming">Nadchodzące</string>
+    <string name="owner_filter_search_hint">Szukaj gościa, nr rej. lub adresu…</string>
+    <string name="owner_filter_price_section">Kwota rezerwacji (PLN)</string>
+    <string name="owner_filter_sort_section">Sortowanie</string>
+    <string name="owner_sort_start_desc">Termin: od najnowszych</string>
+    <string name="owner_sort_start_asc">Termin: od najbliższych / najstarszych</string>
+    <string name="owner_sort_price_desc">Kwota: od najwyższej</string>
+    <string name="owner_sort_price_asc">Kwota: od najniższej</string>
+    <string name="owner_filter_empty">Brak rezerwacji gości pasujących do filtrów.</string>
+    <string name="owner_filter_summary_count">Wyświetlono %1$d z %2$d rezerwacji gości</string>
+
+    <!-- Address autocomplete & multi-city disambiguation -->
+    <string name="search_suggestions_header">Sugerowane miasta i adresy</string>
+    <string name="search_suggestions_near_you">W pobliżu (%1$s)</string>
+    <string name="search_suggestions_section_nearby">Najbliżej Twojej lokalizacji</string>
+    <string name="search_suggestions_section_all">Wszystkie pasujące miasta</string>
+    <string name="search_ambiguous_city_hint">Ta ulica występuje w kilku miastach. Wybierz miasto z listy poniżej.</string>
+    <string name="search_suggestions_empty">Brak podpowiedzi adresów dla tego zapytania.</string>
 </resources>

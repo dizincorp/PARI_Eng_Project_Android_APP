@@ -21,6 +21,18 @@ public abstract class BaseActivity extends AppCompatActivity {
         com.example.project.network.ApiClient.init(getApplicationContext());
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        com.example.project.utils.ReservationLifecycleManager.getInstance(getApplicationContext()).startForegroundMonitoring();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        com.example.project.utils.ReservationLifecycleManager.getInstance(getApplicationContext()).stopForegroundMonitoring();
+    }
+
     /**
      * Configures the BottomNavigationView item selection listener and state.
      *

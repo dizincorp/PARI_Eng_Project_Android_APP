@@ -52,8 +52,37 @@ public class SpotRepository {
     private final ExecutorService diskExecutor;
     private final Context appContext;
 
+    /**
+     * Lightweight cached backend metadata for map filtering (verification & instant-booking flags).
+     */
+    public static final class SpotMetadata {
+        private final boolean verified;
+        private final boolean autoAccept;
+        private final boolean realtimeStatusEnabled;
+
+        public SpotMetadata(boolean verified, boolean autoAccept, boolean realtimeStatusEnabled) {
+            this.verified = verified;
+            this.autoAccept = autoAccept;
+            this.realtimeStatusEnabled = realtimeStatusEnabled;
+        }
+
+        public boolean isVerified() {
+            return verified;
+        }
+
+        public boolean isAutoAccept() {
+            return autoAccept;
+        }
+
+        public boolean isRealtimeStatusEnabled() {
+            return realtimeStatusEnabled;
+        }
+    }
+
     private final MutableLiveData<Resource<Void>> syncStatusLiveData = new MutableLiveData<>();
     private final Map<String, Long> lastBlockedFetchTimestamps = new ConcurrentHashMap<>();
+    private final Map<String, Long> lastRulesFetchTimestamps = new ConcurrentHashMap<>();
+    private final Map<String, SpotMetadata> spotMetadataCache = new ConcurrentHashMap<>();
 
     /**
      * Private constructor initializing dependencies from application context.
@@ -143,6 +172,17 @@ public class SpotRepository {
      */
     public LiveData<Resource<Void>> getSyncStatusLiveData() {
         return syncStatusLiveData;
+    }
+
+    @Nullable
+    public SpotMetadata getSpotMetadata(@Nullable String spotId) {
+        if (spotId == null) return null;
+        return spotMetadataCache.get(spotId.trim());
+    }
+
+    @NonNull
+    public Map<String, SpotMetadata> getSpotMetadataMap() {
+        return spotMetadataCache;
     }
 
     /**
@@ -425,7 +465,11 @@ public class SpotRepository {
     public void fetchAndSaveSpots(double lat, double lng, @Nullable Double radiusMeters) {
         syncStatusLiveData.setValue(Resource.loading(null));
 
-        apiService.getSpots(lat, lng, radiusMeters).enqueue(new Callback<List<ParkingSpot>>() {
+        Call<List<ParkingSpot>> call = apiService.getSpots(lat, lng, radiusMeters, 50);
+        if (call == null) {
+            call = apiService.getSpots(lat, lng, radiusMeters);
+        }
+        call.enqueue(new Callback<List<ParkingSpot>>() {
             @Override
             public void onResponse(@NonNull Call<List<ParkingSpot>> call,
                                    @NonNull Response<List<ParkingSpot>> response) {
@@ -523,7 +567,14 @@ public class SpotRepository {
                                 }
                                 entities.add(entity);
                                 if (entity.getId() != null) {
-                                    fetchBlockedPeriodsThrottled(entity.getId().trim());
+                                    String cleanId = entity.getId().trim();
+                                    spotMetadataCache.put(cleanId, new SpotMetadata(
+                                            spot.isVerified(),
+                                            spot.isAutoAccept(),
+                                            spot.isRealtimeStatusEnabled()
+                                    ));
+                                    fetchBlockedPeriodsThrottled(cleanId);
+                                    fetchAvailabilityRulesThrottled(cleanId);
                                 }
                             }
                         }
@@ -563,6 +614,16 @@ public class SpotRepository {
         }
     }
 
+    private void fetchAvailabilityRulesThrottled(@NonNull String spotId) {
+        if (appContext == null) return;
+        long now = System.currentTimeMillis();
+        Long last = lastRulesFetchTimestamps.get(spotId);
+        if (last == null || (now - last) > 60000L) {
+            lastRulesFetchTimestamps.put(spotId, now);
+            AvailabilityRepository.getInstance(appContext).fetchAvailabilityRules(spotId);
+        }
+    }
+
     /**
      * Fetches all spots owned by the authenticated user via GET /api/spots/mine
      * and synchronizes them into local Room database cache.
@@ -589,6 +650,13 @@ public class SpotRepository {
                         for (ParkingSpot spot : spots) {
                             if (spot == null) continue;
                             ParkingPlaceEntity entity = toEntity(spot);
+                            if (entity.getId() != null) {
+                                spotMetadataCache.put(entity.getId().trim(), new SpotMetadata(
+                                        spot.isVerified(),
+                                        spot.isAutoAccept(),
+                                        spot.isRealtimeStatusEnabled()
+                                ));
+                            }
                             if (currentEmail != null && !currentEmail.isEmpty()) {
                                 entity.setOwnerEmail(currentEmail);
                             }

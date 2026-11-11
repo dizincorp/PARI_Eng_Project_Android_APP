@@ -85,6 +85,17 @@ public class IsoDateTimeAdapter {
 
             dateStr = dateStr.trim();
 
+            // Prefer java.time ISO-8601 parsing first so arbitrary sub-second precision
+            // (e.g. 6-digit microseconds from Instant) and timezone offsets are exact.
+            try {
+                return Date.from(Instant.parse(dateStr));
+            } catch (Exception ignored) {
+            }
+            try {
+                return Date.from(ZonedDateTime.parse(dateStr, DateTimeFormatter.ISO_DATE_TIME).toInstant());
+            } catch (Exception ignored) {
+            }
+
             // Try standard ISO patterns
             for (String pattern : ISO_PATTERNS) {
                 try {

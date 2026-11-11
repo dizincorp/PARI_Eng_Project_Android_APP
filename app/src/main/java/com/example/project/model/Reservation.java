@@ -27,6 +27,9 @@ public class Reservation {
     private String pinCode;
     private int photoResId;
     private String imageUri;
+    private double hourlyRate;
+    private String qrToken;
+    private boolean overstayApplied;
 
     /**
      * Default constructor for Reservation.
@@ -266,6 +269,30 @@ public class Reservation {
 
     public String getImageUri() {
         return imageUri != null ? imageUri : "";
+    }
+
+    public double getHourlyRate() {
+        return hourlyRate;
+    }
+
+    public void setHourlyRate(double hourlyRate) {
+        this.hourlyRate = hourlyRate;
+    }
+
+    public String getQrToken() {
+        return qrToken != null ? qrToken : "";
+    }
+
+    public void setQrToken(String qrToken) {
+        this.qrToken = qrToken;
+    }
+
+    public boolean isOverstayApplied() {
+        return overstayApplied;
+    }
+
+    public void setOverstayApplied(boolean overstayApplied) {
+        this.overstayApplied = overstayApplied;
     }
 
     public void setImageUri(String imageUri) {

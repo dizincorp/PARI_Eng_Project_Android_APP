@@ -1,7 +1,11 @@
 package com.example.project.ui;
 
+import android.Manifest;
+import android.app.DatePickerDialog;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -13,6 +17,7 @@ import androidx.activity.EdgeToEdge;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
+import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -24,16 +29,22 @@ import com.example.project.R;
 import com.example.project.adapter.ReservationsAdapter;
 import com.example.project.databinding.ActivityReservationsBinding;
 import com.example.project.databinding.DialogActiveReservationDetailsBinding;
+import com.example.project.databinding.DialogHistoryFiltersBinding;
 import com.example.project.databinding.DialogRatingBinding;
 import com.example.project.model.Reservation;
 import com.example.project.network.Resource;
 import com.example.project.repository.AppRepository;
 import com.example.project.repository.ReviewRepository;
 import com.example.project.utils.NotificationHelper;
+import com.example.project.utils.ReservationFilterHelper;
+import com.example.project.utils.ReservationLifecycleManager;
 import com.example.project.viewmodel.ReservationsViewModel;
+import com.google.android.material.bottomsheet.BottomSheetBehavior;
+import com.google.android.material.bottomsheet.BottomSheetDialog;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -50,13 +61,21 @@ public class ReservationsActivity extends BaseActivity implements ReservationsAd
     private ReservationsAdapter adapter;
 
     private boolean isHistoryTab = false;
+    private boolean suppressQuickChipEvents = false;
     private final List<Reservation> activeReservationsList = new ArrayList<>();
     private final List<Reservation> historyReservationsList = new ArrayList<>();
+    private final ReservationFilterHelper.HistoryCriteria historyCriteria = new ReservationFilterHelper.HistoryCriteria();
+
+    private static final int REQ_LIFECYCLE_PERMISSIONS = 2101;
+    private boolean hasRequestedLifecyclePermissions = false;
 
     private final Handler timerHandler = new Handler(Looper.getMainLooper());
     private final Runnable timerRunnable = new Runnable() {
         @Override
         public void run() {
+            if (viewModel != null) {
+                viewModel.onTimeTick();
+            }
             if (adapter != null) {
                 adapter.updateCountdowns();
             }
@@ -84,20 +103,50 @@ public class ReservationsActivity extends BaseActivity implements ReservationsAd
 
         setupRecyclerView();
         setupTabs();
+        setupHistoryFilters();
         setupClickListeners();
         observeViewModel();
 
         // Initial fetch of reservations from REST API
         viewModel.refreshReservations();
+        requestLifecyclePermissionsIfNeeded();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         startTimer();
+        ReservationLifecycleManager.getInstance(this).evaluateAsync();
         // Automatically sync fresh reservations from REST backend
         if (viewModel != null) {
             viewModel.refreshReservations();
+        }
+    }
+
+    private void requestLifecyclePermissionsIfNeeded() {
+        if (hasRequestedLifecyclePermissions) return;
+        hasRequestedLifecyclePermissions = true;
+
+        List<String> needed = new ArrayList<>();
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
+                != PackageManager.PERMISSION_GRANTED) {
+            needed.add(Manifest.permission.ACCESS_FINE_LOCATION);
+        }
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU
+                && ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+            needed.add(Manifest.permission.POST_NOTIFICATIONS);
+        }
+        if (!needed.isEmpty()) {
+            ActivityCompat.requestPermissions(this, needed.toArray(new String[0]), REQ_LIFECYCLE_PERMISSIONS);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == REQ_LIFECYCLE_PERMISSIONS) {
+            ReservationLifecycleManager.getInstance(this).startForegroundMonitoring();
         }
     }
 
@@ -137,7 +186,8 @@ public class ReservationsActivity extends BaseActivity implements ReservationsAd
             binding.btnTabHistory.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.brand_slate_950));
             binding.btnTabHistory.setTextColor(ContextCompat.getColor(this, R.color.white));
 
-            renderList(historyReservationsList);
+            binding.layoutHistoryFilters.setVisibility(View.VISIBLE);
+            renderFilteredHistory();
         } else {
             binding.btnTabActive.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.brand_slate_950));
             binding.btnTabActive.setTextColor(ContextCompat.getColor(this, R.color.white));
@@ -145,8 +195,16 @@ public class ReservationsActivity extends BaseActivity implements ReservationsAd
             binding.btnTabHistory.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.brand_slate_100));
             binding.btnTabHistory.setTextColor(ContextCompat.getColor(this, R.color.brand_slate_600));
 
+            binding.layoutHistoryFilters.setVisibility(View.GONE);
             renderList(activeReservationsList);
         }
+    }
+
+    private void renderFilteredHistory() {
+        List<Reservation> filtered = ReservationFilterHelper.filterAndSortHistory(
+                historyReservationsList, historyCriteria, System.currentTimeMillis());
+        updateHistoryFilterBadge();
+        renderList(filtered);
     }
 
     private void renderList(List<Reservation> list) {
@@ -160,17 +218,314 @@ public class ReservationsActivity extends BaseActivity implements ReservationsAd
 
             if (isHistoryTab) {
                 binding.textEmptyTitle.setText(R.string.tab_history);
-                binding.textEmptyMessage.setText(R.string.msg_no_history_reservation);
+                boolean hasFilters = historyCriteria.countActiveFilters() > 0;
+                binding.textEmptyMessage.setText(hasFilters
+                        ? R.string.history_filter_empty : R.string.msg_no_history_reservation);
                 binding.btnSearchOnMap.setVisibility(View.GONE);
+                binding.btnResetHistoryFilters.setVisibility(hasFilters ? View.VISIBLE : View.GONE);
             } else {
                 binding.textEmptyTitle.setText(R.string.title_reservations);
                 binding.textEmptyMessage.setText(R.string.msg_no_active_reservation);
                 binding.btnSearchOnMap.setVisibility(View.VISIBLE);
+                binding.btnResetHistoryFilters.setVisibility(View.GONE);
             }
         } else {
             binding.layoutEmptyState.setVisibility(View.GONE);
             binding.recyclerReservations.setVisibility(View.VISIBLE);
         }
+    }
+
+    private void setupHistoryFilters() {
+        if (binding == null) return;
+
+        binding.chipGroupHistoryQuick.setOnCheckedStateChangeListener((group, checkedIds) -> {
+            if (suppressQuickChipEvents || checkedIds.isEmpty()) return;
+            int id = checkedIds.get(0);
+            historyCriteria.reset();
+            if (id == R.id.chip_hquick_completed) {
+                historyCriteria.setStatusFilter("COMPLETED");
+            } else if (id == R.id.chip_hquick_7d) {
+                historyCriteria.setEndDatePreset(ReservationFilterHelper.DatePreset.LAST_7_DAYS);
+            } else if (id == R.id.chip_hquick_short) {
+                historyCriteria.setDurationPreset(ReservationFilterHelper.DurationPreset.SHORT_LE_2H);
+            } else if (id == R.id.chip_hquick_price_desc) {
+                historyCriteria.setSortBy(ReservationFilterHelper.HistorySort.PRICE_DESC);
+            }
+            if (isHistoryTab) {
+                renderFilteredHistory();
+            } else {
+                updateHistoryFilterBadge();
+            }
+        });
+
+        binding.btnHistoryFilters.setOnClickListener(v -> showHistoryFiltersBottomSheet());
+
+        binding.btnResetHistoryFilters.setOnClickListener(v -> {
+            historyCriteria.reset();
+            syncQuickHistoryChips();
+            if (isHistoryTab) {
+                renderFilteredHistory();
+            }
+        });
+    }
+
+    private void syncQuickHistoryChips() {
+        if (binding == null) return;
+        suppressQuickChipEvents = true;
+        int count = historyCriteria.countActiveFilters();
+        if (count == 0) {
+            binding.chipHquickAll.setChecked(true);
+        } else if (count == 1 && "COMPLETED".equals(historyCriteria.getStatusFilter())) {
+            binding.chipHquickCompleted.setChecked(true);
+        } else if (count == 1 && historyCriteria.getEndDatePreset() == ReservationFilterHelper.DatePreset.LAST_7_DAYS) {
+            binding.chipHquick7d.setChecked(true);
+        } else if (count == 1 && historyCriteria.getDurationPreset() == ReservationFilterHelper.DurationPreset.SHORT_LE_2H) {
+            binding.chipHquickShort.setChecked(true);
+        } else if (count == 1 && historyCriteria.getSortBy() == ReservationFilterHelper.HistorySort.PRICE_DESC) {
+            binding.chipHquickPriceDesc.setChecked(true);
+        } else {
+            binding.chipGroupHistoryQuick.clearCheck();
+        }
+        suppressQuickChipEvents = false;
+    }
+
+    private void updateHistoryFilterBadge() {
+        if (binding == null) return;
+        int count = historyCriteria.countActiveFilters();
+        if (count > 0) {
+            binding.badgeHistoryFilterCount.setText(String.valueOf(count));
+            binding.badgeHistoryFilterCount.setVisibility(View.VISIBLE);
+        } else {
+            binding.badgeHistoryFilterCount.setVisibility(View.GONE);
+        }
+    }
+
+    private void showHistoryFiltersBottomSheet() {
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
+        DialogHistoryFiltersBinding fb = DialogHistoryFiltersBinding.inflate(LayoutInflater.from(this));
+        dialog.setContentView(fb.getRoot());
+        dialog.getBehavior().setState(BottomSheetBehavior.STATE_EXPANDED);
+
+        SimpleDateFormat dateFmt = new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault());
+        final Long[] tempFromMs = new Long[]{historyCriteria.getCustomEndFromMs()};
+        final Long[] tempToMs = new Long[]{historyCriteria.getCustomEndToMs()};
+
+        Runnable syncUi = () -> {
+            fb.editHistoryQuery.setText(historyCriteria.getQuery());
+
+            switch (historyCriteria.getSortBy()) {
+                case END_ASC:
+                    fb.chipHsortEndAsc.setChecked(true);
+                    break;
+                case PRICE_DESC:
+                    fb.chipHsortPriceDesc.setChecked(true);
+                    break;
+                case PRICE_ASC:
+                    fb.chipHsortPriceAsc.setChecked(true);
+                    break;
+                case DURATION_DESC:
+                    fb.chipHsortDurDesc.setChecked(true);
+                    break;
+                case DURATION_ASC:
+                    fb.chipHsortDurAsc.setChecked(true);
+                    break;
+                case END_DESC:
+                default:
+                    fb.chipHsortEndDesc.setChecked(true);
+                    break;
+            }
+
+            switch (historyCriteria.getEndDatePreset()) {
+                case TODAY:
+                    fb.chipHdateToday.setChecked(true);
+                    fb.layoutHistoryCustomDates.setVisibility(View.GONE);
+                    break;
+                case LAST_7_DAYS:
+                    fb.chipHdate7d.setChecked(true);
+                    fb.layoutHistoryCustomDates.setVisibility(View.GONE);
+                    break;
+                case LAST_30_DAYS:
+                    fb.chipHdate30d.setChecked(true);
+                    fb.layoutHistoryCustomDates.setVisibility(View.GONE);
+                    break;
+                case CUSTOM:
+                    fb.chipHdateCustom.setChecked(true);
+                    fb.layoutHistoryCustomDates.setVisibility(View.VISIBLE);
+                    break;
+                case ALL:
+                default:
+                    fb.chipHdateAll.setChecked(true);
+                    fb.layoutHistoryCustomDates.setVisibility(View.GONE);
+                    break;
+            }
+
+            tempFromMs[0] = historyCriteria.getCustomEndFromMs();
+            tempToMs[0] = historyCriteria.getCustomEndToMs();
+            fb.btnHistoryDateFrom.setText(tempFromMs[0] != null
+                    ? getString(R.string.history_filter_date_from) + ": " + dateFmt.format(new Date(tempFromMs[0]))
+                    : getString(R.string.history_filter_date_from));
+            fb.btnHistoryDateTo.setText(tempToMs[0] != null
+                    ? getString(R.string.history_filter_date_to) + ": " + dateFmt.format(new Date(tempToMs[0]))
+                    : getString(R.string.history_filter_date_to));
+
+            switch (historyCriteria.getDurationPreset()) {
+                case SHORT_LE_2H:
+                    fb.chipHdurShort.setChecked(true);
+                    break;
+                case MEDIUM_2_6H:
+                    fb.chipHdurMedium.setChecked(true);
+                    break;
+                case LONG_GT_6H:
+                    fb.chipHdurLong.setChecked(true);
+                    break;
+                case ALL:
+                default:
+                    fb.chipHdurAll.setChecked(true);
+                    break;
+            }
+
+            fb.editHistoryPriceMin.setText(historyCriteria.getMinPrice() != null
+                    ? formatCompactPrice(historyCriteria.getMinPrice()) : "");
+            fb.editHistoryPriceMax.setText(historyCriteria.getMaxPrice() != null
+                    ? formatCompactPrice(historyCriteria.getMaxPrice()) : "");
+            fb.checkboxOverstayOnly.setChecked(historyCriteria.isOnlyOverstay());
+
+            switch (historyCriteria.getStatusFilter()) {
+                case "COMPLETED":
+                    fb.chipHstatusCompleted.setChecked(true);
+                    break;
+                case "CANCELLED":
+                    fb.chipHstatusCancelled.setChecked(true);
+                    break;
+                case "REJECTED":
+                    fb.chipHstatusRejected.setChecked(true);
+                    break;
+                case "EXPIRED":
+                    fb.chipHstatusExpired.setChecked(true);
+                    break;
+                case "NO_SHOW":
+                    fb.chipHstatusNoshow.setChecked(true);
+                    break;
+                case "ALL":
+                default:
+                    fb.chipHstatusAll.setChecked(true);
+                    break;
+            }
+        };
+        syncUi.run();
+
+        fb.chipGroupHistoryDate.setOnCheckedStateChangeListener((group, checkedIds) -> {
+            boolean custom = checkedIds.contains(R.id.chip_hdate_custom);
+            fb.layoutHistoryCustomDates.setVisibility(custom ? View.VISIBLE : View.GONE);
+        });
+
+        fb.btnHistoryDateFrom.setOnClickListener(v -> showDatePicker(tempFromMs[0], pickedMs -> {
+            tempFromMs[0] = pickedMs;
+            fb.btnHistoryDateFrom.setText(getString(R.string.history_filter_date_from) + ": " + dateFmt.format(new Date(pickedMs)));
+        }));
+
+        fb.btnHistoryDateTo.setOnClickListener(v -> showDatePicker(tempToMs[0], pickedMs -> {
+            tempToMs[0] = pickedMs;
+            fb.btnHistoryDateTo.setText(getString(R.string.history_filter_date_to) + ": " + dateFmt.format(new Date(pickedMs)));
+        }));
+
+        fb.btnCloseHistoryFilters.setOnClickListener(v -> dialog.dismiss());
+
+        fb.btnResetHistoryDialogFilters.setOnClickListener(v -> {
+            historyCriteria.reset();
+            syncUi.run();
+        });
+
+        fb.btnApplyHistoryDialogFilters.setOnClickListener(v -> {
+            historyCriteria.setQuery(fb.editHistoryQuery.getText().toString());
+
+            int sortId = fb.chipGroupHistorySort.getCheckedChipId();
+            if (sortId == R.id.chip_hsort_end_asc) historyCriteria.setSortBy(ReservationFilterHelper.HistorySort.END_ASC);
+            else if (sortId == R.id.chip_hsort_price_desc) historyCriteria.setSortBy(ReservationFilterHelper.HistorySort.PRICE_DESC);
+            else if (sortId == R.id.chip_hsort_price_asc) historyCriteria.setSortBy(ReservationFilterHelper.HistorySort.PRICE_ASC);
+            else if (sortId == R.id.chip_hsort_dur_desc) historyCriteria.setSortBy(ReservationFilterHelper.HistorySort.DURATION_DESC);
+            else if (sortId == R.id.chip_hsort_dur_asc) historyCriteria.setSortBy(ReservationFilterHelper.HistorySort.DURATION_ASC);
+            else historyCriteria.setSortBy(ReservationFilterHelper.HistorySort.END_DESC);
+
+            int dateId = fb.chipGroupHistoryDate.getCheckedChipId();
+            if (dateId == R.id.chip_hdate_today) historyCriteria.setEndDatePreset(ReservationFilterHelper.DatePreset.TODAY);
+            else if (dateId == R.id.chip_hdate_7d) historyCriteria.setEndDatePreset(ReservationFilterHelper.DatePreset.LAST_7_DAYS);
+            else if (dateId == R.id.chip_hdate_30d) historyCriteria.setEndDatePreset(ReservationFilterHelper.DatePreset.LAST_30_DAYS);
+            else if (dateId == R.id.chip_hdate_custom) historyCriteria.setEndDatePreset(ReservationFilterHelper.DatePreset.CUSTOM);
+            else historyCriteria.setEndDatePreset(ReservationFilterHelper.DatePreset.ALL);
+
+            historyCriteria.setCustomEndFromMs(tempFromMs[0]);
+            historyCriteria.setCustomEndToMs(tempToMs[0]);
+
+            int durId = fb.chipGroupHistoryDuration.getCheckedChipId();
+            if (durId == R.id.chip_hdur_short) historyCriteria.setDurationPreset(ReservationFilterHelper.DurationPreset.SHORT_LE_2H);
+            else if (durId == R.id.chip_hdur_medium) historyCriteria.setDurationPreset(ReservationFilterHelper.DurationPreset.MEDIUM_2_6H);
+            else if (durId == R.id.chip_hdur_long) historyCriteria.setDurationPreset(ReservationFilterHelper.DurationPreset.LONG_GT_6H);
+            else historyCriteria.setDurationPreset(ReservationFilterHelper.DurationPreset.ALL);
+
+            historyCriteria.setMinPrice(parseOptionalDouble(fb.editHistoryPriceMin.getText().toString()));
+            historyCriteria.setMaxPrice(parseOptionalDouble(fb.editHistoryPriceMax.getText().toString()));
+            historyCriteria.setOnlyOverstay(fb.checkboxOverstayOnly.isChecked());
+
+            int statusId = fb.chipGroupHistoryStatus.getCheckedChipId();
+            if (statusId == R.id.chip_hstatus_completed) historyCriteria.setStatusFilter("COMPLETED");
+            else if (statusId == R.id.chip_hstatus_cancelled) historyCriteria.setStatusFilter("CANCELLED");
+            else if (statusId == R.id.chip_hstatus_rejected) historyCriteria.setStatusFilter("REJECTED");
+            else if (statusId == R.id.chip_hstatus_expired) historyCriteria.setStatusFilter("EXPIRED");
+            else if (statusId == R.id.chip_hstatus_noshow) historyCriteria.setStatusFilter("NO_SHOW");
+            else historyCriteria.setStatusFilter("ALL");
+
+            dialog.dismiss();
+            syncQuickHistoryChips();
+            if (isHistoryTab) {
+                renderFilteredHistory();
+            } else {
+                updateHistoryFilterBadge();
+            }
+        });
+
+        dialog.show();
+    }
+
+    private interface OnDateSelected {
+        void onPicked(long epochMs);
+    }
+
+    private void showDatePicker(@Nullable Long initialMs, @NonNull OnDateSelected callback) {
+        Calendar cal = Calendar.getInstance();
+        if (initialMs != null && initialMs > 0) {
+            cal.setTimeInMillis(initialMs);
+        }
+        new DatePickerDialog(
+                this,
+                (view, year, month, dayOfMonth) -> {
+                    Calendar picked = Calendar.getInstance();
+                    picked.set(year, month, dayOfMonth, 12, 0, 0);
+                    callback.onPicked(picked.getTimeInMillis());
+                },
+                cal.get(Calendar.YEAR),
+                cal.get(Calendar.MONTH),
+                cal.get(Calendar.DAY_OF_MONTH)
+        ).show();
+    }
+
+    @Nullable
+    private Double parseOptionalDouble(@Nullable String raw) {
+        if (raw == null || raw.trim().isEmpty()) return null;
+        try {
+            double val = Double.parseDouble(raw.trim().replace(',', '.'));
+            return val >= 0 ? val : null;
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    @NonNull
+    private String formatCompactPrice(double val) {
+        if (Math.abs(val - Math.round(val)) < 0.01) {
+            return String.valueOf(Math.round(val));
+        }
+        return String.format(Locale.US, "%.2f", val);
     }
 
     private void setupClickListeners() {
@@ -211,7 +566,7 @@ public class ReservationsActivity extends BaseActivity implements ReservationsAd
                 historyReservationsList.addAll(historyList);
             }
             if (isHistoryTab) {
-                renderList(historyReservationsList);
+                renderFilteredHistory();
             }
         });
 
@@ -238,9 +593,8 @@ public class ReservationsActivity extends BaseActivity implements ReservationsAd
 
     @Override
     public void onReservationClick(Reservation reservation) {
-        if (reservation != null) {
-            showActiveReservationDialog(reservation);
-        }
+        if (isHistoryTab || reservation == null) return;
+        showActiveReservationDialog(reservation);
     }
 
     @Override
@@ -390,17 +744,38 @@ public class ReservationsActivity extends BaseActivity implements ReservationsAd
                 .create();
 
         // Configure Check-In and Check-Out actions according to parking lifecycle state
-        boolean isCheckedIn = reservation.isCheckedIn();
-        if (isCheckedIn) {
+        long now = System.currentTimeMillis();
+        String effectiveStatus = ReservationLifecycleManager
+                .computeEffectiveStatus(reservation.getStatus(), reservation.getEndTimeMs(), now)
+                .toUpperCase(Locale.ROOT);
+        boolean isHistoryState = ReservationLifecycleManager.isHistoryStatus(
+                reservation.getStatus(), reservation.getEndTimeMs(), now);
+
+        if (isHistoryState) {
+            dialogBinding.btnCheckIn.setVisibility(View.GONE);
+            dialogBinding.btnCheckOut.setVisibility(View.GONE);
+            dialogBinding.btnCancelReservation.setVisibility(View.GONE);
+            dialogBinding.btnDialogNavigate.setVisibility(View.GONE);
+        } else if (reservation.isCheckedIn()) {
+            dialogBinding.btnCheckIn.setVisibility(View.VISIBLE);
+            dialogBinding.btnCheckOut.setVisibility(View.VISIBLE);
             dialogBinding.btnCheckIn.setEnabled(false);
             dialogBinding.btnCheckIn.setText(R.string.btn_already_checked_in);
             dialogBinding.btnCheckIn.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.gray_input_bg));
             dialogBinding.btnCheckIn.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
 
+            boolean inOverstay = reservation.getEndTimeMs() > 0 && now >= reservation.getEndTimeMs();
             dialogBinding.btnCheckOut.setEnabled(true);
-            dialogBinding.btnCheckOut.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.orange_dot));
+            dialogBinding.btnCheckOut.setBackgroundTintList(ContextCompat.getColorStateList(
+                    this, inOverstay ? R.color.brand_rose_700 : R.color.orange_dot));
             dialogBinding.btnCancelReservation.setVisibility(View.GONE);
+        } else if (effectiveStatus.contains("PENDING")) {
+            dialogBinding.btnCheckIn.setVisibility(View.GONE);
+            dialogBinding.btnCheckOut.setVisibility(View.GONE);
+            dialogBinding.btnCancelReservation.setVisibility(View.VISIBLE);
         } else {
+            dialogBinding.btnCheckIn.setVisibility(View.VISIBLE);
+            dialogBinding.btnCheckOut.setVisibility(View.VISIBLE);
             dialogBinding.btnCheckIn.setEnabled(true);
             dialogBinding.btnCheckIn.setText(R.string.btn_check_in);
             dialogBinding.btnCheckIn.setBackgroundTintList(ContextCompat.getColorStateList(this, R.color.chip_bg_selected));
@@ -462,6 +837,7 @@ public class ReservationsActivity extends BaseActivity implements ReservationsAd
             }
         });
 
+        dialogBinding.btnCloseDialogTop.setOnClickListener(v -> dialog.dismiss());
         dialogBinding.btnCloseDetails.setOnClickListener(v -> dialog.dismiss());
 
         dialog.show();

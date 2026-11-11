@@ -16,6 +16,7 @@ import retrofit2.http.Body;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
+import retrofit2.http.Query;
 
 /**
  * Retrofit REST API interface defining parking reservation endpoints
@@ -38,15 +39,25 @@ public interface ReservationApiService {
      *
      * @return Retrofit Call delivering a list of {@link ReservationResponse}
      */
-    @GET("/api/reservations")
+    @GET("/api/reservations?size=50")
     Call<List<ReservationResponse>> getReservations();
+
+    /**
+     * Retrieves a page of reservations for the current authenticated user via GET /api/reservations.
+     *
+     * @param page Zero-based page index
+     * @param size Maximum items per page
+     * @return Retrofit Call delivering a list of {@link ReservationResponse}
+     */
+    @GET("/api/reservations")
+    Call<List<ReservationResponse>> getReservationsPaged(@Query("page") int page, @Query("size") int size);
 
     /**
      * Retrieves incoming and active reservations for the current authenticated user via GET /api/reservations/incoming.
      *
      * @return Retrofit Call delivering a list of incoming {@link ReservationResponse}
      */
-    @GET("/api/reservations/incoming")
+    @GET("/api/reservations/incoming?size=50")
     Call<List<ReservationResponse>> getIncomingReservations();
 
     /**

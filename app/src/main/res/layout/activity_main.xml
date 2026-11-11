@@ -45,14 +45,149 @@
             app:strokeColor="@color/brand_slate_200"
             app:strokeWidth="1dp">
 
-            <androidx.appcompat.widget.SearchView
-                android:id="@+id/search_view"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:theme="@style/ThemeOverlay.AppCompat.Light"
-                app:iconifiedByDefault="false"
-                app:queryBackground="@null"
-                app:queryHint="@string/search_hint" />
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <androidx.appcompat.widget.SearchView
+                    android:id="@+id/search_view"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:imeOptions="actionSearch"
+                    android:theme="@style/ThemeOverlay.AppCompat.Light"
+                    app:iconifiedByDefault="false"
+                    app:queryBackground="@null"
+                    app:queryHint="@string/search_hint" />
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="26dp"
+                    android:background="@color/brand_slate_200" />
+
+                <FrameLayout
+                    android:id="@+id/btn_map_filters"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:clickable="true"
+                    android:contentDescription="@string/map_filter_btn"
+                    android:focusable="true">
+
+                    <ImageView
+                        android:layout_width="21dp"
+                        android:layout_height="21dp"
+                        android:layout_gravity="center"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_tune"
+                        app:tint="@color/brand_slate_900" />
+
+                    <TextView
+                        android:id="@+id/badge_filter_count"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:layout_gravity="top|end"
+                        android:layout_marginTop="6dp"
+                        android:layout_marginEnd="6dp"
+                        android:background="@drawable/bg_badge_emerald"
+                        android:gravity="center"
+                        android:textColor="@color/brand_emerald_800"
+                        android:textSize="9sp"
+                        android:textStyle="bold"
+                        android:visibility="gone"
+                        tools:text="2"
+                        tools:visibility="visible" />
+                </FrameLayout>
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Address Autocomplete & Multi-City Disambiguation Dropdown -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_search_suggestions"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="6dp"
+            android:visibility="gone"
+            app:cardBackgroundColor="@color/card_background"
+            app:cardCornerRadius="18dp"
+            app:cardElevation="8dp"
+            app:strokeColor="@color/brand_slate_200"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="14dp"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="8dp">
+
+                    <TextView
+                        android:id="@+id/text_suggestions_header"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/search_suggestions_header"
+                        android:textColor="@color/brand_slate_700"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+
+                    <ProgressBar
+                        android:id="@+id/progress_suggestions"
+                        style="?android:attr/progressBarStyleSmall"
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:layout_marginEnd="8dp"
+                        android:indeterminate="true"
+                        android:indeterminateTint="@color/brand_emerald_600"
+                        android:visibility="gone" />
+
+                    <ImageView
+                        android:id="@+id/btn_close_suggestions"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:clickable="true"
+                        android:contentDescription="@null"
+                        android:focusable="true"
+                        android:padding="4dp"
+                        android:src="@drawable/ic_close"
+                        app:tint="@color/brand_slate_500" />
+                </LinearLayout>
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="1dp"
+                    android:background="@color/brand_slate_100" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/recycler_search_suggestions"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:nestedScrollingEnabled="true"
+                    android:overScrollMode="never" />
+
+                <TextView
+                    android:id="@+id/text_suggestions_empty"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="center"
+                    android:padding="14dp"
+                    android:text="@string/search_suggestions_empty"
+                    android:textColor="@color/brand_slate_500"
+                    android:textSize="12sp"
+                    android:visibility="gone" />
+            </LinearLayout>
 
         </com.google.android.material.card.MaterialCardView>
 
@@ -215,6 +350,77 @@
 
             </LinearLayout>
         </HorizontalScrollView>
+
+        <!-- Active Address / Nearby Summary Banner -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_nearby_banner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="16dp"
+            android:visibility="gone"
+            app:cardBackgroundColor="@color/brand_emerald_50"
+            app:cardCornerRadius="14dp"
+            app:cardElevation="3dp"
+            app:strokeColor="@color/brand_emerald_300"
+            app:strokeWidth="1dp"
+            tools:visibility="visible">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="12dp"
+                android:paddingVertical="8dp">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:contentDescription="@null"
+                    android:src="@drawable/ic_location_pin"
+                    app:tint="@color/brand_emerald_700" />
+
+                <TextView
+                    android:id="@+id/text_nearby_banner"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:ellipsize="end"
+                    android:maxLines="2"
+                    android:textColor="@color/brand_slate_900"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    tools:text="ul. Złota 12 • 6 parkingów (promień 5.0 km)" />
+
+                <TextView
+                    android:id="@+id/btn_open_nearby_list"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:background="@drawable/bg_badge_emerald"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="5dp"
+                    android:textColor="@color/brand_emerald_800"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    tools:text="Lista (6)" />
+
+                <ImageButton
+                    android:id="@+id/btn_clear_address_search"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_marginStart="4dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:contentDescription="@string/btn_close"
+                    android:src="@drawable/ic_close"
+                    app:tint="@color/brand_slate_600" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
     </LinearLayout>
 
     <!-- Floating Map Recenter / Center Button (ParkShare Web Style) -->
@@ -230,7 +436,7 @@
         app:cardBackgroundColor="@color/card_background"
         app:cardCornerRadius="22dp"
         app:cardElevation="5dp"
-        app:layout_constraintBottom_toTopOf="@id/card_place_preview"
+        app:layout_constraintBottom_toTopOf="@id/bottom_overlay_container"
         app:layout_constraintEnd_toEndOf="parent"
         app:strokeColor="@color/brand_slate_200"
         app:strokeWidth="1dp">
@@ -244,24 +450,49 @@
             app:tint="@color/brand_emerald_600" />
     </com.google.android.material.card.MaterialCardView>
 
-    <!-- Floating Spot Preview Card Overlay (ParkShare Modern Web Aesthetic) -->
-    <com.google.android.material.card.MaterialCardView
-        android:id="@+id/card_place_preview"
+    <!-- Bottom Map Overlays Container: Nearby Parkings Strip + Selected Spot Preview Card -->
+    <LinearLayout
+        android:id="@+id/bottom_overlay_container"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="14dp"
-        android:layout_marginEnd="14dp"
-        android:layout_marginBottom="14dp"
-        android:visibility="gone"
-        app:cardBackgroundColor="@color/card_background"
-        app:cardCornerRadius="24dp"
-        app:cardElevation="8dp"
+        android:orientation="vertical"
         app:layout_constraintBottom_toTopOf="@id/bottom_navigation"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:strokeColor="@color/brand_slate_200"
-        app:strokeWidth="1dp"
-        tools:visibility="visible">
+        app:layout_constraintStart_toStartOf="parent">
+
+        <LinearLayout
+            android:id="@+id/layout_nearby_strip"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:orientation="vertical"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_nearby_strip"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:clipToPadding="false"
+                android:paddingStart="14dp"
+                android:paddingEnd="14dp" />
+        </LinearLayout>
+
+        <!-- Floating Spot Preview Card Overlay (ParkShare Modern Web Aesthetic) -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/card_place_preview"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="14dp"
+            android:layout_marginEnd="14dp"
+            android:layout_marginBottom="14dp"
+            android:visibility="gone"
+            app:cardBackgroundColor="@color/card_background"
+            app:cardCornerRadius="24dp"
+            app:cardElevation="8dp"
+            app:strokeColor="@color/brand_slate_200"
+            app:strokeWidth="1dp"
+            tools:visibility="visible">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -428,6 +659,45 @@
                 app:chipSpacingHorizontal="6dp"
                 tools:visibility="visible" />
 
+            <!-- Working Hours + Distance Badges Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/text_preview_hours"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_badge_slate"
+                    android:drawableStart="@drawable/ic_clock"
+                    android:drawablePadding="5dp"
+                    android:drawableTint="@color/brand_slate_600"
+                    android:paddingHorizontal="9dp"
+                    android:paddingVertical="4dp"
+                    android:textColor="@color/brand_slate_700"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    tools:text="Dziś: 06:00-22:00" />
+
+                <TextView
+                    android:id="@+id/text_preview_distance"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/bg_badge_slate"
+                    android:paddingHorizontal="9dp"
+                    android:paddingVertical="4dp"
+                    android:textColor="@color/blue_badge_text"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    tools:text="320 m"
+                    tools:visibility="visible" />
+            </LinearLayout>
+
             <!-- Spot Dimensions Badge -->
             <TextView
                 android:id="@+id/text_preview_dimensions"
@@ -539,6 +809,7 @@
 
         </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
 
     <!-- Bottom Navigation Bar -->
     <com.google.android.material.bottomnavigation.BottomNavigationView

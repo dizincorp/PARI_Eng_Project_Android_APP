@@ -99,6 +99,155 @@
             app:elevation="0dp" />
     </LinearLayout>
 
+    <!-- History Filters Strip (Visible strictly on Historia tab) -->
+    <LinearLayout
+        android:id="@+id/layout_history_filters"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="16dp"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/layout_tabs"
+        tools:visibility="visible">
+
+        <HorizontalScrollView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:overScrollMode="never"
+            android:scrollbars="none">
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chip_group_history_quick"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:selectionRequired="true"
+                app:singleLine="true"
+                app:singleSelection="true">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_hquick_all"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:checked="true"
+                    android:text="@string/places_filter_all"
+                    android:textColor="@color/chip_filter_text_selector"
+                    android:textSize="12sp"
+                    app:chipBackgroundColor="@color/chip_filter_bg_selector"
+                    app:chipStrokeColor="@color/chip_filter_stroke_selector"
+                    app:chipStrokeWidth="1dp" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_hquick_completed"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/status_completed"
+                    android:textColor="@color/chip_filter_text_selector"
+                    android:textSize="12sp"
+                    app:chipBackgroundColor="@color/chip_filter_bg_selector"
+                    app:chipStrokeColor="@color/chip_filter_stroke_selector"
+                    app:chipStrokeWidth="1dp" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_hquick_7d"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/history_filter_date_7d"
+                    android:textColor="@color/chip_filter_text_selector"
+                    android:textSize="12sp"
+                    app:chipBackgroundColor="@color/chip_filter_bg_selector"
+                    app:chipStrokeColor="@color/chip_filter_stroke_selector"
+                    app:chipStrokeWidth="1dp" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_hquick_short"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/history_filter_dur_short"
+                    android:textColor="@color/chip_filter_text_selector"
+                    android:textSize="12sp"
+                    app:chipBackgroundColor="@color/chip_filter_bg_selector"
+                    app:chipStrokeColor="@color/chip_filter_stroke_selector"
+                    app:chipStrokeWidth="1dp" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chip_hquick_price_desc"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/history_sort_price_desc"
+                    android:textColor="@color/chip_filter_text_selector"
+                    android:textSize="12sp"
+                    app:chipBackgroundColor="@color/chip_filter_bg_selector"
+                    app:chipStrokeColor="@color/chip_filter_stroke_selector"
+                    app:chipStrokeWidth="1dp" />
+            </com.google.android.material.chip.ChipGroup>
+        </HorizontalScrollView>
+
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/btn_history_filters"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?attr/selectableItemBackground"
+            app:cardBackgroundColor="@color/card_background"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="1dp"
+            app:strokeColor="@color/brand_slate_200"
+            app:strokeWidth="1dp">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="10dp"
+                android:paddingVertical="7dp">
+
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:contentDescription="@string/history_filter_btn"
+                    android:src="@drawable/ic_tune"
+                    app:tint="@color/brand_slate_900" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
+                    android:text="@string/history_filter_btn"
+                    android:textColor="@color/brand_slate_900"
+                    android:textSize="12sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/badge_history_filter_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="5dp"
+                    android:background="@drawable/bg_badge_emerald"
+                    android:paddingHorizontal="6dp"
+                    android:paddingVertical="1dp"
+                    android:textColor="@color/brand_emerald_800"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    tools:text="2"
+                    tools:visibility="visible" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+    </LinearLayout>
+
     <!-- Empty State Layout -->
     <LinearLayout
         android:id="@+id/layout_empty_state"
@@ -112,7 +261,7 @@
         app:layout_constraintBottom_toTopOf="@id/bottom_navigation"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/layout_tabs">
+        app:layout_constraintTop_toBottomOf="@id/layout_history_filters">
 
         <ImageView
             android:layout_width="64dp"
@@ -162,6 +311,22 @@
             app:iconGravity="textStart"
             app:iconSize="16dp"
             app:iconTint="@color/brand_emerald_400" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_reset_history_filters"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            android:layout_marginTop="12dp"
+            android:paddingHorizontal="20dp"
+            android:text="@string/filter_reset_btn"
+            android:textAllCaps="false"
+            android:textColor="@color/brand_slate_800"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            app:cornerRadius="12dp"
+            app:strokeColor="@color/brand_slate_300" />
     </LinearLayout>
 
     <!-- RecyclerView for Active and History Reservations List -->
@@ -177,7 +342,7 @@
         app:layout_constraintBottom_toTopOf="@id/bottom_navigation"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/layout_tabs"
+        app:layout_constraintTop_toBottomOf="@id/layout_history_filters"
         tools:listitem="@layout/item_reservation" />
 
     <!-- Bottom Navigation Bar -->

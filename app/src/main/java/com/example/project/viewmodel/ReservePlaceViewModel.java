@@ -26,6 +26,7 @@ import com.example.project.repository.AppRepository;
 import com.example.project.repository.AvailabilityRepository;
 import com.example.project.repository.ReservationRepository;
 import com.example.project.repository.VehicleRepository;
+import com.example.project.utils.SessionManager;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -309,7 +310,7 @@ public class ReservePlaceViewModel extends AndroidViewModel {
                 durationMonths
         );
 
-        String currentEmail = appRepository.getUserEmailLiveData().getValue();
+        String currentEmail = resolveUserEmail();
 
         LiveData<Resource<ReservationResponse>> repoSource = reservationRepository.createReservation(request, currentEmail);
         reservationStatusLiveData.addSource(repoSource, resource -> {
@@ -332,6 +333,22 @@ public class ReservePlaceViewModel extends AndroidViewModel {
         });
     }
 
+    @NonNull
+    private String resolveUserEmail() {
+        String currentEmail = appRepository.getUserEmailLiveData().getValue();
+        SessionManager sm = SessionManager.getInstance(getApplication());
+        if (sm != null && sm.isLoggedIn() && sm.getUserEmail() != null && !sm.getUserEmail().trim().isEmpty()) {
+            if (currentEmail == null || currentEmail.trim().isEmpty()
+                    || "jan_kowalski@gmail.com".equalsIgnoreCase(currentEmail.trim())) {
+                return sm.getUserEmail().trim();
+            }
+        }
+        if (currentEmail != null && !currentEmail.trim().isEmpty()) {
+            return currentEmail.trim();
+        }
+        return (sm != null && sm.getUserEmail() != null) ? sm.getUserEmail().trim() : "";
+    }
+
     /**
      * Adds a newly registered vehicle to the backend REST API via POST /api/vehicles
      * and caches it in local repository and database without duplicating entries.
@@ -340,7 +357,7 @@ public class ReservePlaceViewModel extends AndroidViewModel {
      * @param plateNumber License plate number
      */
     public void addVehicle(@NonNull String model, @NonNull String plateNumber) {
-        String currentEmail = appRepository.getUserEmailLiveData().getValue();
+        String currentEmail = resolveUserEmail();
         CreateVehicleRequest request = new CreateVehicleRequest(model.trim(), plateNumber.trim());
         vehicleRepository.createVehicle(request, currentEmail);
     }

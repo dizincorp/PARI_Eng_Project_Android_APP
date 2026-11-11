@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <!-- Optional Section Header (e.g. Najbliżej Twojej lokalizacji / Wszystkie pasujące miasta) -->
+    <TextView
+        android:id="@+id/text_suggestion_section"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/brand_slate_50"
+        android:paddingHorizontal="14dp"
+        android:paddingTop="7dp"
+        android:paddingBottom="5dp"
+        android:textAllCaps="true"
+        android:textColor="@color/brand_slate_500"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:letterSpacing="0.05"
+        android:visibility="gone"
+        tools:text="Najbliżej Twojej lokalizacji"
+        tools:visibility="visible" />
+
+    <LinearLayout
+        android:id="@+id/row_suggestion_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingHorizontal="14dp"
+        android:paddingVertical="10dp">
+
+        <ImageView
+            android:id="@+id/icon_suggestion_pin"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginEnd="12dp"
+            android:contentDescription="@null"
+            android:src="@drawable/ic_location_pin"
+            app:tint="@color/brand_emerald_600" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/text_suggestion_street"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/brand_slate_900"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                tools:text="ul. Przyjaźni 4" />
+
+            <TextView
+                android:id="@+id/text_suggestion_city_meta"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/brand_slate_500"
+                android:textSize="12sp"
+                tools:text="Wrocław, woj. dolnośląskie, 53-030" />
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:gravity="end"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/text_suggestion_city_badge"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/bg_badge_emerald"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:maxWidth="128dp"
+                android:paddingHorizontal="8dp"
+                android:paddingVertical="3dp"
+                android:textColor="@color/brand_emerald_800"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                tools:text="Wrocław" />
+
+            <TextView
+                android:id="@+id/text_suggestion_distance"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:textColor="@color/brand_emerald_700"
+                android:textSize="11sp"
+                tools:text="W pobliżu (2,4 km)" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginHorizontal="14dp"
+        android:background="@color/brand_slate_100" />
+
+</LinearLayout>

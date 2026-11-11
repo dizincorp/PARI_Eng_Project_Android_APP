@@ -247,7 +247,8 @@ public class AvailabilityRepository {
                     Log.d(TAG, "Successfully fetched " + slots.size() + " booked slots for spot: " + cleanId);
                     diskExecutor.execute(() -> {
                         List<BlockedPeriodEntity> blockedList = new ArrayList<>();
-                        List<ReservationEntity> resList = new ArrayList<>();
+                        List<ReservationEntity> calendarInsertIgnoreList = new ArrayList<>();
+                        List<ReservationEntity> calendarUpdateList = new ArrayList<>();
 
                         for (BookedSlotResponse slot : slots) {
                             if (slot == null) continue;
@@ -269,21 +270,33 @@ public class AvailabilityRepository {
                                 long startMs = BlockedPeriodEntity.parseIsoToMillis(slot.getStart());
                                 long endMs = BlockedPeriodEntity.parseIsoToMillis(slot.getEnd());
                                 String st = slot.getStatus() != null ? slot.getStatus() : "CONFIRMED";
-                                ReservationEntity re = new ReservationEntity();
-                                re.setId(resId);
-                                re.setPlaceId(cleanId);
-                                re.setStartTimeMs(startMs);
-                                re.setEndTimeMs(endMs);
-                                re.setStatus(st);
-                                resList.add(re);
+                                ReservationEntity existing = reservationDao != null ? reservationDao.getReservationByIdSync(resId) : null;
+                                if (existing == null) {
+                                    ReservationEntity re = new ReservationEntity();
+                                    re.setId(resId);
+                                    re.setUserEmail("__calendar_slot__");
+                                    re.setPlaceId(cleanId);
+                                    re.setStartTimeMs(startMs);
+                                    re.setEndTimeMs(endMs);
+                                    re.setStatus(st);
+                                    calendarInsertIgnoreList.add(re);
+                                } else if ("__calendar_slot__".equals(existing.getUserEmail())) {
+                                    if (startMs > 0) existing.setStartTimeMs(startMs);
+                                    if (endMs > 0) existing.setEndTimeMs(endMs);
+                                    existing.setStatus(st);
+                                    calendarUpdateList.add(existing);
+                                }
                             }
                         }
 
                         if (!blockedList.isEmpty()) {
                             blockedPeriodDao.replaceBlockedPeriodsForSpot(cleanId, blockedList);
                         }
-                        if (reservationDao != null && !resList.isEmpty()) {
-                            reservationDao.insertOrUpdateAll(resList);
+                        if (reservationDao != null && !calendarInsertIgnoreList.isEmpty()) {
+                            reservationDao.insertIgnoreAll(calendarInsertIgnoreList);
+                        }
+                        if (reservationDao != null && !calendarUpdateList.isEmpty()) {
+                            reservationDao.insertOrUpdateAll(calendarUpdateList);
                         }
                     });
                 } else {

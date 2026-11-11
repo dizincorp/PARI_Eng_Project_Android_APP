@@ -167,7 +167,21 @@ public class OwnerReservationsAdapter extends RecyclerView.Adapter<OwnerReservat
                 binding.textPinCode.setVisibility(View.GONE);
                 binding.layoutActions.setVisibility(View.GONE);
 
-            } else { // CANCELLED or EXPIRED
+            } else if ("EXPIRED".equalsIgnoreCase(status) || "WYGASŁA".equalsIgnoreCase(status)) {
+                binding.textReservationStatus.setText(context.getString(R.string.status_expired));
+                binding.textReservationStatus.setBackgroundResource(R.drawable.bg_badge_slate);
+                binding.textReservationStatus.setTextColor(ContextCompat.getColor(context, R.color.brand_slate_600));
+                binding.textPinCode.setVisibility(View.GONE);
+                binding.layoutActions.setVisibility(View.GONE);
+
+            } else if ("NO_SHOW".equalsIgnoreCase(status)) {
+                binding.textReservationStatus.setText(context.getString(R.string.status_no_show));
+                binding.textReservationStatus.setBackgroundResource(R.drawable.bg_badge_rose);
+                binding.textReservationStatus.setTextColor(ContextCompat.getColor(context, R.color.brand_rose_700));
+                binding.textPinCode.setVisibility(View.GONE);
+                binding.layoutActions.setVisibility(View.GONE);
+
+            } else { // CANCELLED
                 binding.textReservationStatus.setText(context.getString(R.string.status_cancelled));
                 binding.textReservationStatus.setBackgroundResource(R.drawable.bg_badge_rose);
                 binding.textReservationStatus.setTextColor(ContextCompat.getColor(context, R.color.brand_rose_700));

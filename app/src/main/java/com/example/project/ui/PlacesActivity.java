@@ -6,6 +6,10 @@ import android.view.View;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.StringRes;
+import androidx.core.content.ContextCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -20,7 +24,9 @@ import com.example.project.model.Transaction;
 import com.example.project.repository.OwnerAnalyticsRepository;
 import com.example.project.utils.AmenityUtils;
 import com.example.project.viewmodel.PlacesViewModel;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,9 +41,29 @@ import java.util.Map;
  */
 public class PlacesActivity extends BaseActivity {
 
+    private enum PlaceFilter {
+        ALL(R.string.places_filter_all),
+        FREE(R.string.places_filter_free),
+        OCCUPIED(R.string.places_filter_occupied),
+        CHECKED_IN(R.string.places_filter_checked_in),
+        RESERVED(R.string.places_filter_reserved),
+        ACTIVE(R.string.places_filter_active),
+        INACTIVE(R.string.places_filter_inactive),
+        CALENDAR_BLOCKED(R.string.places_filter_blocked);
+
+        @StringRes
+        final int labelResId;
+
+        PlaceFilter(@StringRes int labelResId) {
+            this.labelResId = labelResId;
+        }
+    }
+
     private ActivityPlacesBinding binding;
     private PlacesViewModel viewModel;
     private final Map<String, List<BlockedPeriodEntity>> spotBlockedMap = new HashMap<>();
+    private final List<ParkingPlace> allOwnerPlaces = new ArrayList<>();
+    private PlaceFilter currentPlaceFilter = PlaceFilter.ALL;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,6 +118,94 @@ public class PlacesActivity extends BaseActivity {
             Intent intent = new Intent(PlacesActivity.this, OwnerReservationsActivity.class);
             startActivity(intent);
         });
+
+        binding.btnPlacesFilter.setOnClickListener(v -> showPlacesFilterDialog());
+    }
+
+    private void showPlacesFilterDialog() {
+        PlaceFilter[] filters = PlaceFilter.values();
+        String[] labels = new String[filters.length];
+        int checkedIdx = 0;
+
+        for (int i = 0; i < filters.length; i++) {
+            PlaceFilter pf = filters[i];
+            int count = countMatchingPlaces(allOwnerPlaces, pf);
+            labels[i] = getString(pf.labelResId) + " (" + count + ")";
+            if (pf == currentPlaceFilter) {
+                checkedIdx = i;
+            }
+        }
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle(R.string.places_filter_dialog_title)
+                .setSingleChoiceItems(labels, checkedIdx, (dialog, which) -> {
+                    currentPlaceFilter = filters[which];
+                    dialog.dismiss();
+                    renderPlacesList(allOwnerPlaces);
+                })
+                .setNegativeButton(R.string.btn_close, null)
+                .show();
+    }
+
+    private int countMatchingPlaces(@NonNull List<ParkingPlace> source, @NonNull PlaceFilter filter) {
+        int count = 0;
+        for (ParkingPlace p : source) {
+            if (matchesPlaceFilter(p, filter)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private boolean matchesPlaceFilter(@Nullable ParkingPlace p, @NonNull PlaceFilter filter) {
+        if (p == null) return false;
+        boolean active = p.isActive();
+        boolean checkedIn = p.isCheckedIn();
+        boolean hasDriverAssigned = p.getDriverName() != null && !p.getDriverName().trim().isEmpty();
+        boolean occupiedOrReserved = checkedIn || p.isOccupied() || p.isReserved() || hasDriverAssigned;
+
+        List<BlockedPeriodEntity> blocks = spotBlockedMap.get(p.getId());
+        boolean hasAnyNonExpiredBlock = false;
+        boolean hasActiveBlockNow = false;
+        if (blocks != null) {
+            for (BlockedPeriodEntity b : blocks) {
+                if (b == null || b.isExpired()) continue;
+                hasAnyNonExpiredBlock = true;
+                if (b.isCurrentlyActive()) {
+                    hasActiveBlockNow = true;
+                }
+            }
+        }
+
+        switch (filter) {
+            case FREE:
+                return active && !occupiedOrReserved && !hasActiveBlockNow;
+            case OCCUPIED:
+                return active && occupiedOrReserved;
+            case CHECKED_IN:
+                return active && checkedIn;
+            case RESERVED:
+                return active && !checkedIn && occupiedOrReserved;
+            case ACTIVE:
+                return active;
+            case INACTIVE:
+                return !active;
+            case CALENDAR_BLOCKED:
+                return hasAnyNonExpiredBlock;
+            case ALL:
+            default:
+                return true;
+        }
+    }
+
+    private void updatePlaceFilterPillLabel(int visibleCount) {
+        if (binding == null) return;
+        String base = getString(currentPlaceFilter.labelResId);
+        if (!allOwnerPlaces.isEmpty() || currentPlaceFilter != PlaceFilter.ALL) {
+            binding.textPlacesFilterLabel.setText(base + " (" + visibleCount + ")");
+        } else {
+            binding.textPlacesFilterLabel.setText(base);
+        }
     }
 
     private void observeViewModel() {
@@ -165,19 +279,48 @@ public class PlacesActivity extends BaseActivity {
     private void renderPlacesList(List<ParkingPlace> places) {
         if (binding == null) return;
 
+        allOwnerPlaces.clear();
+        if (places != null) {
+            allOwnerPlaces.addAll(places);
+        }
+
+        List<ParkingPlace> filtered = new ArrayList<>();
+        for (ParkingPlace p : allOwnerPlaces) {
+            if (matchesPlaceFilter(p, currentPlaceFilter)) {
+                filtered.add(p);
+            }
+        }
+        updatePlaceFilterPillLabel(filtered.size());
+
         binding.containerMyPlaces.removeAllViews();
 
-        if (places == null || places.isEmpty()) {
+        if (filtered.isEmpty()) {
             android.widget.TextView emptyView = new android.widget.TextView(this);
-            emptyView.setText(R.string.msg_no_places);
+            if (!allOwnerPlaces.isEmpty() && currentPlaceFilter != PlaceFilter.ALL) {
+                emptyView.setText(getString(R.string.places_filter_empty, getString(currentPlaceFilter.labelResId)));
+            } else {
+                emptyView.setText(R.string.msg_no_places);
+            }
             emptyView.setTextSize(14);
-            emptyView.setTextColor(androidx.core.content.ContextCompat.getColor(this, R.color.brand_slate_500));
-            emptyView.setPadding(16, 24, 16, 24);
+            emptyView.setTextColor(ContextCompat.getColor(this, R.color.brand_slate_500));
+            emptyView.setPadding(16, 24, 16, 12);
             binding.containerMyPlaces.addView(emptyView);
+
+            if (!allOwnerPlaces.isEmpty() && currentPlaceFilter != PlaceFilter.ALL) {
+                MaterialButton showAllBtn = new MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle);
+                showAllBtn.setText(R.string.places_filter_show_all);
+                showAllBtn.setAllCaps(false);
+                showAllBtn.setTextColor(ContextCompat.getColor(this, R.color.brand_emerald_700));
+                showAllBtn.setOnClickListener(v -> {
+                    currentPlaceFilter = PlaceFilter.ALL;
+                    renderPlacesList(allOwnerPlaces);
+                });
+                binding.containerMyPlaces.addView(showAllBtn);
+            }
             return;
         }
 
-        for (ParkingPlace p : places) {
+        for (ParkingPlace p : filtered) {
             if (p == null) continue;
 
             ItemMyPlaceBinding itemBinding =

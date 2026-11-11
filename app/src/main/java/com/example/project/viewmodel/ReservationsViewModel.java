@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MediatorLiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.Observer;
 import androidx.lifecycle.Transformations;
@@ -18,9 +19,13 @@ import com.example.project.network.model.CheckOutResponse;
 import com.example.project.network.model.ReservationResponse;
 import com.example.project.repository.AppRepository;
 import com.example.project.repository.ReservationRepository;
+import com.example.project.utils.ReservationLifecycleManager;
+import com.example.project.utils.SessionManager;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * ViewModel managing the state of the Reservations screen and the lifecycle operations
@@ -41,6 +46,12 @@ public class ReservationsViewModel extends AndroidViewModel {
     private final MutableLiveData<String> toastMessageLiveData = new MutableLiveData<>(null);
     private final MutableLiveData<ReservationResponse> updatedReservationLiveData = new MutableLiveData<>(null);
     private final MutableLiveData<String> actionErrorLiveData = new MutableLiveData<>(null);
+
+    private final MutableLiveData<Long> partitionEpochLiveData = new MutableLiveData<>(System.currentTimeMillis());
+    private final MediatorLiveData<List<Reservation>> activeReservationsLiveData = new MediatorLiveData<>();
+    private final MediatorLiveData<List<Reservation>> historyReservationsLiveData = new MediatorLiveData<>();
+    private final List<ReservationEntity> cachedAllEntities = new ArrayList<>();
+    private long nextBoundaryTimestampMs = Long.MAX_VALUE;
 
     /**
      * Default constructor for ReservationsViewModel.
@@ -64,28 +75,67 @@ public class ReservationsViewModel extends AndroidViewModel {
         super(application);
         this.reservationRepository = reservationRepository;
         this.appRepository = appRepository;
+        syncEmailWithSessionIfNeeded();
+
+        LiveData<List<ReservationEntity>> allSource = Transformations.switchMap(
+                appRepository.getUserEmailLiveData(),
+                reservationRepository::getAllReservationsLiveData
+        );
+
+        activeReservationsLiveData.addSource(allSource, entities -> {
+            cachedAllEntities.clear();
+            if (entities != null) {
+                cachedAllEntities.addAll(entities);
+            }
+            recomputePartitions();
+        });
+        activeReservationsLiveData.addSource(partitionEpochLiveData, epoch -> recomputePartitions());
+        historyReservationsLiveData.addSource(allSource, entities -> {
+            if (!activeReservationsLiveData.hasActiveObservers()) {
+                cachedAllEntities.clear();
+                if (entities != null) {
+                    cachedAllEntities.addAll(entities);
+                }
+                recomputePartitions();
+            }
+        });
+        historyReservationsLiveData.addSource(partitionEpochLiveData, epoch -> {
+            if (!activeReservationsLiveData.hasActiveObservers()) {
+                recomputePartitions();
+            }
+        });
     }
 
     /**
-     * LiveData stream of incoming / active reservations for the current user.
+     * LiveData stream of incoming / active reservations for the current user,
+     * partitioned dynamically against the current clock time.
      *
      * @return LiveData emitting list of active {@link Reservation}
      */
     public LiveData<List<Reservation>> getIncomingReservationsLiveData() {
-        return Transformations.switchMap(appRepository.getUserEmailLiveData(), email ->
-                Transformations.map(reservationRepository.getIncomingReservationsLiveData(email), this::mapEntitiesToModels)
-        );
+        return activeReservationsLiveData;
     }
 
     /**
-     * LiveData stream of past / history reservations for the current user.
+     * LiveData stream of past / history reservations for the current user,
+     * partitioned dynamically against the current clock time.
      *
      * @return LiveData emitting list of history {@link Reservation}
      */
     public LiveData<List<Reservation>> getHistoryReservationsLiveData() {
-        return Transformations.switchMap(appRepository.getUserEmailLiveData(), email ->
-                Transformations.map(reservationRepository.getHistoryReservationsLiveData(email), this::mapEntitiesToModels)
-        );
+        return historyReservationsLiveData;
+    }
+
+    /**
+     * Called on UI timer ticks to immediately move reservations across time boundaries
+     * (end time expiration, no-show, +1h overstay grace, auto-checkout).
+     */
+    public void onTimeTick() {
+        long now = System.currentTimeMillis();
+        if (now >= nextBoundaryTimestampMs) {
+            ReservationLifecycleManager.getInstance(getApplication()).evaluateAsync();
+            partitionEpochLiveData.setValue(now);
+        }
     }
 
     /**
@@ -153,12 +203,39 @@ public class ReservationsViewModel extends AndroidViewModel {
         return reservationRepository.getReservationByIdLiveData(id);
     }
 
+    private void syncEmailWithSessionIfNeeded() {
+        SessionManager sm = SessionManager.getInstance(getApplication());
+        if (sm != null && sm.isLoggedIn() && sm.getUserEmail() != null && !sm.getUserEmail().trim().isEmpty()) {
+            String currentEmail = appRepository.getUserEmailLiveData().getValue();
+            if (currentEmail == null || currentEmail.trim().isEmpty()
+                    || "jan_kowalski@gmail.com".equalsIgnoreCase(currentEmail.trim())) {
+                appRepository.init(getApplication());
+            }
+        }
+    }
+
+    @NonNull
+    private String resolveUserEmail() {
+        String currentEmail = appRepository.getUserEmailLiveData().getValue();
+        SessionManager sm = SessionManager.getInstance(getApplication());
+        if (sm != null && sm.isLoggedIn() && sm.getUserEmail() != null && !sm.getUserEmail().trim().isEmpty()) {
+            if (currentEmail == null || currentEmail.trim().isEmpty()
+                    || "jan_kowalski@gmail.com".equalsIgnoreCase(currentEmail.trim())) {
+                return sm.getUserEmail().trim();
+            }
+        }
+        if (currentEmail != null && !currentEmail.trim().isEmpty()) {
+            return currentEmail.trim();
+        }
+        return (sm != null && sm.getUserEmail() != null) ? sm.getUserEmail().trim() : "";
+    }
+
     /**
      * Refreshes both incoming reservations (GET /api/reservations/incoming)
      * and all user reservations (GET /api/reservations) from the backend REST API.
      */
     public void refreshReservations() {
-        String currentEmail = appRepository.getUserEmailLiveData().getValue();
+        String currentEmail = resolveUserEmail();
         isLoadingLiveData.setValue(true);
         errorMessageLiveData.setValue(null);
 
@@ -196,7 +273,7 @@ public class ReservationsViewModel extends AndroidViewModel {
             return;
         }
 
-        String currentEmail = appRepository.getUserEmailLiveData().getValue();
+        String currentEmail = resolveUserEmail();
         actionStatusLiveData.setValue(Resource.loading(null));
 
         LiveData<Resource<ReservationResponse>> source = reservationRepository.cancelReservation(id.trim(), currentEmail);
@@ -257,7 +334,7 @@ public class ReservationsViewModel extends AndroidViewModel {
             return;
         }
 
-        String currentEmail = appRepository.getUserEmailLiveData().getValue();
+        String currentEmail = resolveUserEmail();
         actionStatusLiveData.setValue(Resource.loading(null));
 
         LiveData<Resource<ReservationResponse>> source = reservationRepository.checkInReservation(id.trim(), pinCode, null, currentEmail);
@@ -304,7 +381,7 @@ public class ReservationsViewModel extends AndroidViewModel {
             return;
         }
 
-        String currentEmail = appRepository.getUserEmailLiveData().getValue();
+        String currentEmail = resolveUserEmail();
         actionStatusLiveData.setValue(Resource.loading(null));
 
         LiveData<Resource<CheckOutResponse>> source = reservationRepository.checkOutReservation(id.trim(), currentEmail);
@@ -333,22 +410,70 @@ public class ReservationsViewModel extends AndroidViewModel {
         });
     }
 
-    private List<Reservation> mapEntitiesToModels(List<ReservationEntity> entities) {
-        List<Reservation> list = new ArrayList<>();
-        if (entities != null) {
-            for (ReservationEntity e : entities) {
-                if (e == null) continue;
-                Reservation r = new Reservation(
-                        e.getId(), e.getPlaceId(), e.getPlaceName(), e.getStreet(), e.getCity(),
-                        e.getPlaceNumber(), e.getDateString(), e.getTimeRange(), e.getStartTimeMs(),
-                        e.getEndTimeMs(), e.getVehicleInfo(), e.getStatus(), e.getTotalPrice(),
-                        e.getPinCode(), e.getPhotoResId() != 0 ? e.getPhotoResId() : R.drawable.default_parking_spot
-                );
-                r.setUserEmail(e.getUserEmail() != null ? e.getUserEmail() : "");
-                r.setCarPlate(e.getCarPlate() != null ? e.getCarPlate() : "");
-                list.add(r);
+    private void recomputePartitions() {
+        long now = System.currentTimeMillis();
+        long earliestNextBoundary = Long.MAX_VALUE;
+        List<Reservation> active = new ArrayList<>();
+        List<Reservation> history = new ArrayList<>();
+
+        ReservationLifecycleManager lifecycle = ReservationLifecycleManager.getInstance(getApplication());
+
+        for (ReservationEntity e : cachedAllEntities) {
+            if (e == null) continue;
+            Reservation model = mapEntityToModel(e, now, lifecycle);
+            boolean isHistory = ReservationLifecycleManager.isHistoryStatus(e.getStatus(), e.getEndTimeMs(), now);
+
+            if (isHistory) {
+                history.add(model);
+            } else {
+                active.add(model);
+                long endMs = e.getEndTimeMs();
+                String upper = model.getStatus() != null ? model.getStatus().toUpperCase(Locale.ROOT) : "";
+                if (upper.contains("IN_PROGRESS") && endMs > 0) {
+                    if (now < endMs) {
+                        earliestNextBoundary = Math.min(earliestNextBoundary, endMs);
+                    } else {
+                        long graceEndMs = endMs + ReservationLifecycleManager.ONE_HOUR_MS;
+                        if (now < graceEndMs) {
+                            earliestNextBoundary = Math.min(earliestNextBoundary, graceEndMs);
+                        }
+                    }
+                } else if (endMs > 0 && now < endMs) {
+                    earliestNextBoundary = Math.min(earliestNextBoundary, endMs);
+                }
             }
         }
-        return list;
+
+        Collections.sort(active, (a, b) -> Long.compare(a.getStartTimeMs(), b.getStartTimeMs()));
+        Collections.sort(history, (a, b) -> Long.compare(b.getStartTimeMs(), a.getStartTimeMs()));
+
+        nextBoundaryTimestampMs = earliestNextBoundary;
+        activeReservationsLiveData.setValue(active);
+        historyReservationsLiveData.setValue(history);
+    }
+
+    private Reservation mapEntityToModel(@NonNull ReservationEntity e,
+                                         long now,
+                                         @NonNull ReservationLifecycleManager lifecycle) {
+        String effectiveStatus = ReservationLifecycleManager.computeEffectiveStatus(e.getStatus(), e.getEndTimeMs(), now);
+        double displayPrice = e.getTotalPrice();
+        boolean overstayApplied = e.isOverstayApplied() || lifecycle.isOverstayApplied(e.getId());
+        if (overstayApplied) {
+            displayPrice = Math.max(displayPrice, lifecycle.getStoredPenalizedPrice(e.getId(), displayPrice));
+        }
+
+        Reservation r = new Reservation(
+                e.getId(), e.getPlaceId(), e.getPlaceName(), e.getStreet(), e.getCity(),
+                e.getPlaceNumber(), e.getDateString(), e.getTimeRange(), e.getStartTimeMs(),
+                e.getEndTimeMs(), e.getVehicleInfo(), effectiveStatus, displayPrice,
+                e.getPinCode(), e.getPhotoResId() != 0 ? e.getPhotoResId() : R.drawable.default_parking_spot
+        );
+        r.setUserEmail(e.getUserEmail() != null ? e.getUserEmail() : "");
+        r.setCarPlate(e.getCarPlate() != null ? e.getCarPlate() : "");
+        r.setImageUri(e.getImageUri());
+        r.setHourlyRate(e.getHourlyRate());
+        r.setQrToken(e.getQrToken());
+        r.setOverstayApplied(overstayApplied);
+        return r;
     }
 }

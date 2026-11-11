@@ -25,10 +25,13 @@ import com.example.project.network.model.QuoteResponse;
 import com.example.project.network.model.CheckInReservationRequest;
 import com.example.project.network.model.ReservationRequest;
 import com.example.project.network.model.ReservationResponse;
+import com.example.project.utils.ReservationLifecycleManager;
+import com.example.project.utils.SessionManager;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
@@ -54,6 +57,8 @@ public class ReservationRepository {
     private final ReservationDao reservationDao;
     private final ParkingPlaceDao parkingPlaceDao;
     private final ExecutorService diskExecutor;
+    @Nullable
+    private final Context appContext;
 
     /**
      * Private constructor initializing dependencies from application context.
@@ -65,7 +70,8 @@ public class ReservationRepository {
                 ApiClient.getReservationApiService(),
                 AppDatabase.getInstance(context).reservationDao(),
                 AppDatabase.getInstance(context).parkingPlaceDao(),
-                Executors.newSingleThreadExecutor()
+                Executors.newSingleThreadExecutor(),
+                context.getApplicationContext()
         );
     }
 
@@ -81,10 +87,37 @@ public class ReservationRepository {
                                  @NonNull ReservationDao reservationDao,
                                  @NonNull ParkingPlaceDao parkingPlaceDao,
                                  @NonNull ExecutorService diskExecutor) {
+        this(apiService, reservationDao, parkingPlaceDao, diskExecutor, null);
+    }
+
+    private ReservationRepository(@NonNull ReservationApiService apiService,
+                                  @NonNull ReservationDao reservationDao,
+                                  @NonNull ParkingPlaceDao parkingPlaceDao,
+                                  @NonNull ExecutorService diskExecutor,
+                                  @Nullable Context appContext) {
         this.apiService = apiService;
         this.reservationDao = reservationDao;
         this.parkingPlaceDao = parkingPlaceDao;
         this.diskExecutor = diskExecutor;
+        this.appContext = appContext;
+    }
+
+    private void applyLifecycleIfAvailable(@NonNull ReservationEntity entity, @Nullable ParkingPlaceEntity place) {
+        if (appContext != null) {
+            ReservationLifecycleManager.getInstance(appContext).applyLifecycleToEntity(entity, place);
+        }
+    }
+
+    @NonNull
+    private String resolveEffectiveEmail(@Nullable String candidateEmail) {
+        if (candidateEmail != null && !candidateEmail.trim().isEmpty()) {
+            return candidateEmail.trim().toLowerCase(Locale.ROOT);
+        }
+        SessionManager sm = appContext != null ? SessionManager.getInstance(appContext) : SessionManager.getInstance();
+        if (sm != null && sm.isLoggedIn() && sm.getUserEmail() != null && !sm.getUserEmail().trim().isEmpty()) {
+            return sm.getUserEmail().trim().toLowerCase(Locale.ROOT);
+        }
+        return "";
     }
 
     /**
@@ -210,21 +243,46 @@ public class ReservationRepository {
         MutableLiveData<Resource<List<ReservationResponse>>> resultLiveData = new MutableLiveData<>();
         resultLiveData.setValue(Resource.loading(null));
 
-        apiService.getReservations().enqueue(new Callback<List<ReservationResponse>>() {
+        String resolvedEmail = resolveEffectiveEmail(userEmail);
+        fetchReservationsPage(0, resolvedEmail, new ArrayList<>(), resultLiveData);
+        return resultLiveData;
+    }
+
+    private void fetchReservationsPage(int page,
+                                       @NonNull String resolvedEmail,
+                                       @NonNull List<ReservationResponse> accumulated,
+                                       @NonNull MutableLiveData<Resource<List<ReservationResponse>>> resultLiveData) {
+        final int pageSize = 50;
+        final int maxPages = 5;
+        apiService.getReservationsPaged(page, pageSize).enqueue(new Callback<List<ReservationResponse>>() {
             @Override
             public void onResponse(@NonNull Call<List<ReservationResponse>> call,
                                    @NonNull Response<List<ReservationResponse>> response) {
                 if (response.isSuccessful() && response.body() != null) {
                     List<ReservationResponse> body = response.body();
+                    accumulated.addAll(body);
                     diskExecutor.execute(() -> {
                         for (ReservationResponse res : body) {
                             if (res == null) continue;
                             ParkingPlaceEntity place = parkingPlaceDao.getPlaceById(res.getSpotId());
-                            ReservationEntity entity = toEntity(res, userEmail, place, false);
+                            ReservationEntity entity = toEntity(res, resolvedEmail, place, false);
+                            applyLifecycleIfAvailable(entity, place);
                             reservationDao.insertOrUpdate(entity);
                         }
-                        resultLiveData.postValue(Resource.success(body));
+                        if (body.size() >= pageSize && page + 1 < maxPages) {
+                            fetchReservationsPage(page + 1, resolvedEmail, accumulated, resultLiveData);
+                        } else {
+                            if (appContext != null) {
+                                ReservationLifecycleManager.getInstance(appContext).evaluateAsync();
+                            }
+                            resultLiveData.postValue(Resource.success(accumulated));
+                        }
                     });
+                } else if (page > 0) {
+                    if (appContext != null) {
+                        ReservationLifecycleManager.getInstance(appContext).evaluateAsync();
+                    }
+                    resultLiveData.postValue(Resource.success(accumulated));
                 } else {
                     String errorMsg = parseErrorMessage(response);
                     Log.e(TAG, "getReservations failed with HTTP " + response.code() + ": " + errorMsg);
@@ -234,13 +292,18 @@ public class ReservationRepository {
 
             @Override
             public void onFailure(@NonNull Call<List<ReservationResponse>> call, @NonNull Throwable t) {
+                if (page > 0) {
+                    if (appContext != null) {
+                        ReservationLifecycleManager.getInstance(appContext).evaluateAsync();
+                    }
+                    resultLiveData.postValue(Resource.success(accumulated));
+                    return;
+                }
                 String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd połączenia z serwerem";
                 Log.e(TAG, "getReservations failure: " + errorMsg, t);
                 resultLiveData.setValue(Resource.error(errorMsg, null, 0));
             }
         });
-
-        return resultLiveData;
     }
 
     /**
@@ -264,11 +327,17 @@ public class ReservationRepository {
                             if (res == null) continue;
                             ParkingPlaceEntity place = parkingPlaceDao.getPlaceById(res.getSpotId());
                             ReservationEntity entity = toEntity(res, userEmail, place, true);
-                            if (res.getStatus() != null && !res.getStatus().isEmpty()) {
-                                entity.setStatus(res.getStatus());
-                            } else if (entity.getStatus() == null || entity.getStatus().isEmpty() || entity.getStatus().equalsIgnoreCase("PENDING_PAYMENT")) {
-                                entity.setStatus("CONFIRMED");
+                            if (res.getId() != null && !res.getId().isEmpty()) {
+                                entity.setId("owner_" + res.getId());
                             }
+                            if (res.getStatus() != null && !res.getStatus().isEmpty()) {
+                                entity.setStatus(ReservationLifecycleManager.computeEffectiveStatus(
+                                        res.getStatus(), entity.getEndTimeMs(), System.currentTimeMillis()));
+                            } else if (entity.getStatus() == null || entity.getStatus().isEmpty() || entity.getStatus().equalsIgnoreCase("PENDING_PAYMENT")) {
+                                entity.setStatus(ReservationLifecycleManager.computeEffectiveStatus(
+                                        "CONFIRMED", entity.getEndTimeMs(), System.currentTimeMillis()));
+                            }
+                            applyLifecycleIfAvailable(entity, place);
                             reservationDao.insertOrUpdate(entity);
 
                             // Synchronize place state with incoming reservation
@@ -277,7 +346,8 @@ public class ReservationRepository {
                                 if ("COMPLETED".equalsIgnoreCase(status)
                                         || "CANCELLED".equalsIgnoreCase(status)
                                         || "REJECTED".equalsIgnoreCase(status)
-                                        || "EXPIRED".equalsIgnoreCase(status)) {
+                                        || "EXPIRED".equalsIgnoreCase(status)
+                                        || "NO_SHOW".equalsIgnoreCase(status)) {
                                     ReservationEntity activeOther = reservationDao.getActiveReservationForSpotSync(place.getId());
                                     if (activeOther == null) {
                                         place.setOccupied(false);
@@ -447,8 +517,13 @@ public class ReservationRepository {
             String resolvedQr = qrToken;
             if ((resolvedPin == null || resolvedPin.trim().isEmpty()) && (resolvedQr == null || resolvedQr.trim().isEmpty())) {
                 ReservationEntity localEntity = reservationDao.getReservationByIdSync(reservationId.trim());
-                if (localEntity != null && localEntity.getPinCode() != null && !localEntity.getPinCode().trim().isEmpty()) {
-                    resolvedPin = localEntity.getPinCode().trim();
+                if (localEntity != null) {
+                    if (localEntity.getPinCode() != null && !localEntity.getPinCode().trim().isEmpty()) {
+                        resolvedPin = localEntity.getPinCode().trim();
+                    }
+                    if (localEntity.getQrToken() != null && !localEntity.getQrToken().trim().isEmpty()) {
+                        resolvedQr = localEntity.getQrToken().trim();
+                    }
                 }
             }
 
@@ -474,8 +549,12 @@ public class ReservationRepository {
 
                             ReservationEntity entity = toEntity(body, userEmail, place);
                             entity.setStatus(body.getStatus() != null && !body.getStatus().isEmpty() ? body.getStatus() : "IN_PROGRESS");
+                            applyLifecycleIfAvailable(entity, place);
                             reservationDao.insertOrUpdate(entity);
 
+                            if (appContext != null) {
+                                ReservationLifecycleManager.getInstance(appContext).evaluateAsync();
+                            }
                             resultLiveData.postValue(Resource.success(body));
                         });
                     } else {
@@ -524,6 +603,7 @@ public class ReservationRepository {
                     diskExecutor.execute(() -> {
                         ParkingPlaceEntity place = parkingPlaceDao.getPlaceById(body.getSpotId());
                         ReservationEntity entity = toEntity(body, userEmail, place);
+                        applyLifecycleIfAvailable(entity, place);
                         reservationDao.insertOrUpdate(entity);
                         resultLiveData.postValue(Resource.success(body));
                     });
@@ -571,6 +651,7 @@ public class ReservationRepository {
                         }
                         ReservationEntity entity = toEntity(body, userEmail, place);
                         entity.setStatus(body.getStatus() != null && !body.getStatus().isEmpty() ? body.getStatus() : "IN_PROGRESS");
+                        applyLifecycleIfAvailable(entity, place);
                         reservationDao.insertOrUpdate(entity);
                         resultLiveData.postValue(Resource.success(body));
                     });
@@ -627,10 +708,17 @@ public class ReservationRepository {
 
                         if (entity != null) {
                             entity.setStatus(body.getStatus() != null && !body.getStatus().isEmpty() ? body.getStatus() : "COMPLETED");
-                            entity.setTotalPrice(body.getTotalFinalAmount());
+                            if (body.getTotalFinalAmount() > 0) {
+                                entity.setTotalPrice(body.getTotalFinalAmount());
+                            }
                             if (body.getActualCheckoutAt() != null) {
                                 entity.setEndTimeMs(body.getActualCheckoutAt().getTime());
                             }
+                            ParkingPlaceEntity checkoutPlace = !spotId.isEmpty() ? parkingPlaceDao.getPlaceById(spotId) : null;
+                            if (appContext != null) {
+                                ReservationLifecycleManager.getInstance(appContext).recordManualCheckOut(entity.getId());
+                            }
+                            applyLifecycleIfAvailable(entity, checkoutPlace);
                             reservationDao.insertOrUpdate(entity);
                         }
 
@@ -687,7 +775,10 @@ public class ReservationRepository {
             return resultLiveData;
         }
 
-        apiService.acceptReservation(reservationId.trim()).enqueue(new Callback<ReservationResponse>() {
+        String trimmedId = reservationId.trim();
+        String rawId = trimmedId.startsWith("owner_") ? trimmedId.substring("owner_".length()) : trimmedId;
+
+        apiService.acceptReservation(rawId).enqueue(new Callback<ReservationResponse>() {
             @Override
             public void onResponse(@NonNull Call<ReservationResponse> call,
                                    @NonNull Response<ReservationResponse> response) {
@@ -695,9 +786,21 @@ public class ReservationRepository {
                     ReservationResponse body = response.body();
                     diskExecutor.execute(() -> {
                         ParkingPlaceEntity place = parkingPlaceDao.getPlaceById(body.getSpotId());
-                        ReservationEntity entity = toEntity(body, userEmail, place);
-                        entity.setStatus(body.getStatus() != null && !body.getStatus().isEmpty() ? body.getStatus() : "CONFIRMED");
-                        reservationDao.insertOrUpdate(entity);
+                        String resolvedStatus = body.getStatus() != null && !body.getStatus().isEmpty() ? body.getStatus() : "CONFIRMED";
+
+                        ReservationEntity ownerEntity = toEntity(body, userEmail, place, true);
+                        ownerEntity.setId("owner_" + rawId);
+                        ownerEntity.setStatus(resolvedStatus);
+                        applyLifecycleIfAvailable(ownerEntity, place);
+                        reservationDao.insertOrUpdate(ownerEntity);
+
+                        ReservationEntity driverExisting = reservationDao.getReservationByIdSync(rawId);
+                        if (driverExisting != null && !driverExisting.isOwnerIncoming()) {
+                            ReservationEntity driverUpdated = toEntity(body, driverExisting.getUserEmail(), place, false);
+                            driverUpdated.setStatus(resolvedStatus);
+                            applyLifecycleIfAvailable(driverUpdated, place);
+                            reservationDao.insertOrUpdate(driverUpdated);
+                        }
 
                         resultLiveData.postValue(Resource.success(body));
                     });
@@ -752,8 +855,11 @@ public class ReservationRepository {
             return resultLiveData;
         }
 
+        String trimmedId = reservationId.trim();
+        String rawId = trimmedId.startsWith("owner_") ? trimmedId.substring("owner_".length()) : trimmedId;
+
         RejectReservationRequest req = new RejectReservationRequest(reason != null ? reason : "");
-        apiService.rejectReservationWithReason(reservationId.trim(), req).enqueue(new Callback<ReservationResponse>() {
+        apiService.rejectReservationWithReason(rawId, req).enqueue(new Callback<ReservationResponse>() {
             @Override
             public void onResponse(@NonNull Call<ReservationResponse> call,
                                    @NonNull Response<ReservationResponse> response) {
@@ -762,13 +868,25 @@ public class ReservationRepository {
                     diskExecutor.execute(() -> {
                         ParkingPlaceEntity place = parkingPlaceDao.getPlaceById(body.getSpotId());
                         if (place != null) {
-                            place.setOccupied(false);
-                            parkingPlaceDao.insertOrUpdate(place);
+                            ReservationEntity activeOther = reservationDao.getActiveReservationForSpotSync(place.getId());
+                            if (activeOther == null) {
+                                place.setOccupied(false);
+                                parkingPlaceDao.insertOrUpdate(place);
+                            }
                         }
+                        String resolvedStatus = body.getStatus() != null && !body.getStatus().isEmpty() ? body.getStatus() : "REJECTED";
 
-                        ReservationEntity entity = toEntity(body, userEmail, place);
-                        entity.setStatus(body.getStatus() != null && !body.getStatus().isEmpty() ? body.getStatus() : "REJECTED");
-                        reservationDao.insertOrUpdate(entity);
+                        ReservationEntity ownerEntity = toEntity(body, userEmail, place, true);
+                        ownerEntity.setId("owner_" + rawId);
+                        ownerEntity.setStatus(resolvedStatus);
+                        reservationDao.insertOrUpdate(ownerEntity);
+
+                        ReservationEntity driverExisting = reservationDao.getReservationByIdSync(rawId);
+                        if (driverExisting != null && !driverExisting.isOwnerIncoming()) {
+                            ReservationEntity driverUpdated = toEntity(body, driverExisting.getUserEmail(), place, false);
+                            driverUpdated.setStatus(resolvedStatus);
+                            reservationDao.insertOrUpdate(driverUpdated);
+                        }
 
                         resultLiveData.postValue(Resource.success(body));
                     });
@@ -1001,7 +1119,16 @@ public class ReservationRepository {
         if (res.getId() != null && !res.getId().isEmpty()) {
             entity.setId(res.getId());
         }
-        entity.setUserEmail(userEmail != null ? userEmail : "");
+        String resolvedEmail = (userEmail != null && !userEmail.trim().isEmpty())
+                ? userEmail.trim().toLowerCase(Locale.ROOT)
+                : "";
+        if (resolvedEmail.isEmpty()) {
+            SessionManager sm = SessionManager.getInstance();
+            if (sm != null && sm.isLoggedIn() && sm.getUserEmail() != null && !sm.getUserEmail().trim().isEmpty()) {
+                resolvedEmail = sm.getUserEmail().trim().toLowerCase(Locale.ROOT);
+            }
+        }
+        entity.setUserEmail(resolvedEmail);
         entity.setOwnerIncoming(isOwnerIncoming);
         entity.setPlaceId(res.getSpotId());
         entity.setPlaceName(res.getSpotName() != null && !res.getSpotName().isEmpty()
@@ -1020,8 +1147,11 @@ public class ReservationRepository {
             entity.setImageUri("");
         }
         entity.setPinCode(res.getPinCode() != null && !res.getPinCode().isEmpty() ? res.getPinCode() : "4829");
-        entity.setStatus(res.getStatus() != null && !res.getStatus().isEmpty() ? res.getStatus() : "AKTYWNA");
-        entity.setTotalPrice(res.getTotal());
+        entity.setQrToken(res.getQrToken());
+        double hourlyRate = res.getHourlyRate() > 0 ? res.getHourlyRate() : (place != null ? place.getPrice() : 0.0);
+        entity.setHourlyRate(hourlyRate);
+        double finalPrice = (res.getFinalCost() > 0) ? res.getFinalCost() : res.getTotal();
+        entity.setTotalPrice(finalPrice);
         entity.setCarPlate(res.getVehiclePlate());
         entity.setVehicleInfo(res.getVehiclePlate());
         if (res.getDriverId() != null && !res.getDriverId().isEmpty()) {
@@ -1033,6 +1163,9 @@ public class ReservationRepository {
         long endMs = res.getEndsAtMillis() > 0 ? res.getEndsAtMillis() : (startMs + 3600000L);
         entity.setStartTimeMs(startMs);
         entity.setEndTimeMs(endMs);
+
+        String rawStatus = res.getStatus() != null && !res.getStatus().isEmpty() ? res.getStatus() : "AKTYWNA";
+        entity.setStatus(ReservationLifecycleManager.computeEffectiveStatus(rawStatus, endMs, System.currentTimeMillis()));
 
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
         SimpleDateFormat timeFormat = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());

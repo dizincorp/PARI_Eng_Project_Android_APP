@@ -143,7 +143,11 @@ public class ReservationsAdapter extends RecyclerView.Adapter<ReservationsAdapte
             }
 
             // Price
-            binding.textReservationPrice.setText(String.format(Locale.getDefault(), "%.2f PLN", res.getTotalPrice()));
+            if (res.isOverstayApplied()) {
+                binding.textReservationPrice.setText(String.format(Locale.getDefault(), "%.2f PLN (+15%%)", res.getTotalPrice()));
+            } else {
+                binding.textReservationPrice.setText(String.format(Locale.getDefault(), "%.2f PLN", res.getTotalPrice()));
+            }
 
             // Schedule: Date & Time range
             String dateStr = res.getDateString() != null && !res.getDateString().isEmpty() ? res.getDateString() : "2026-10-25";
@@ -168,7 +172,14 @@ public class ReservationsAdapter extends RecyclerView.Adapter<ReservationsAdapte
             }
 
             // Status Badge Formatting
-            String status = res.getStatus() != null ? res.getStatus().toUpperCase(Locale.ROOT) : "CONFIRMED";
+            long now = System.currentTimeMillis();
+            String status = com.example.project.utils.ReservationLifecycleManager
+                    .computeEffectiveStatus(res.getStatus(), res.getEndTimeMs(), now)
+                    .toUpperCase(Locale.ROOT);
+            if (status.isEmpty()) {
+                status = "CONFIRMED";
+            }
+
             if (status.contains("PENDING_PAYMENT")) {
                 binding.badgeStatus.setText(R.string.status_pending_payment);
                 binding.badgeStatus.setBackgroundResource(R.drawable.bg_badge_amber);
@@ -179,11 +190,23 @@ public class ReservationsAdapter extends RecyclerView.Adapter<ReservationsAdapte
                 binding.badgeStatus.setBackgroundResource(R.drawable.bg_badge_amber);
                 binding.badgeStatus.setBackgroundTintList(null);
                 binding.badgeStatus.setTextColor(ContextCompat.getColor(context, R.color.brand_amber_800));
-            } else if (status.contains("IN_PROGRESS")) {
-                binding.badgeStatus.setText(R.string.status_in_progress);
-                binding.badgeStatus.setBackgroundResource(R.drawable.bg_badge_emerald);
+            } else if (status.contains("NO_SHOW")) {
+                binding.badgeStatus.setText(R.string.status_no_show);
+                binding.badgeStatus.setBackgroundResource(R.drawable.bg_badge_rose);
                 binding.badgeStatus.setBackgroundTintList(null);
-                binding.badgeStatus.setTextColor(ContextCompat.getColor(context, R.color.brand_emerald_700));
+                binding.badgeStatus.setTextColor(ContextCompat.getColor(context, R.color.brand_rose_700));
+            } else if (status.contains("IN_PROGRESS")) {
+                if (res.getEndTimeMs() > 0 && now >= res.getEndTimeMs()) {
+                    binding.badgeStatus.setText(R.string.status_overstay_grace);
+                    binding.badgeStatus.setBackgroundResource(R.drawable.bg_badge_rose);
+                    binding.badgeStatus.setBackgroundTintList(null);
+                    binding.badgeStatus.setTextColor(ContextCompat.getColor(context, R.color.brand_rose_700));
+                } else {
+                    binding.badgeStatus.setText(R.string.status_in_progress);
+                    binding.badgeStatus.setBackgroundResource(R.drawable.bg_badge_emerald);
+                    binding.badgeStatus.setBackgroundTintList(null);
+                    binding.badgeStatus.setTextColor(ContextCompat.getColor(context, R.color.brand_emerald_700));
+                }
             } else if (status.contains("AKT") || status.contains("CONFIRM") || status.contains("ACTIV")) {
                 binding.badgeStatus.setText(R.string.badge_active_now);
                 binding.badgeStatus.setBackgroundResource(R.drawable.bg_badge_emerald);
@@ -213,11 +236,7 @@ public class ReservationsAdapter extends RecyclerView.Adapter<ReservationsAdapte
 
             // Countdown banner & Navigation button
             boolean isInactiveOrFinished = isHistory
-                    || status.contains("CANCEL")
-                    || status.contains("REJECT")
-                    || status.contains("EXPIRE")
-                    || status.contains("COMPLET")
-                    || status.contains("ZAKOŃ");
+                    || com.example.project.utils.ReservationLifecycleManager.isHistoryStatus(status, res.getEndTimeMs(), now);
 
             if (isInactiveOrFinished) {
                 binding.cardCountdownBanner.setVisibility(View.GONE);
@@ -226,40 +245,61 @@ public class ReservationsAdapter extends RecyclerView.Adapter<ReservationsAdapte
                 binding.cardCountdownBanner.setVisibility(View.VISIBLE);
                 binding.btnItemNavigate.setVisibility(View.VISIBLE);
 
-                long now = System.currentTimeMillis();
                 long startTime = res.getStartTimeMs();
                 long endTime = res.getEndTimeMs();
 
-                if (startTime > 0 && now < startTime) {
-                    long diff = startTime - now;
+                if (status.contains("IN_PROGRESS") && endTime > 0 && now >= endTime) {
+                    long graceEnd = endTime + com.example.project.utils.ReservationLifecycleManager.ONE_HOUR_MS;
+                    long diff = Math.max(0, graceEnd - now);
                     long hours = diff / (1000 * 60 * 60);
                     long minutes = (diff % (1000 * 60 * 60)) / (1000 * 60);
                     long seconds = (diff % (1000 * 60)) / 1000;
-                    binding.textItemCountdown.setText(String.format(Locale.getDefault(), "Do rozpoczęcia: %dh %02dm %02ds", hours, minutes, seconds));
-                } else if (endTime > 0) {
-                    long diff = Math.max(0, endTime - now);
-                    long hours = diff / (1000 * 60 * 60);
-                    long minutes = (diff % (1000 * 60 * 60)) / (1000 * 60);
-                    long seconds = (diff % (1000 * 60)) / 1000;
-                    binding.textItemCountdown.setText(String.format(Locale.getDefault(), "Pozostało: %dh %02dm %02ds", hours, minutes, seconds));
+                    binding.cardCountdownBanner.setCardBackgroundColor(ContextCompat.getColor(context, R.color.brand_rose_700));
+                    binding.textItemCountdown.setText(context.getString(R.string.countdown_grace_format, hours, minutes, seconds));
                 } else {
-                    binding.textItemCountdown.setText("Rezerwacja aktywna");
+                    binding.cardCountdownBanner.setCardBackgroundColor(ContextCompat.getColor(context, R.color.brand_slate_950));
+                    if (startTime > 0 && now < startTime) {
+                        long diff = startTime - now;
+                        long hours = diff / (1000 * 60 * 60);
+                        long minutes = (diff % (1000 * 60 * 60)) / (1000 * 60);
+                        long seconds = (diff % (1000 * 60)) / 1000;
+                        binding.textItemCountdown.setText(String.format(Locale.getDefault(), "Do rozpoczęcia: %dh %02dm %02ds", hours, minutes, seconds));
+                    } else if (endTime > 0) {
+                        long diff = Math.max(0, endTime - now);
+                        long hours = diff / (1000 * 60 * 60);
+                        long minutes = (diff % (1000 * 60 * 60)) / (1000 * 60);
+                        long seconds = (diff % (1000 * 60)) / 1000;
+                        binding.textItemCountdown.setText(String.format(Locale.getDefault(), "Pozostało: %dh %02dm %02ds", hours, minutes, seconds));
+                    } else {
+                        binding.textItemCountdown.setText("Rezerwacja aktywna");
+                    }
                 }
             }
 
-            // Click listeners
-            binding.getRoot().setOnClickListener(v -> {
-                if (listener != null) listener.onReservationClick(res);
-            });
+            // Click listeners (history items are not clickable and hide details action)
+            if (isHistory) {
+                binding.getRoot().setOnClickListener(null);
+                binding.getRoot().setClickable(false);
+                binding.getRoot().setFocusable(false);
 
-            binding.btnItemDetails.setOnClickListener(v -> {
-                if (listener != null) listener.onReservationClick(res);
-            });
+                binding.btnItemDetails.setVisibility(View.GONE);
+                binding.btnItemDetails.setOnClickListener(null);
+            } else {
+                binding.getRoot().setClickable(true);
+                binding.getRoot().setFocusable(true);
+                binding.getRoot().setOnClickListener(v -> {
+                    if (listener != null) listener.onReservationClick(res);
+                });
+
+                binding.btnItemDetails.setVisibility(View.VISIBLE);
+                binding.btnItemDetails.setOnClickListener(v -> {
+                    if (listener != null) listener.onReservationClick(res);
+                });
+            }
 
             // Check-In / Check-Out / Rate Action Button logic
             if (isInactiveOrFinished) {
-                if (res.getStatus() != null &&
-                        (res.getStatus().equalsIgnoreCase("ZAKOŃCZONA") || res.getStatus().equalsIgnoreCase("COMPLETED"))) {
+                if (status.contains("COMPLET") || status.contains("ZAKOŃ") || status.contains("ZAKON")) {
                     binding.btnItemCheckInOut.setVisibility(View.VISIBLE);
                     binding.btnItemCheckInOut.setText(R.string.btn_rate_spot);
                     binding.btnItemCheckInOut.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.brand_slate_950));
@@ -270,19 +310,25 @@ public class ReservationsAdapter extends RecyclerView.Adapter<ReservationsAdapte
                     });
                 } else {
                     binding.btnItemCheckInOut.setVisibility(View.GONE);
+                    binding.btnItemCheckInOut.setOnClickListener(null);
                 }
             } else if (res.isCheckedIn()) {
-                // Checked in -> can Check-Out
+                // Checked in -> can Check-Out (including during +1h grace period)
                 binding.btnItemCheckInOut.setVisibility(View.VISIBLE);
                 binding.btnItemCheckInOut.setText(R.string.btn_check_out);
-                binding.btnItemCheckInOut.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.brand_slate_950));
+                boolean inOverstay = res.getEndTimeMs() > 0 && now >= res.getEndTimeMs();
+                binding.btnItemCheckInOut.setBackgroundTintList(ContextCompat.getColorStateList(
+                        context, inOverstay ? R.color.brand_rose_700 : R.color.brand_slate_950));
                 binding.btnItemCheckInOut.setIcon(ContextCompat.getDrawable(context, R.drawable.ic_arrow_up));
                 binding.btnItemCheckInOut.setIconTint(ContextCompat.getColorStateList(context, R.color.brand_emerald_400));
                 binding.btnItemCheckInOut.setOnClickListener(v -> {
                     if (listener != null) listener.onCheckOutClick(res);
                 });
+            } else if (status.contains("PENDING")) {
+                binding.btnItemCheckInOut.setVisibility(View.GONE);
+                binding.btnItemCheckInOut.setOnClickListener(null);
             } else {
-                // Not checked in -> can Check-In
+                // Not checked in & confirmed -> can Check-In
                 binding.btnItemCheckInOut.setVisibility(View.VISIBLE);
                 binding.btnItemCheckInOut.setText(R.string.btn_check_in);
                 binding.btnItemCheckInOut.setBackgroundTintList(ContextCompat.getColorStateList(context, R.color.brand_slate_950));
@@ -293,9 +339,18 @@ public class ReservationsAdapter extends RecyclerView.Adapter<ReservationsAdapte
                 });
             }
 
-            binding.btnItemNavigate.setOnClickListener(v -> {
-                if (listener != null) listener.onNavigateClick(res);
-            });
+            if (isInactiveOrFinished) {
+                binding.btnItemNavigate.setOnClickListener(null);
+            } else {
+                binding.btnItemNavigate.setOnClickListener(v -> {
+                    if (listener != null) listener.onNavigateClick(res);
+                });
+            }
+
+            boolean anyActionVisible = binding.btnItemDetails.getVisibility() == View.VISIBLE
+                    || binding.btnItemCheckInOut.getVisibility() == View.VISIBLE
+                    || binding.btnItemNavigate.getVisibility() == View.VISIBLE;
+            binding.layoutItemActions.setVisibility(anyActionVisible ? View.VISIBLE : View.GONE);
         }
     }
 }

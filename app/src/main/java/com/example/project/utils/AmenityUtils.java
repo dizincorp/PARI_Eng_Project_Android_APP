@@ -3,6 +3,9 @@ package com.example.project.utils;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Utility helper to format backend amenity codes (e.g. CCTV, LIGHTING, EV_CHARGER, COVERED)
  * into localized, user-friendly labels for UI Chip badges across all spot listings.
@@ -62,5 +65,24 @@ public final class AmenityUtils {
                 }
                 return trimmed;
         }
+    }
+
+    /**
+     * Parses a comma-separated amenities CSV string into formatted display labels.
+     */
+    @NonNull
+    public static List<String> parseAmenitiesCsv(@Nullable String amenitiesCsv) {
+        List<String> result = new ArrayList<>();
+        if (amenitiesCsv == null || amenitiesCsv.trim().isEmpty()) {
+            return result;
+        }
+        String[] parts = amenitiesCsv.split(",");
+        for (String part : parts) {
+            String formatted = formatAmenity(part);
+            if (!formatted.isEmpty() && !result.contains(formatted)) {
+                result.add(formatted);
+            }
+        }
+        return result;
     }
 }

@@ -249,19 +249,45 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"
+                    android:layout_toStartOf="@id/btn_places_filter"
                     android:text="@string/my_places_title"
                     android:textColor="@color/brand_slate_950"
                     android:textSize="18sp"
                     android:textStyle="bold" />
 
-                <TextView
+                <LinearLayout
+                    android:id="@+id/btn_places_filter"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_alignParentEnd="true"
-                    android:text="@string/link_all"
-                    android:textColor="@color/brand_emerald_600"
-                    android:textSize="13sp"
-                    android:textStyle="bold" />
+                    android:layout_centerVertical="true"
+                    android:background="@drawable/bg_badge_emerald"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:foreground="?attr/selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingHorizontal="12dp"
+                    android:paddingVertical="6dp">
+
+                    <TextView
+                        android:id="@+id/text_places_filter_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/link_all"
+                        android:textColor="@color/brand_emerald_700"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <ImageView
+                        android:layout_width="16dp"
+                        android:layout_height="16dp"
+                        android:layout_marginStart="4dp"
+                        android:contentDescription="@string/places_filter_dialog_title"
+                        android:src="@drawable/ic_expand_more"
+                        app:tint="@color/brand_emerald_700" />
+                </LinearLayout>
             </RelativeLayout>
 
             <!-- My Places Dynamic Container -->

@@ -237,6 +237,14 @@ public class BlockedPeriodEntity {
         if (iso == null || iso.trim().isEmpty()) return 0L;
         String clean = iso.trim();
         try {
+            return java.time.Instant.parse(clean).toEpochMilli();
+        } catch (Throwable ignored) {}
+        try {
+            return java.time.ZonedDateTime.parse(clean, java.time.format.DateTimeFormatter.ISO_DATE_TIME)
+                    .toInstant()
+                    .toEpochMilli();
+        } catch (Throwable ignored) {}
+        try {
             java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US);
             sdf.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
             java.util.Date d = sdf.parse(clean);
