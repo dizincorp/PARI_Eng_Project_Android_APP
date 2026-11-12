@@ -195,35 +195,63 @@ public class Reservation {
     }
 
     public String getUserName() {
-        return userName != null ? userName : "Użytkownik";
+        if (com.example.project.utils.ReservationLifecycleManager.isUuidOrPlaceholder(userName)) {
+            return "Kierowca";
+        }
+        return userName != null && !userName.trim().isEmpty() ? userName.trim() : "Kierowca";
     }
 
     public void setUserName(String userName) {
-        this.userName = userName;
+        if (com.example.project.utils.ReservationLifecycleManager.isUuidOrPlaceholder(userName)) {
+            this.userName = "Kierowca";
+        } else {
+            this.userName = userName;
+        }
     }
 
     public String getCarModel() {
-        return carModel != null ? carModel : (vehicleInfo != null ? vehicleInfo : "Pojazd");
+        if (com.example.project.utils.ReservationLifecycleManager.isUuidOrPlaceholder(carModel)) {
+            return "Pojazd";
+        }
+        return carModel != null && !carModel.trim().isEmpty() ? carModel : "Pojazd";
     }
 
     public void setCarModel(String carModel) {
-        this.carModel = carModel;
+        if (com.example.project.utils.ReservationLifecycleManager.isUuidOrPlaceholder(carModel)) {
+            this.carModel = "Pojazd";
+        } else {
+            this.carModel = carModel;
+        }
     }
 
     public String getCarPlate() {
+        if (com.example.project.utils.ReservationLifecycleManager.isUuidOrPlaceholder(carPlate)) {
+            return "";
+        }
         return carPlate != null ? carPlate : "";
     }
 
     public void setCarPlate(String carPlate) {
-        this.carPlate = carPlate;
+        if (com.example.project.utils.ReservationLifecycleManager.isUuidOrPlaceholder(carPlate)) {
+            this.carPlate = "";
+        } else {
+            this.carPlate = carPlate;
+        }
     }
 
     public String getVehicleInfo() {
-        return vehicleInfo;
+        if (com.example.project.utils.ReservationLifecycleManager.isUuidOrPlaceholder(vehicleInfo)) {
+            return "";
+        }
+        return vehicleInfo != null ? vehicleInfo : "";
     }
 
     public void setVehicleInfo(String vehicleInfo) {
-        this.vehicleInfo = vehicleInfo;
+        if (com.example.project.utils.ReservationLifecycleManager.isUuidOrPlaceholder(vehicleInfo)) {
+            this.vehicleInfo = "";
+        } else {
+            this.vehicleInfo = vehicleInfo;
+        }
     }
 
     public String getStatus() {

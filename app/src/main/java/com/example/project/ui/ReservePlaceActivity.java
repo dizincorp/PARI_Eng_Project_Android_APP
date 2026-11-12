@@ -171,9 +171,10 @@ public class ReservePlaceActivity extends BaseActivity {
         setupClickListeners();
         observeViewModel();
 
-        // Fetch spot availability rules and blocked periods directly from backend
+        // Fetch spot details (GET /api/spots/{id}) and availability rules directly from backend
         if (currentPlace != null && currentPlace.getId() != null) {
             viewModel.fetchSpotAvailability(currentPlace.getId());
+            viewModel.fetchSpotDetails(currentPlace.getId());
         }
     }
 

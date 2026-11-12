@@ -1,9 +1,12 @@
 package com.example.project.network;
 
+import com.example.project.network.model.ChangePasswordRequest;
 import com.example.project.network.model.LoginRequest;
 import com.example.project.network.model.LoginResponse;
+import com.example.project.network.model.MessageResponse;
 import com.example.project.network.model.RegisterRequest;
 import com.example.project.network.model.RegisterResponse;
+import com.example.project.network.model.UpdateProfileRequest;
 import com.example.project.network.model.UserProfileResponse;
 
 import retrofit2.Call;
@@ -11,6 +14,7 @@ import retrofit2.http.Body;
 import retrofit2.http.GET;
 import retrofit2.http.Header;
 import retrofit2.http.POST;
+import retrofit2.http.PUT;
 
 /**
  * Retrofit REST API interface defining authentication and account endpoints.
@@ -57,5 +61,27 @@ public interface ApiService {
     @GET("api/auth/me")
     Call<UserProfileResponse> getCurrentUser(
             @Header("Authorization") String authToken
+    );
+
+    /**
+     * Updates the user's profile details via PUT /api/auth/profile.
+     *
+     * @param request UpdateProfileRequest containing updated user attributes
+     * @return Retrofit Call delivering updated UserProfileResponse
+     */
+    @PUT("api/auth/profile")
+    Call<UserProfileResponse> updateProfile(
+            @Body UpdateProfileRequest request
+    );
+
+    /**
+     * Changes the authenticated user's password via POST /api/auth/change-password.
+     *
+     * @param request ChangePasswordRequest containing current and new password
+     * @return Retrofit Call delivering MessageResponse
+     */
+    @POST("api/auth/change-password")
+    Call<MessageResponse> changePassword(
+            @Body ChangePasswordRequest request
     );
 }

@@ -161,6 +161,9 @@ public class ReservationsAdapter extends RecyclerView.Adapter<ReservationsAdapte
             // Vehicle Plate & Model
             String vehicleInfo = res.getVehicleInfo() != null && !res.getVehicleInfo().isEmpty()
                     ? res.getVehicleInfo() : (res.getCarPlate() != null ? res.getCarPlate() : "Pojazd");
+            if (com.example.project.utils.ReservationLifecycleManager.isUuidOrPlaceholder(vehicleInfo)) {
+                vehicleInfo = "Pojazd";
+            }
             binding.textReservationVehicle.setText(vehicleInfo);
 
             // PIN Code

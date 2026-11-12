@@ -289,19 +289,33 @@ public class ParkingPlaceEntity {
     }
 
     public String getDriverName() {
+        if (com.example.project.utils.ReservationLifecycleManager.isUuidOrPlaceholder(driverName)) {
+            return "Kierowca";
+        }
         return driverName;
     }
 
     public void setDriverName(String driverName) {
-        this.driverName = driverName;
+        if (com.example.project.utils.ReservationLifecycleManager.isUuidOrPlaceholder(driverName)) {
+            this.driverName = "Kierowca";
+        } else {
+            this.driverName = driverName;
+        }
     }
 
     public String getDriverVehicle() {
+        if (com.example.project.utils.ReservationLifecycleManager.isUuidOrPlaceholder(driverVehicle)) {
+            return "";
+        }
         return driverVehicle;
     }
 
     public void setDriverVehicle(String driverVehicle) {
-        this.driverVehicle = driverVehicle;
+        if (com.example.project.utils.ReservationLifecycleManager.isUuidOrPlaceholder(driverVehicle)) {
+            this.driverVehicle = "";
+        } else {
+            this.driverVehicle = driverVehicle;
+        }
     }
 
     public boolean isCheckedIn() {

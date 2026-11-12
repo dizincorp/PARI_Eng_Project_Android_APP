@@ -727,6 +727,54 @@ public class SpotRepository {
     }
 
     /**
+     * Fetches a single parking spot by its unique identifier via GET /api/spots/{id}
+     * and updates the local Room database cache.
+     *
+     * @param spotId Unique spot identifier
+     * @return LiveData emitting Resource containing ParkingSpot
+     */
+    public LiveData<Resource<ParkingSpot>> fetchSpotById(@NonNull String spotId) {
+        MutableLiveData<Resource<ParkingSpot>> resultLiveData = new MutableLiveData<>();
+        resultLiveData.setValue(Resource.loading(null));
+
+        apiService.getSpotById(spotId).enqueue(new Callback<ParkingSpot>() {
+            @Override
+            public void onResponse(@NonNull Call<ParkingSpot> call, @NonNull Response<ParkingSpot> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    ParkingSpot spot = response.body();
+                    diskExecutor.execute(() -> {
+                        ParkingPlaceEntity entity = toEntity(spot);
+                        if (entity != null) {
+                            ParkingPlaceEntity existing = parkingPlaceDao.getPlaceById(spotId);
+                            if (existing != null) {
+                                entity.setOwnerEmail(existing.getOwnerEmail());
+                                if (entity.getDriverName() == null || entity.getDriverName().isEmpty()) {
+                                    entity.setDriverName(existing.getDriverName());
+                                }
+                            }
+                            parkingPlaceDao.insertOrUpdate(entity);
+                        }
+                        resultLiveData.postValue(Resource.success(spot));
+                    });
+                } else {
+                    String errorMsg = "Błąd pobierania miejsca: HTTP " + response.code();
+                    Log.e(TAG, errorMsg);
+                    resultLiveData.postValue(Resource.error(errorMsg, null, response.code()));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<ParkingSpot> call, @NonNull Throwable t) {
+                String errorMsg = t.getMessage() != null ? t.getMessage() : "Błąd połączenia z serwerem";
+                Log.e(TAG, "fetchSpotById network failure: " + errorMsg, t);
+                resultLiveData.postValue(Resource.error(errorMsg, null, 0));
+            }
+        });
+
+        return resultLiveData;
+    }
+
+    /**
      * Converts network ParkingSpot DTO to local Room ParkingPlaceEntity.
      *
      * @param spot ParkingSpot DTO

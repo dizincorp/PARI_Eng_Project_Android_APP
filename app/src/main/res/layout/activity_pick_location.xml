@@ -250,10 +250,15 @@
             <!-- Confirm Button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_confirm_location"
+                style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:layout_marginTop="14dp"
                 android:backgroundTint="@color/brand_emerald_600"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
                 android:text="@string/btn_confirm_location"
                 android:textColor="@color/white"
                 android:textSize="14sp"

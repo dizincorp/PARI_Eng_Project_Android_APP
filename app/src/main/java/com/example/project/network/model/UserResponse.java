@@ -31,6 +31,9 @@ public class UserResponse {
     @SerializedName("avatarUrl")
     private String avatarUrl;
 
+    @SerializedName("phoneNumber")
+    private String phoneNumber;
+
     /**
      * Default no-argument constructor for Gson deserialization.
      */
@@ -215,5 +218,23 @@ public class UserResponse {
      */
     public void setAvatarUrl(String avatarUrl) {
         this.avatarUrl = avatarUrl;
+    }
+
+    /**
+     * Gets the user contact phone number.
+     *
+     * @return Phone number string, or empty string if not set
+     */
+    public String getPhoneNumber() {
+        return phoneNumber != null ? phoneNumber : "";
+    }
+
+    /**
+     * Sets the user contact phone number.
+     *
+     * @param phoneNumber Contact phone number
+     */
+    public void setPhoneNumber(String phoneNumber) {
+        this.phoneNumber = phoneNumber;
     }
 }

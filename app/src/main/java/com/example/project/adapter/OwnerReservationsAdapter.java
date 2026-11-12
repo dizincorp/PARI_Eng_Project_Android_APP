@@ -89,10 +89,23 @@ public class OwnerReservationsAdapter extends RecyclerView.Adapter<OwnerReservat
             binding.textDateTimeRange.setText((date + "  " + time).trim());
 
             // Driver & Vehicle
-            String driver = item.getUserName() != null && !item.getUserName().isEmpty()
-                    ? item.getUserName() : "Kierowca";
+            String driver = item.getUserName();
+            if (com.example.project.utils.ReservationLifecycleManager.isUuidOrPlaceholder(driver)) {
+                com.example.project.utils.SessionManager session = com.example.project.utils.SessionManager.getInstance();
+                if (session != null && session.getUserId() != null && session.getUserId().equals(driver)
+                        && session.getUserName() != null && !session.getUserName().trim().isEmpty()
+                        && !com.example.project.utils.ReservationLifecycleManager.isUuidOrPlaceholder(session.getUserName())) {
+                    driver = session.getUserName().trim();
+                } else {
+                    driver = null;
+                }
+            }
+            driver = com.example.project.utils.ReservationLifecycleManager.sanitizeDriverName(driver, "Kierowca");
             String plate = item.getCarPlate() != null && !item.getCarPlate().isEmpty()
                     ? item.getCarPlate() : (item.getVehicleInfo() != null ? item.getVehicleInfo() : "");
+            if (com.example.project.utils.ReservationLifecycleManager.isUuidOrPlaceholder(plate)) {
+                plate = "";
+            }
             binding.textDriverInfo.setText(plate.isEmpty() ? driver : driver + " • " + plate);
 
             // Price

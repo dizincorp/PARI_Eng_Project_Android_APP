@@ -23,6 +23,7 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.project.R;
 import com.example.project.databinding.ActivityProfileDetailsBinding;
+import com.example.project.databinding.DialogChangePasswordBinding;
 import com.example.project.databinding.DialogEditNameBinding;
 import com.example.project.databinding.DialogEditPhoneBinding;
 import com.example.project.model.UserProfile;
@@ -111,6 +112,8 @@ public class ProfileDetailsActivity extends BaseActivity {
 
         binding.layoutPhoneRow.setOnClickListener(v -> showEditPhoneDialog());
         binding.btnEditPhone.setOnClickListener(v -> showEditPhoneDialog());
+
+        binding.layoutChangePasswordRow.setOnClickListener(v -> showChangePasswordDialog());
     }
 
     private void observeViewModel() {
@@ -245,6 +248,69 @@ public class ProfileDetailsActivity extends BaseActivity {
                 .create();
 
         dialogBinding.btnCloseDialog.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
+    }
+
+    /**
+     * Displays dialog for changing user account password via POST /api/auth/change-password.
+     */
+    private void showChangePasswordDialog() {
+        DialogChangePasswordBinding dialogBinding = DialogChangePasswordBinding.inflate(LayoutInflater.from(this));
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogBinding.getRoot())
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        dialogBinding.btnCloseDialog.setOnClickListener(v -> dialog.dismiss());
+        dialogBinding.btnCancelChangePassword.setOnClickListener(v -> dialog.dismiss());
+
+        dialogBinding.btnSubmitChangePassword.setOnClickListener(v -> {
+            String currentPassword = dialogBinding.editCurrentPassword.getText() != null
+                    ? dialogBinding.editCurrentPassword.getText().toString().trim() : "";
+            String newPassword = dialogBinding.editNewPassword.getText() != null
+                    ? dialogBinding.editNewPassword.getText().toString().trim() : "";
+            String confirmPassword = dialogBinding.editConfirmNewPassword.getText() != null
+                    ? dialogBinding.editConfirmNewPassword.getText().toString().trim() : "";
+
+            if (currentPassword.isEmpty()) {
+                dialogBinding.editCurrentPassword.setError(getString(R.string.error_fill_all_fields));
+                dialogBinding.editCurrentPassword.requestFocus();
+                return;
+            }
+            if (newPassword.length() < 8) {
+                dialogBinding.editNewPassword.setError(getString(R.string.error_password_too_short));
+                dialogBinding.editNewPassword.requestFocus();
+                return;
+            }
+            if (!newPassword.equals(confirmPassword)) {
+                dialogBinding.editConfirmNewPassword.setError(getString(R.string.error_passwords_dont_match));
+                dialogBinding.editConfirmNewPassword.requestFocus();
+                return;
+            }
+
+            dialogBinding.btnSubmitChangePassword.setEnabled(false);
+            viewModel.changePassword(currentPassword, newPassword).observe(this, res -> {
+                if (res == null) return;
+                switch (res.status) {
+                    case SUCCESS:
+                        dialog.dismiss();
+                        Toast.makeText(this, R.string.msg_password_changed_success, Toast.LENGTH_SHORT).show();
+                        break;
+                    case ERROR:
+                        dialogBinding.btnSubmitChangePassword.setEnabled(true);
+                        String msg = res.message != null ? res.message : getString(R.string.error_invalid_credentials);
+                        Toast.makeText(this, msg, Toast.LENGTH_LONG).show();
+                        break;
+                    case LOADING:
+                        break;
+                }
+            });
+        });
+
         dialog.show();
     }
 

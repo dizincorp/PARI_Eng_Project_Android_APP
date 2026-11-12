@@ -180,9 +180,9 @@ public class PlacesAdapter extends RecyclerView.Adapter<PlacesAdapter.PlaceViewH
                     binding.viewStatusDot.setBackgroundTintList(ColorStateList.valueOf(
                             ContextCompat.getColor(context, R.color.status_dot_red)));
 
-                    String driver = place.getDriverName() != null && !place.getDriverName().isEmpty()
-                            ? place.getDriverName() : "Kierowca";
+                    String driver = com.example.project.utils.ReservationLifecycleManager.sanitizeDriverName(place.getDriverName(), "Kierowca");
                     String vehicle = place.getDriverVehicle() != null && !place.getDriverVehicle().isEmpty()
+                            && !com.example.project.utils.ReservationLifecycleManager.isUuidOrPlaceholder(place.getDriverVehicle())
                             ? place.getDriverVehicle() : "Pojazd w trakcie parkowania";
                     binding.textDriverInfo.setText(String.format("🚗 Parkuje: %s • %s", driver, vehicle));
                     binding.textDriverInfo.setTextColor(ContextCompat.getColor(context, R.color.status_dot_red));
@@ -192,9 +192,9 @@ public class PlacesAdapter extends RecyclerView.Adapter<PlacesAdapter.PlaceViewH
                     binding.viewStatusDot.setBackgroundTintList(ColorStateList.valueOf(
                             ContextCompat.getColor(context, R.color.status_dot_yellow)));
 
-                    String driver = place.getDriverName() != null && !place.getDriverName().isEmpty()
-                            ? place.getDriverName() : "Zarezerwowane";
+                    String driver = com.example.project.utils.ReservationLifecycleManager.sanitizeDriverName(place.getDriverName(), "Zarezerwowane");
                     String vehicle = place.getDriverVehicle() != null && !place.getDriverVehicle().isEmpty()
+                            && !com.example.project.utils.ReservationLifecycleManager.isUuidOrPlaceholder(place.getDriverVehicle())
                             ? " • " + place.getDriverVehicle() : "";
                     binding.textDriverInfo.setText(String.format("👤 Zarezerwowane: %s%s", driver, vehicle));
                     binding.textDriverInfo.setTextColor(ContextCompat.getColor(context, R.color.status_dot_yellow));

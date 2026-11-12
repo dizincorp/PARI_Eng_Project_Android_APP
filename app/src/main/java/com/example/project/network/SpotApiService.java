@@ -87,6 +87,15 @@ public interface SpotApiService {
     Call<List<ParkingSpot>> getMySpots();
 
     /**
+     * Retrieves a single parking spot by its unique identifier via GET /api/spots/{id}.
+     *
+     * @param id Parking spot unique identifier
+     * @return Retrofit Call delivering {@link ParkingSpot}
+     */
+    @GET("api/spots/{id}")
+    Call<ParkingSpot> getSpotById(@Path("id") String id);
+
+    /**
      * Activates a parking spot via POST /api/spots/{id}/activate with an empty request body.
      *
      * @param id Parking spot unique identifier

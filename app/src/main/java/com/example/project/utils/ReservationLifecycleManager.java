@@ -724,4 +724,53 @@ public class ReservationLifecycleManager {
         int requestCode = (reservationId + "_" + action).hashCode();
         return PendingIntent.getBroadcast(appContext, requestCode, intent, flags);
     }
+
+    /**
+     * Inspects whether a display name string resembles a raw UUID, numeric placeholder, or empty string.
+     *
+     * @param value Text to inspect
+     * @return true if the text resembles a UUID or placeholder rather than a human name
+     */
+    public static boolean isUuidOrPlaceholder(@Nullable String value) {
+        if (value == null) {
+            return false;
+        }
+        String clean = value.trim();
+        if (clean.isEmpty()) {
+            return false;
+        }
+        if (clean.equalsIgnoreCase("string") || clean.equalsIgnoreCase("null")
+                || clean.equalsIgnoreCase("undefined") || clean.equalsIgnoreCase("none")) {
+            return true;
+        }
+        if (clean.startsWith("0000") || clean.contains("000000")) {
+            return true;
+        }
+        if (clean.length() == 36 && clean.charAt(8) == '-' && clean.charAt(13) == '-'
+                && clean.charAt(18) == '-' && clean.charAt(23) == '-') {
+            return true;
+        }
+        if (clean.matches("(?i)^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")) {
+            return true;
+        }
+        if (clean.matches("(?i).*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}.*")) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Sanitizes a driver or user name, replacing raw UUIDs and placeholders with a friendly fallback.
+     *
+     * @param name     Raw driver name from backend or entity
+     * @param fallback Default fallback (e.g. "Kierowca")
+     * @return Human-readable driver name
+     */
+    @NonNull
+    public static String sanitizeDriverName(@Nullable String name, @NonNull String fallback) {
+        if (name == null || name.trim().isEmpty() || isUuidOrPlaceholder(name)) {
+            return fallback;
+        }
+        return name.trim();
+    }
 }

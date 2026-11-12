@@ -37,6 +37,8 @@ public class ApiClient {
     private static OwnerApiService ownerApiService;
     private static AvailabilityApiService availabilityApiService;
     private static MediaApiService mediaApiService;
+    private static DriverApiService driverApiService;
+    private static OwnerPayoutApiService ownerPayoutApiService;
     private static OkHttpClient okHttpClient;
     private static Gson gsonInstance;
 
@@ -195,6 +197,30 @@ public class ApiClient {
     }
 
     /**
+     * Gets the configured singleton instance of DriverApiService (Driver analytics).
+     *
+     * @return Retrofit DriverApiService instance
+     */
+    public static synchronized DriverApiService getDriverApiService() {
+        if (driverApiService == null) {
+            driverApiService = getRetrofit().create(DriverApiService.class);
+        }
+        return driverApiService;
+    }
+
+    /**
+     * Gets the configured singleton instance of OwnerPayoutApiService (Owner balance & payouts).
+     *
+     * @return Retrofit OwnerPayoutApiService instance
+     */
+    public static synchronized OwnerPayoutApiService getOwnerPayoutApiService() {
+        if (ownerPayoutApiService == null) {
+            ownerPayoutApiService = getRetrofit().create(OwnerPayoutApiService.class);
+        }
+        return ownerPayoutApiService;
+    }
+
+    /**
      * Sets a custom base URL (useful for physical test devices or staging environments).
      *
      * @param newBaseUrl New base URL ending with a trailing slash
@@ -211,6 +237,8 @@ public class ApiClient {
             ownerApiService = null;
             availabilityApiService = null;
             mediaApiService = null;
+            driverApiService = null;
+            ownerPayoutApiService = null;
             gsonInstance = null;
         }
     }

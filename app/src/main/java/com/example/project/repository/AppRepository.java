@@ -247,6 +247,22 @@ public class AppRepository {
         }
     }
 
+    public void updateUserProfile(String firstName, String lastName, String phone) {
+        updateUserProfile(firstName, lastName, phone, null);
+    }
+
+    public void updateUserProfile(String firstName, String lastName, String phone, String avatarUrl) {
+        if (firstName != null || lastName != null) {
+            updateUserName(firstName != null ? firstName : "", lastName != null ? lastName : "");
+        }
+        if (phone != null) {
+            updateUserPhone(phone);
+        }
+        if (avatarUrl != null && !avatarUrl.trim().isEmpty()) {
+            updateUserAvatarUri(avatarUrl);
+        }
+    }
+
     public void rateUser(double ratingScore) {
         UserProfile profile = userProfileLiveData.getValue();
         if (profile != null) {

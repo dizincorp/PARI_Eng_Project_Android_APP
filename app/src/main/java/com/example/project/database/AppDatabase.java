@@ -9,7 +9,9 @@ import androidx.room.TypeConverters;
 
 import com.example.project.database.dao.AvailabilityRuleDao;
 import com.example.project.database.dao.BlockedPeriodDao;
+import com.example.project.database.dao.DriverAnalyticsDao;
 import com.example.project.database.dao.OwnerAnalyticsDao;
+import com.example.project.database.dao.OwnerPayoutDao;
 import com.example.project.database.dao.ParkingPlaceDao;
 import com.example.project.database.dao.ReservationDao;
 import com.example.project.database.dao.ReviewDao;
@@ -19,7 +21,9 @@ import com.example.project.database.dao.UserDao;
 import com.example.project.database.dao.VehicleDao;
 import com.example.project.database.entity.AvailabilityRuleEntity;
 import com.example.project.database.entity.BlockedPeriodEntity;
+import com.example.project.database.entity.DriverAnalyticsEntity;
 import com.example.project.database.entity.OwnerAnalyticsEntity;
+import com.example.project.database.entity.OwnerBalanceEntity;
 import com.example.project.database.entity.ParkingPlaceEntity;
 import com.example.project.database.entity.ReservationEntity;
 import com.example.project.database.entity.ReviewEntity;
@@ -27,6 +31,7 @@ import com.example.project.database.entity.SpotPhotoEntity;
 import com.example.project.database.entity.TransactionEntity;
 import com.example.project.database.entity.UserEntity;
 import com.example.project.database.entity.VehicleEntity;
+import com.example.project.database.entity.WithdrawalEntity;
 
 /**
  * Central Room Database class for local persistent caching.
@@ -42,9 +47,12 @@ import com.example.project.database.entity.VehicleEntity;
                 OwnerAnalyticsEntity.class,
                 AvailabilityRuleEntity.class,
                 BlockedPeriodEntity.class,
-                SpotPhotoEntity.class
+                SpotPhotoEntity.class,
+                DriverAnalyticsEntity.class,
+                OwnerBalanceEntity.class,
+                WithdrawalEntity.class
         },
-        version = 13,
+        version = 14,
         exportSchema = false
 )
 @TypeConverters({Converters.class})
@@ -63,6 +71,8 @@ public abstract class AppDatabase extends RoomDatabase {
     public abstract AvailabilityRuleDao availabilityRuleDao();
     public abstract BlockedPeriodDao blockedPeriodDao();
     public abstract SpotPhotoDao spotPhotoDao();
+    public abstract DriverAnalyticsDao driverAnalyticsDao();
+    public abstract OwnerPayoutDao ownerPayoutDao();
 
     /**
      * Gets the singleton instance of AppDatabase.

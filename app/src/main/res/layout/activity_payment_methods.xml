@@ -320,6 +320,8 @@
                 android:layout_marginTop="32dp"
                 android:layout_marginBottom="16dp"
                 android:backgroundTint="@color/brand_slate_950"
+                android:gravity="center"
+                android:includeFontPadding="false"
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
                 android:text="@string/btn_return_to_places"

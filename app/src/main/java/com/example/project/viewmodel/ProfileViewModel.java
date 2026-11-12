@@ -11,7 +11,10 @@ import androidx.lifecycle.MediatorLiveData;
 import com.example.project.model.UserProfile;
 import com.example.project.model.Vehicle;
 import com.example.project.network.Resource;
+import com.example.project.network.model.ChangePasswordRequest;
 import com.example.project.network.model.CreateVehicleRequest;
+import com.example.project.network.model.MessageResponse;
+import com.example.project.network.model.UpdateProfileRequest;
 import com.example.project.network.model.UserProfileResponse;
 import com.example.project.network.model.VehicleResponse;
 import com.example.project.repository.AppRepository;
@@ -122,15 +125,24 @@ public class ProfileViewModel extends AndroidViewModel {
      */
     public void updateUserName(@NonNull String firstName, @NonNull String lastName) {
         appRepository.updateUserName(firstName, lastName);
+        UserProfile p = appRepository.getUserProfileLiveData().getValue();
+        String phone = p != null ? p.getPhone() : "";
+        String avatar = p != null ? p.getAvatarUri() : "";
+        updateProfile(firstName, lastName, phone, avatar);
     }
 
     /**
-     * Updates user's contact phone number in local database and session.
+     * Updates user's contact phone number in local database, session, and backend API.
      *
      * @param phone New phone number
      */
     public void updateUserPhone(@NonNull String phone) {
         appRepository.updateUserPhone(phone);
+        UserProfile p = appRepository.getUserProfileLiveData().getValue();
+        String first = p != null ? p.getFirstName() : "";
+        String last = p != null ? p.getLastName() : "";
+        String avatar = p != null ? p.getAvatarUri() : "";
+        updateProfile(first, last, phone, avatar);
     }
 
     /**
@@ -190,5 +202,48 @@ public class ProfileViewModel extends AndroidViewModel {
                 remoteProfileLiveData.removeSource(source);
             }
         });
+    }
+
+    /**
+     * Updates user profile attributes on backend REST API via PUT /api/auth/profile.
+     *
+     * @param firstName User first name
+     * @param lastName  User last name
+     * @param phone     User contact phone
+     * @param avatarUrl User avatar image URL
+     * @return LiveData containing Resource with UserProfileResponse
+     */
+    public LiveData<Resource<UserProfileResponse>> updateProfile(@NonNull String firstName,
+                                                                 @NonNull String lastName,
+                                                                 @Nullable String phone,
+                                                                 @Nullable String avatarUrl) {
+        UpdateProfileRequest request = new UpdateProfileRequest(firstName.trim(), lastName.trim(),
+                phone != null ? phone.trim() : "", avatarUrl != null ? avatarUrl.trim() : "");
+        LiveData<Resource<UserProfileResponse>> source = authRepository.updateProfile(request);
+        remoteProfileLiveData.addSource(source, resource -> {
+            remoteProfileLiveData.setValue(resource);
+            if (resource.status == Resource.Status.SUCCESS && resource.data != null) {
+                appRepository.updateUserProfile(firstName.trim(), lastName.trim(),
+                        phone != null ? phone.trim() : "",
+                        avatarUrl != null ? avatarUrl.trim() : "");
+                remoteProfileLiveData.removeSource(source);
+            } else if (resource.status == Resource.Status.ERROR) {
+                remoteProfileLiveData.removeSource(source);
+            }
+        });
+        return source;
+    }
+
+    /**
+     * Changes user account password on backend REST API via POST /api/auth/change-password.
+     *
+     * @param currentPassword Current password
+     * @param newPassword     New password
+     * @return LiveData containing Resource with MessageResponse
+     */
+    public LiveData<Resource<MessageResponse>> changePassword(@NonNull String currentPassword,
+                                                              @NonNull String newPassword) {
+        ChangePasswordRequest request = new ChangePasswordRequest(currentPassword, newPassword);
+        return authRepository.changePassword(request);
     }
 }

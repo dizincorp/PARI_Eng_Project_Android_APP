@@ -614,12 +614,15 @@ public class AvailabilityCalendarActivity extends BaseActivity {
                 itemBinding.textReservationTime.setText(r.getTimeRange() != null ? r.getTimeRange() : "");
                 itemBinding.textPlaceName.setText(r.getPlaceName() != null ? r.getPlaceName() : getPlaceNameById(r.getPlaceId()));
 
-                String driver = r.getUserName() != null && !r.getUserName().trim().isEmpty() ? r.getUserName().trim() : "Kierowca";
+                String driver = com.example.project.utils.ReservationLifecycleManager.sanitizeDriverName(r.getUserName(), "Kierowca");
                 itemBinding.textUserName.setText(driver);
 
-                String car = r.getCarModel() != null && !r.getCarModel().trim().isEmpty() ? r.getCarModel().trim() : "Pojazd";
-                String plate = r.getCarPlate() != null && !r.getCarPlate().trim().isEmpty() ? " • " + r.getCarPlate().trim() : "";
-                itemBinding.textCarDetails.setText(car + plate);
+                String car = r.getCarModel();
+                if (com.example.project.utils.ReservationLifecycleManager.isUuidOrPlaceholder(car)) car = "Pojazd";
+                String rawPlate = r.getCarPlate();
+                if (com.example.project.utils.ReservationLifecycleManager.isUuidOrPlaceholder(rawPlate)) rawPlate = "";
+                String plate = (rawPlate != null && !rawPlate.trim().isEmpty()) ? " • " + rawPlate.trim() : "";
+                itemBinding.textCarDetails.setText((car != null && !car.trim().isEmpty() ? car.trim() : "Pojazd") + plate);
 
                 ImageLoader.getInstance(this).loadImage(
                         itemBinding.imgDriverAvatar,

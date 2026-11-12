@@ -180,12 +180,17 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_add_place"
+                    style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
                     android:layout_width="0dp"
                     android:layout_height="50dp"
                     android:layout_marginEnd="6dp"
                     android:layout_weight="1"
                     android:backgroundTint="@color/brand_slate_950"
                     android:elevation="2dp"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
                     android:text="@string/btn_add_place"
                     android:textAllCaps="false"
                     android:textColor="@color/white"
@@ -199,12 +204,17 @@
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_availability"
+                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                     android:layout_width="0dp"
                     android:layout_height="50dp"
                     android:layout_marginStart="6dp"
                     android:layout_weight="1"
                     android:backgroundTint="@color/card_background"
                     android:elevation="1dp"
+                    android:gravity="center"
+                    android:includeFontPadding="false"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
                     android:text="@string/btn_availability"
                     android:textAllCaps="false"
                     android:textColor="@color/brand_slate_900"
@@ -221,11 +231,16 @@
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_owner_reservations"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:layout_marginTop="8dp"
                 android:backgroundTint="@color/card_background"
                 android:elevation="1dp"
+                android:gravity="center"
+                android:includeFontPadding="false"
+                android:insetTop="0dp"
+                android:insetBottom="0dp"
                 android:text="@string/btn_owner_reservations"
                 android:textAllCaps="false"
                 android:textColor="@color/brand_slate_900"
@@ -240,55 +255,106 @@
                 app:strokeWidth="1dp" />
 
             <!-- Section Moje Miejsca Header -->
-            <RelativeLayout
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="26dp"
+                android:text="@string/my_places_title"
+                android:textColor="@color/brand_slate_950"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <!-- Places Filter Tabs: Wszystkie, Wolne, Zajęte, Oczekujące -->
+            <HorizontalScrollView
+                android:id="@+id/scroll_places_filters"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="26dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentStart="true"
-                    android:layout_centerVertical="true"
-                    android:layout_toStartOf="@id/btn_places_filter"
-                    android:text="@string/my_places_title"
-                    android:textColor="@color/brand_slate_950"
-                    android:textSize="18sp"
-                    android:textStyle="bold" />
+                android:layout_marginTop="12dp"
+                android:overScrollMode="never"
+                android:scrollbars="none">
 
                 <LinearLayout
-                    android:id="@+id/btn_places_filter"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:background="@drawable/bg_badge_emerald"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?attr/selectableItemBackground"
                     android:gravity="center_vertical"
-                    android:orientation="horizontal"
-                    android:paddingHorizontal="12dp"
-                    android:paddingVertical="6dp">
+                    android:orientation="horizontal">
 
+                    <!-- Wszystkie Tab -->
                     <TextView
-                        android:id="@+id/text_places_filter_label"
+                        android:id="@+id/tab_filter_all"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="@string/link_all"
+                        android:background="@drawable/bg_filter_all_active"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center"
+                        android:includeFontPadding="false"
+                        android:paddingHorizontal="14dp"
+                        android:paddingVertical="7dp"
+                        android:text="@string/places_filter_all"
+                        android:textColor="@color/white"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <!-- Wolne Tab -->
+                    <TextView
+                        android:id="@+id/tab_filter_free"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/bg_badge_emerald"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center"
+                        android:includeFontPadding="false"
+                        android:paddingHorizontal="14dp"
+                        android:paddingVertical="7dp"
+                        android:text="@string/places_filter_free"
                         android:textColor="@color/brand_emerald_700"
                         android:textSize="13sp"
                         android:textStyle="bold" />
 
-                    <ImageView
-                        android:layout_width="16dp"
-                        android:layout_height="16dp"
-                        android:layout_marginStart="4dp"
-                        android:contentDescription="@string/places_filter_dialog_title"
-                        android:src="@drawable/ic_expand_more"
-                        app:tint="@color/brand_emerald_700" />
+                    <!-- Zajęte Tab -->
+                    <TextView
+                        android:id="@+id/tab_filter_occupied"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/bg_badge_rose"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center"
+                        android:includeFontPadding="false"
+                        android:paddingHorizontal="14dp"
+                        android:paddingVertical="7dp"
+                        android:text="@string/places_filter_occupied"
+                        android:textColor="@color/brand_rose_700"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
+
+                    <!-- Oczekujące Tab -->
+                    <TextView
+                        android:id="@+id/tab_filter_pending"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:background="@drawable/bg_badge_amber"
+                        android:clickable="true"
+                        android:focusable="true"
+                        android:foreground="?attr/selectableItemBackground"
+                        android:gravity="center"
+                        android:includeFontPadding="false"
+                        android:paddingHorizontal="14dp"
+                        android:paddingVertical="7dp"
+                        android:text="@string/tab_pending"
+                        android:textColor="@color/brand_amber_800"
+                        android:textSize="13sp"
+                        android:textStyle="bold" />
                 </LinearLayout>
-            </RelativeLayout>
+            </HorizontalScrollView>
 
             <!-- My Places Dynamic Container -->
             <LinearLayout

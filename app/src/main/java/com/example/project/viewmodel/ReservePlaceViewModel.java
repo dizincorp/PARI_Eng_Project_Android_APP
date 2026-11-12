@@ -47,6 +47,7 @@ public class ReservePlaceViewModel extends AndroidViewModel {
     private final VehicleRepository vehicleRepository;
     private final AppRepository appRepository;
     private final AvailabilityRepository availabilityRepository;
+    private final com.example.project.repository.SpotRepository spotRepository;
 
     private final MediatorLiveData<Resource<ReservationResponse>> reservationStatusLiveData = new MediatorLiveData<>();
     private final MediatorLiveData<Resource<QuoteResponse>> quoteLiveData = new MediatorLiveData<>();
@@ -84,7 +85,19 @@ public class ReservePlaceViewModel extends AndroidViewModel {
         this.vehicleRepository = vehicleRepository;
         this.appRepository = appRepository;
         this.availabilityRepository = availabilityRepository;
+        this.spotRepository = com.example.project.repository.SpotRepository.getInstance(application);
         refreshVehicles();
+    }
+
+    /**
+     * Refreshes parking spot details directly from backend REST API via GET /api/spots/{id}
+     * and synchronizes the local Room Database cache.
+     *
+     * @param spotId Unique spot identifier
+     */
+    public void fetchSpotDetails(@NonNull String spotId) {
+        if (spotId.trim().isEmpty()) return;
+        spotRepository.fetchSpotById(spotId.trim());
     }
 
     /**

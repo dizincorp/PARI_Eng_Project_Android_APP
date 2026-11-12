@@ -45,11 +45,7 @@ public class PlacesActivity extends BaseActivity {
         ALL(R.string.places_filter_all),
         FREE(R.string.places_filter_free),
         OCCUPIED(R.string.places_filter_occupied),
-        CHECKED_IN(R.string.places_filter_checked_in),
-        RESERVED(R.string.places_filter_reserved),
-        ACTIVE(R.string.places_filter_active),
-        INACTIVE(R.string.places_filter_inactive),
-        CALENDAR_BLOCKED(R.string.places_filter_blocked);
+        PENDING(R.string.tab_pending);
 
         @StringRes
         final int labelResId;
@@ -119,92 +115,62 @@ public class PlacesActivity extends BaseActivity {
             startActivity(intent);
         });
 
-        binding.btnPlacesFilter.setOnClickListener(v -> showPlacesFilterDialog());
+        // Tap-to-filter tabs: Wszystkie, Wolne, Zajęte, Oczekujące
+        binding.tabFilterAll.setOnClickListener(v -> selectFilter(PlaceFilter.ALL));
+        binding.tabFilterFree.setOnClickListener(v -> selectFilter(PlaceFilter.FREE));
+        binding.tabFilterOccupied.setOnClickListener(v -> selectFilter(PlaceFilter.OCCUPIED));
+        binding.tabFilterPending.setOnClickListener(v -> selectFilter(PlaceFilter.PENDING));
+
+        updateFilterTabsUI(currentPlaceFilter);
     }
 
-    private void showPlacesFilterDialog() {
-        PlaceFilter[] filters = PlaceFilter.values();
-        String[] labels = new String[filters.length];
-        int checkedIdx = 0;
-
-        for (int i = 0; i < filters.length; i++) {
-            PlaceFilter pf = filters[i];
-            int count = countMatchingPlaces(allOwnerPlaces, pf);
-            labels[i] = getString(pf.labelResId) + " (" + count + ")";
-            if (pf == currentPlaceFilter) {
-                checkedIdx = i;
-            }
-        }
-
-        new MaterialAlertDialogBuilder(this)
-                .setTitle(R.string.places_filter_dialog_title)
-                .setSingleChoiceItems(labels, checkedIdx, (dialog, which) -> {
-                    currentPlaceFilter = filters[which];
-                    dialog.dismiss();
-                    renderPlacesList(allOwnerPlaces);
-                })
-                .setNegativeButton(R.string.btn_close, null)
-                .show();
+    private void selectFilter(@NonNull PlaceFilter filter) {
+        currentPlaceFilter = filter;
+        updateFilterTabsUI(filter);
+        applyCurrentFilterAndRender();
     }
 
-    private int countMatchingPlaces(@NonNull List<ParkingPlace> source, @NonNull PlaceFilter filter) {
-        int count = 0;
-        for (ParkingPlace p : source) {
-            if (matchesPlaceFilter(p, filter)) {
-                count++;
-            }
-        }
-        return count;
+    private void updateFilterTabsUI(@NonNull PlaceFilter selectedFilter) {
+        if (binding == null) return;
+
+        // 1. Wszystkie: Dark Slate when active, subtle slate badge when inactive
+        boolean isAll = selectedFilter == PlaceFilter.ALL;
+        binding.tabFilterAll.setBackgroundResource(isAll ? R.drawable.bg_filter_all_active : R.drawable.bg_badge_slate);
+        binding.tabFilterAll.setTextColor(ContextCompat.getColor(this, isAll ? R.color.white : R.color.brand_slate_600));
+
+        // 2. Wolne: Emerald 600 when active, subtle emerald badge when inactive
+        boolean isFree = selectedFilter == PlaceFilter.FREE;
+        binding.tabFilterFree.setBackgroundResource(isFree ? R.drawable.bg_filter_free_active : R.drawable.bg_badge_emerald);
+        binding.tabFilterFree.setTextColor(ContextCompat.getColor(this, isFree ? R.color.white : R.color.brand_emerald_700));
+
+        // 3. Zajęte: Rose 600 when active, subtle rose badge when inactive
+        boolean isOccupied = selectedFilter == PlaceFilter.OCCUPIED;
+        binding.tabFilterOccupied.setBackgroundResource(isOccupied ? R.drawable.bg_filter_occupied_active : R.drawable.bg_badge_rose);
+        binding.tabFilterOccupied.setTextColor(ContextCompat.getColor(this, isOccupied ? R.color.white : R.color.brand_rose_700));
+
+        // 4. Oczekujące: Amber 500 when active, subtle amber badge when inactive
+        boolean isPending = selectedFilter == PlaceFilter.PENDING;
+        binding.tabFilterPending.setBackgroundResource(isPending ? R.drawable.bg_filter_pending_active : R.drawable.bg_badge_amber);
+        binding.tabFilterPending.setTextColor(ContextCompat.getColor(this, isPending ? R.color.white : R.color.brand_amber_800));
     }
 
     private boolean matchesPlaceFilter(@Nullable ParkingPlace p, @NonNull PlaceFilter filter) {
         if (p == null) return false;
-        boolean active = p.isActive();
         boolean checkedIn = p.isCheckedIn();
-        boolean hasDriverAssigned = p.getDriverName() != null && !p.getDriverName().trim().isEmpty();
-        boolean occupiedOrReserved = checkedIn || p.isOccupied() || p.isReserved() || hasDriverAssigned;
-
-        List<BlockedPeriodEntity> blocks = spotBlockedMap.get(p.getId());
-        boolean hasAnyNonExpiredBlock = false;
-        boolean hasActiveBlockNow = false;
-        if (blocks != null) {
-            for (BlockedPeriodEntity b : blocks) {
-                if (b == null || b.isExpired()) continue;
-                hasAnyNonExpiredBlock = true;
-                if (b.isCurrentlyActive()) {
-                    hasActiveBlockNow = true;
-                }
-            }
-        }
+        boolean reservedOrPending = !checkedIn && (p.isOccupied() || p.isReserved()
+                || (p.getDriverName() != null && !p.getDriverName().trim().isEmpty()));
+        boolean free = !checkedIn && !reservedOrPending;
 
         switch (filter) {
             case FREE:
-                return active && !occupiedOrReserved && !hasActiveBlockNow;
+                return free;
             case OCCUPIED:
-                return active && occupiedOrReserved;
-            case CHECKED_IN:
-                return active && checkedIn;
-            case RESERVED:
-                return active && !checkedIn && occupiedOrReserved;
-            case ACTIVE:
-                return active;
-            case INACTIVE:
-                return !active;
-            case CALENDAR_BLOCKED:
-                return hasAnyNonExpiredBlock;
+                return checkedIn;
+            case PENDING:
+                return reservedOrPending;
             case ALL:
             default:
                 return true;
-        }
-    }
-
-    private void updatePlaceFilterPillLabel(int visibleCount) {
-        if (binding == null) return;
-        String base = getString(currentPlaceFilter.labelResId);
-        if (!allOwnerPlaces.isEmpty() || currentPlaceFilter != PlaceFilter.ALL) {
-            binding.textPlacesFilterLabel.setText(base + " (" + visibleCount + ")");
-        } else {
-            binding.textPlacesFilterLabel.setText(base);
         }
     }
 
@@ -279,10 +245,16 @@ public class PlacesActivity extends BaseActivity {
     private void renderPlacesList(List<ParkingPlace> places) {
         if (binding == null) return;
 
-        allOwnerPlaces.clear();
-        if (places != null) {
+        if (places != null && places != allOwnerPlaces) {
+            allOwnerPlaces.clear();
             allOwnerPlaces.addAll(places);
         }
+
+        applyCurrentFilterAndRender();
+    }
+
+    private void applyCurrentFilterAndRender() {
+        if (binding == null) return;
 
         List<ParkingPlace> filtered = new ArrayList<>();
         for (ParkingPlace p : allOwnerPlaces) {
@@ -290,8 +262,6 @@ public class PlacesActivity extends BaseActivity {
                 filtered.add(p);
             }
         }
-        updatePlaceFilterPillLabel(filtered.size());
-
         binding.containerMyPlaces.removeAllViews();
 
         if (filtered.isEmpty()) {
@@ -311,10 +281,7 @@ public class PlacesActivity extends BaseActivity {
                 showAllBtn.setText(R.string.places_filter_show_all);
                 showAllBtn.setAllCaps(false);
                 showAllBtn.setTextColor(ContextCompat.getColor(this, R.color.brand_emerald_700));
-                showAllBtn.setOnClickListener(v -> {
-                    currentPlaceFilter = PlaceFilter.ALL;
-                    renderPlacesList(allOwnerPlaces);
-                });
+                showAllBtn.setOnClickListener(v -> selectFilter(PlaceFilter.ALL));
                 binding.containerMyPlaces.addView(showAllBtn);
             }
             return;
@@ -415,9 +382,9 @@ public class PlacesActivity extends BaseActivity {
                 if (p.isCheckedIn()) {
                     // RED: Driver checked in (parked now)
                     itemBinding.viewStatusDot.setBackgroundTintList(getColorStateList(R.color.status_dot_red));
-                    String driver = p.getDriverName() != null && !p.getDriverName().isEmpty()
-                            ? p.getDriverName() : "Kierowca";
+                    String driver = com.example.project.utils.ReservationLifecycleManager.sanitizeDriverName(p.getDriverName(), "Kierowca");
                     String vehicle = p.getDriverVehicle() != null && !p.getDriverVehicle().isEmpty()
+                            && !com.example.project.utils.ReservationLifecycleManager.isUuidOrPlaceholder(p.getDriverVehicle())
                             ? p.getDriverVehicle() : "Pojazd na miejscu";
                     itemBinding.textDriverInfo.setText(String.format("🚗 Parkuje: %s • %s", driver, vehicle));
                     itemBinding.textDriverInfo.setTextColor(getColor(R.color.brand_rose_600));
@@ -425,9 +392,9 @@ public class PlacesActivity extends BaseActivity {
                 } else if (p.isOccupied() || p.isReserved() || (p.getDriverName() != null && !p.getDriverName().isEmpty())) {
                     // YELLOW: Reserved by a driver
                     itemBinding.viewStatusDot.setBackgroundTintList(getColorStateList(R.color.status_dot_yellow));
-                    String driver = p.getDriverName() != null && !p.getDriverName().isEmpty()
-                            ? p.getDriverName() : "Zarezerwowane";
+                    String driver = com.example.project.utils.ReservationLifecycleManager.sanitizeDriverName(p.getDriverName(), "Zarezerwowane");
                     String vehicle = p.getDriverVehicle() != null && !p.getDriverVehicle().isEmpty()
+                            && !com.example.project.utils.ReservationLifecycleManager.isUuidOrPlaceholder(p.getDriverVehicle())
                             ? " • " + p.getDriverVehicle() : "";
                     itemBinding.textDriverInfo.setText(String.format("👤 Zarezerwowane: %s%s", driver, vehicle));
                     itemBinding.textDriverInfo.setTextColor(getColor(R.color.brand_amber_600));

@@ -363,7 +363,7 @@ public class ReservationRepository {
                                         place.setDriverVehicle(res.getVehiclePlate());
                                     }
                                     if (res.getDriverId() != null && !res.getDriverId().isEmpty()) {
-                                        place.setDriverName(res.getDriverId());
+                                        place.setDriverName(res.getDriverFullName() != null && !res.getDriverFullName().isEmpty() ? res.getDriverFullName() : com.example.project.utils.ReservationLifecycleManager.sanitizeDriverName(res.getDriverId(), "Kierowca"));
                                     }
                                     parkingPlaceDao.insertOrUpdate(place);
                                 } else if ("CONFIRMED".equalsIgnoreCase(status)
@@ -376,7 +376,7 @@ public class ReservationRepository {
                                         place.setDriverVehicle(res.getVehiclePlate());
                                     }
                                     if (res.getDriverId() != null && !res.getDriverId().isEmpty()) {
-                                        place.setDriverName(res.getDriverId());
+                                        place.setDriverName(res.getDriverFullName() != null && !res.getDriverFullName().isEmpty() ? res.getDriverFullName() : com.example.project.utils.ReservationLifecycleManager.sanitizeDriverName(res.getDriverId(), "Kierowca"));
                                     }
                                     parkingPlaceDao.insertOrUpdate(place);
                                 }
@@ -1154,9 +1154,19 @@ public class ReservationRepository {
         entity.setTotalPrice(finalPrice);
         entity.setCarPlate(res.getVehiclePlate());
         entity.setVehicleInfo(res.getVehiclePlate());
-        if (res.getDriverId() != null && !res.getDriverId().isEmpty()) {
-            entity.setUserName(res.getDriverId());
+        String rawDriverName = res.getDriverFullName();
+        if (rawDriverName == null || rawDriverName.trim().isEmpty()
+                || com.example.project.utils.ReservationLifecycleManager.isUuidOrPlaceholder(rawDriverName)) {
+            com.example.project.utils.SessionManager session = com.example.project.utils.SessionManager.getInstance();
+            if (session != null && session.getUserId() != null && session.getUserId().equals(res.getDriverId())
+                    && session.getUserName() != null && !session.getUserName().trim().isEmpty()
+                    && !com.example.project.utils.ReservationLifecycleManager.isUuidOrPlaceholder(session.getUserName())) {
+                rawDriverName = session.getUserName().trim();
+            } else {
+                rawDriverName = "Kierowca";
+            }
         }
+        entity.setUserName(com.example.project.utils.ReservationLifecycleManager.sanitizeDriverName(rawDriverName, "Kierowca"));
 
         // Accurately map timestamps from backend response
         long startMs = res.getStartsAtMillis() > 0 ? res.getStartsAtMillis() : System.currentTimeMillis();

@@ -19,6 +19,7 @@ public class SessionManager {
     private static final String KEY_LAST_NAME = "userLastName";
     private static final String KEY_USER_PHONE = "userPhone";
     private static final String KEY_AVATAR_URI = "avatarUri";
+    private static final String KEY_NEEDS_PHONE_PROMPT = "needsPhonePrompt";
 
     private static volatile SessionManager instance;
 
@@ -180,7 +181,16 @@ public class SessionManager {
     }
 
     public String getUserPhone() {
-        return pref.getString(KEY_USER_PHONE, "+48 500 123 456");
+        return pref.getString(KEY_USER_PHONE, "");
+    }
+
+    public boolean needsPhonePrompt() {
+        return pref.getBoolean(KEY_NEEDS_PHONE_PROMPT, false);
+    }
+
+    public void setNeedsPhonePrompt(boolean needsPrompt) {
+        editor.putBoolean(KEY_NEEDS_PHONE_PROMPT, needsPrompt);
+        editor.apply();
     }
 
     public String getAvatarUri() {
@@ -196,7 +206,11 @@ public class SessionManager {
     }
 
     public void updateUserPhone(String phone) {
-        editor.putString(KEY_USER_PHONE, phone != null ? phone.trim() : "");
+        String cleanPhone = phone != null ? phone.trim() : "";
+        editor.putString(KEY_USER_PHONE, cleanPhone);
+        if (!cleanPhone.isEmpty()) {
+            editor.putBoolean(KEY_NEEDS_PHONE_PROMPT, false);
+        }
         editor.apply();
     }
 

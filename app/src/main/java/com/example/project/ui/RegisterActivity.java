@@ -5,6 +5,9 @@ import android.os.Bundle;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -18,6 +21,7 @@ import com.example.project.network.model.LoginResponse;
 import com.example.project.network.model.RegisterResponse;
 import com.example.project.network.model.UserResponse;
 import com.example.project.repository.AppRepository;
+import com.example.project.utils.GoogleAuthHelper;
 import com.example.project.utils.SessionManager;
 import com.example.project.viewmodel.AuthViewModel;
 
@@ -31,6 +35,19 @@ public class RegisterActivity extends AppCompatActivity {
     private ActivityRegisterBinding binding;
     private AuthViewModel viewModel;
     private SessionManager sessionManager;
+
+    private final ActivityResultLauncher<Intent> googleAccountPickerLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    String accountEmail = result.getData().getStringExtra(android.accounts.AccountManager.KEY_ACCOUNT_NAME);
+                    if (accountEmail != null && !accountEmail.trim().isEmpty()) {
+                        String[] names = GoogleAuthHelper.extractNameFromEmail(accountEmail.trim());
+                        proceedWithGoogleRegister(accountEmail.trim(), names[0], names[1]);
+                        return;
+                    }
+                }
+                showGoogleAccountInputDialog(null);
+            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -71,7 +88,13 @@ public class RegisterActivity extends AppCompatActivity {
             viewModel.register(firstName, lastName, email, password, confirmPassword, phone);
         });
 
-        binding.btnGoogleRegister.setOnClickListener(v -> viewModel.loginWithGoogle());
+        binding.btnGoogleRegister.setOnClickListener(v -> {
+            try {
+                googleAccountPickerLauncher.launch(GoogleAuthHelper.createAccountChooserIntent());
+            } catch (Exception e) {
+                showGoogleAccountInputDialog(null);
+            }
+        });
 
         binding.btnGoToLogin.setOnClickListener(v -> finish());
         binding.tabLogin.setOnClickListener(v -> finish());
@@ -140,6 +163,16 @@ public class RegisterActivity extends AppCompatActivity {
                 finish();
             }
         });
+    }
+
+    private void showGoogleAccountInputDialog(@Nullable String prefilledEmail) {
+        GoogleAuthHelper.showGoogleSignInDialog(this, prefilledEmail, googleAccountPickerLauncher,
+                this::proceedWithGoogleRegister);
+    }
+
+    private void proceedWithGoogleRegister(String email, String firstName, String lastName) {
+        sessionManager.setNeedsPhonePrompt(true);
+        viewModel.loginOrRegisterWithGoogle(email, firstName, lastName);
     }
 
     @Override

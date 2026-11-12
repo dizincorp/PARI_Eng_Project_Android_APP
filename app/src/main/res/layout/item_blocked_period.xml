@@ -81,6 +81,8 @@
                 android:layout_alignParentEnd="true"
                 android:layout_centerVertical="true"
                 android:backgroundTint="@color/brand_rose_50"
+                android:gravity="center"
+                android:includeFontPadding="false"
                 android:insetTop="0dp"
                 android:insetBottom="0dp"
                 android:paddingHorizontal="14dp"

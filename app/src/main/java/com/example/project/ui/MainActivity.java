@@ -189,6 +189,11 @@ public class MainActivity extends BaseActivity implements OnMapReadyCallback {
         timeCheckHandler.postDelayed(timeCheckRunnable, 15000);
         com.example.project.utils.SessionManager sessionManager = com.example.project.utils.SessionManager.getInstance(this);
         if (sessionManager != null && sessionManager.isLoggedIn()) {
+            if (sessionManager.needsPhonePrompt()) {
+                com.example.project.utils.GoogleAuthHelper.showRequirePhoneDialog(this, phone -> {
+                    // Phone number saved and synced
+                });
+            }
             String userEmail = sessionManager.getUserEmail();
             com.example.project.repository.VehicleRepository.getInstance(this).fetchVehicles(userEmail);
             com.example.project.repository.ReservationRepository.getInstance(this).fetchReservations(userEmail);

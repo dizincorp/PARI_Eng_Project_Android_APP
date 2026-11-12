@@ -21,6 +21,15 @@ public class ParkingSpot {
     @SerializedName("ownerFirstName")
     private String ownerFirstName;
 
+    @SerializedName("ownerLastName")
+    private String ownerLastName;
+
+    @SerializedName("ownerPhoneNumber")
+    private String ownerPhoneNumber;
+
+    @SerializedName("ownerAvatarUrl")
+    private String ownerAvatarUrl;
+
     @SerializedName("name")
     private String name;
 
@@ -56,6 +65,12 @@ public class ParkingSpot {
 
     @SerializedName("hourlyPrice")
     private Double hourlyPrice;
+
+    @SerializedName("dailyPrice")
+    private Double dailyPrice;
+
+    @SerializedName("monthlyPrice")
+    private Double monthlyPrice;
 
     @SerializedName("currency")
     private String currency;
@@ -458,5 +473,45 @@ public class ParkingSpot {
 
     public void setDistanceMeters(Double distanceMeters) {
         this.distanceMeters = distanceMeters;
+    }
+
+    public String getOwnerLastName() {
+        return ownerLastName != null ? ownerLastName : "";
+    }
+
+    public void setOwnerLastName(String ownerLastName) {
+        this.ownerLastName = ownerLastName;
+    }
+
+    public String getOwnerPhoneNumber() {
+        return ownerPhoneNumber != null ? ownerPhoneNumber : "";
+    }
+
+    public void setOwnerPhoneNumber(String ownerPhoneNumber) {
+        this.ownerPhoneNumber = ownerPhoneNumber;
+    }
+
+    public String getOwnerAvatarUrl() {
+        return ownerAvatarUrl;
+    }
+
+    public void setOwnerAvatarUrl(String ownerAvatarUrl) {
+        this.ownerAvatarUrl = ownerAvatarUrl;
+    }
+
+    public Double getDailyPrice() {
+        return dailyPrice;
+    }
+
+    public void setDailyPrice(Double dailyPrice) {
+        this.dailyPrice = dailyPrice;
+    }
+
+    public Double getMonthlyPrice() {
+        return monthlyPrice;
+    }
+
+    public void setMonthlyPrice(Double monthlyPrice) {
+        this.monthlyPrice = monthlyPrice;
     }
 }

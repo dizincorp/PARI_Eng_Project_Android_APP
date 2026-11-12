@@ -218,10 +218,15 @@
     <!-- Save Action Button -->
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_save_dialog_rules"
+        style="@style/Widget.MaterialComponents.Button.UnelevatedButton"
         android:layout_width="match_parent"
         android:layout_height="52dp"
         android:layout_marginTop="14dp"
         android:backgroundTint="@color/brand_slate_950"
+        android:gravity="center"
+        android:includeFontPadding="false"
+        android:insetTop="0dp"
+        android:insetBottom="0dp"
         android:text="@string/btn_save_rules"
         android:textAllCaps="false"
         android:textColor="@color/white"

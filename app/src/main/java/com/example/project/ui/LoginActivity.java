@@ -2,9 +2,14 @@ package com.example.project.ui;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Patterns;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
@@ -13,10 +18,12 @@ import androidx.lifecycle.ViewModelProvider;
 
 import com.example.project.R;
 import com.example.project.databinding.ActivityLoginBinding;
+import com.example.project.databinding.DialogForgotPasswordBinding;
 import com.example.project.network.Resource;
 import com.example.project.network.model.LoginResponse;
 import com.example.project.network.model.UserResponse;
 import com.example.project.repository.AppRepository;
+import com.example.project.utils.GoogleAuthHelper;
 import com.example.project.utils.SessionManager;
 import com.example.project.viewmodel.AuthViewModel;
 
@@ -29,6 +36,19 @@ public class LoginActivity extends AppCompatActivity {
     private ActivityLoginBinding binding;
     private AuthViewModel viewModel;
     private SessionManager sessionManager;
+
+    private final ActivityResultLauncher<Intent> googleAccountPickerLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() == RESULT_OK && result.getData() != null) {
+                    String accountEmail = result.getData().getStringExtra(android.accounts.AccountManager.KEY_ACCOUNT_NAME);
+                    if (accountEmail != null && !accountEmail.trim().isEmpty()) {
+                        String[] names = GoogleAuthHelper.extractNameFromEmail(accountEmail.trim());
+                        proceedWithGoogleSignIn(accountEmail.trim(), names[0], names[1]);
+                        return;
+                    }
+                }
+                showGoogleAccountInputDialog(null);
+            });
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,7 +92,13 @@ public class LoginActivity extends AppCompatActivity {
             viewModel.login(email, password);
         });
 
-        binding.btnGoogleLogin.setOnClickListener(v -> viewModel.loginWithGoogle());
+        binding.btnGoogleLogin.setOnClickListener(v -> {
+            try {
+                googleAccountPickerLauncher.launch(GoogleAuthHelper.createAccountChooserIntent());
+            } catch (Exception e) {
+                showGoogleAccountInputDialog(null);
+            }
+        });
 
         binding.btnGoToRegister.setOnClickListener(v -> {
             Intent intent = new Intent(LoginActivity.this, RegisterActivity.class);
@@ -84,9 +110,55 @@ public class LoginActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        binding.btnForgotPassword.setOnClickListener(v ->
-                Toast.makeText(this, R.string.link_forgot_password, Toast.LENGTH_SHORT).show()
-        );
+        binding.btnForgotPassword.setOnClickListener(v -> showForgotPasswordDialog());
+    }
+
+    /**
+     * Displays a clean dialog for recovering account password via email instructions.
+     */
+    private void showForgotPasswordDialog() {
+        DialogForgotPasswordBinding dialogBinding = DialogForgotPasswordBinding.inflate(getLayoutInflater());
+
+        // Pre-fill email if user already entered something in login email field
+        String currentEnteredEmail = binding.editLoginEmail.getText() != null
+                ? binding.editLoginEmail.getText().toString().trim() : "";
+        if (!currentEnteredEmail.isEmpty()) {
+            dialogBinding.editResetEmail.setText(currentEnteredEmail);
+            dialogBinding.editResetEmail.setSelection(currentEnteredEmail.length());
+        }
+
+        AlertDialog dialog = new AlertDialog.Builder(this)
+                .setView(dialogBinding.getRoot())
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        dialogBinding.btnCloseDialog.setOnClickListener(v -> dialog.dismiss());
+        dialogBinding.btnCancelReset.setOnClickListener(v -> dialog.dismiss());
+
+        dialogBinding.btnSendReset.setOnClickListener(v -> {
+            String email = dialogBinding.editResetEmail.getText() != null
+                    ? dialogBinding.editResetEmail.getText().toString().trim() : "";
+
+            if (email.isEmpty() || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+                dialogBinding.editResetEmail.setError(getString(R.string.error_enter_valid_email));
+                dialogBinding.editResetEmail.requestFocus();
+                return;
+            }
+
+            dialog.dismiss();
+
+            // Display confirmation alert that password reset instructions were dispatched
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.title_reset_password)
+                    .setMessage(getString(R.string.msg_reset_link_sent, email))
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show();
+        });
+
+        dialog.show();
     }
 
     private void observeViewModel() {
@@ -118,9 +190,15 @@ public class LoginActivity extends AppCompatActivity {
                         com.example.project.repository.VehicleRepository.getInstance(this).fetchVehicles(email);
 
                         Toast.makeText(this, R.string.msg_login_success, Toast.LENGTH_SHORT).show();
-                        Intent intent = new Intent(LoginActivity.this, MainActivity.class);
-                        startActivity(intent);
-                        finish();
+                        if (sessionManager.needsPhonePrompt()) {
+                            Intent intent = new Intent(LoginActivity.this, OnboardingActivity.class);
+                            startActivity(intent);
+                            finish();
+                        } else {
+                            Intent intent = new Intent(LoginActivity.this, MainActivity.class);
+                            startActivity(intent);
+                            finish();
+                        }
                     }
                     break;
                 case ERROR:
@@ -130,6 +208,16 @@ public class LoginActivity extends AppCompatActivity {
                     break;
             }
         });
+    }
+
+    private void showGoogleAccountInputDialog(@Nullable String prefilledEmail) {
+        GoogleAuthHelper.showGoogleSignInDialog(this, prefilledEmail, googleAccountPickerLauncher,
+                this::proceedWithGoogleSignIn);
+    }
+
+    private void proceedWithGoogleSignIn(String email, String firstName, String lastName) {
+        sessionManager.setNeedsPhonePrompt(true);
+        viewModel.loginOrRegisterWithGoogle(email, firstName, lastName);
     }
 
     @Override

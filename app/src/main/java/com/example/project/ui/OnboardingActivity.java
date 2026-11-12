@@ -10,6 +10,8 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 
 import com.example.project.databinding.ActivityOnboardingBinding;
+import com.example.project.utils.GoogleAuthHelper;
+import com.example.project.utils.SessionManager;
 
 /**
  * Onboarding activity shown upon first registration/login.
@@ -33,9 +35,18 @@ public class OnboardingActivity extends AppCompatActivity {
         });
 
         binding.btnStartNow.setOnClickListener(v -> {
-            Intent intent = new Intent(OnboardingActivity.this, MainActivity.class);
-            startActivity(intent);
-            finish();
+            SessionManager sessionManager = SessionManager.getInstance(this);
+            if (sessionManager != null && sessionManager.needsPhonePrompt()) {
+                GoogleAuthHelper.showRequirePhoneDialog(this, phone -> {
+                    Intent intent = new Intent(OnboardingActivity.this, MainActivity.class);
+                    startActivity(intent);
+                    finish();
+                });
+            } else {
+                Intent intent = new Intent(OnboardingActivity.this, MainActivity.class);
+                startActivity(intent);
+                finish();
+            }
         });
     }
 
